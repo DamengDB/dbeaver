@@ -16,8 +16,6 @@
  */
 package org.jkiss.dbeaver.ui.resources;
 
-import org.eclipse.core.filesystem.EFS;
-import org.eclipse.core.filesystem.IFileInfo;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
@@ -36,13 +34,9 @@ import org.jkiss.dbeaver.model.fs.DBFUtils;
 import org.jkiss.dbeaver.runtime.DBWorkbench;
 import org.jkiss.dbeaver.ui.ProgramInfo;
 import org.jkiss.dbeaver.ui.UIUtils;
-import org.jkiss.dbeaver.utils.ContentUtils;
 import org.jkiss.utils.ByteNumberFormat;
 
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
@@ -97,26 +91,7 @@ public class DefaultResourceHandlerImpl extends AbstractResourceHandler {
             }
 
             try {
-                final Path[] target = new Path[1];
-
-                UIUtils.runInProgressService(monitor -> {
-                    try {
-                        target[0] = Files.createTempFile(
-                            DBWorkbench.getPlatform().getTempFolder(monitor, "external-files"),
-                            null,
-                            fileStore.getName()
-                        );
-
-                        try (InputStream is = fileStore.openInputStream(EFS.NONE, null)) {
-                            try (OutputStream os = Files.newOutputStream(target[0])) {
-                                final IFileInfo info = fileStore.fetchInfo(EFS.NONE, null);
-                                ContentUtils.copyStreams(is, info.getLength(), os, monitor);
-                            }
-                        }
-                    } catch (Exception e) {
-                        throw new InvocationTargetException(e);
-                    }
-                });
+                final Path target = ResourceDownloader.getInstance().downloadResource(fileStore);
 
                 if (IEditorRegistry.SYSTEM_EXTERNAL_EDITOR_ID.equals(editorDesc.getId())) {
                     // Here we could potentially start a new process
@@ -125,11 +100,11 @@ public class DefaultResourceHandlerImpl extends AbstractResourceHandler {
                     //  2. Detect changes made by an external editor
                     // But for now it's okay, I assume.
 
-                    Program.launch(target[0].toString());
+                    Program.launch(target.toString());
                 } else {
                     IDE.openEditor(
                         UIUtils.getActiveWorkbenchWindow().getActivePage(),
-                        DBFUtils.getUriFromPath(target[0]),
+                        DBFUtils.getUriFromPath(target),
                         editorDesc.getId(),
                         true
                     );
