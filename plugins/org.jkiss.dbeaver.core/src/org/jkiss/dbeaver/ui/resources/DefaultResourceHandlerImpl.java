@@ -91,7 +91,7 @@ public class DefaultResourceHandlerImpl extends AbstractResourceHandler {
             }
 
             try {
-                final Path target = ResourceDownloader.getInstance().downloadResource(fileStore);
+                final Path target = ResourceDownloader.getInstance().downloadResourceAsTempFile(fileStore);
 
                 if (IEditorRegistry.SYSTEM_EXTERNAL_EDITOR_ID.equals(editorDesc.getId())) {
                     // Here we could potentially start a new process

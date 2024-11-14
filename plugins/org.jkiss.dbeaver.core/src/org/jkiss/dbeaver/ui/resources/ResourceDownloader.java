@@ -23,11 +23,16 @@ import org.jkiss.dbeaver.runtime.DBWorkbench;
 import org.jkiss.dbeaver.ui.UIUtils;
 import org.jkiss.dbeaver.utils.ContentUtils;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.function.Function;
 
 public class ResourceDownloader {
 
@@ -37,16 +42,58 @@ public class ResourceDownloader {
         return INSTANCE;
     }
 
-    public Path downloadResource(IFileStore fileStore) throws InterruptedException, InvocationTargetException {
+    public Path downloadResourceAsTempFile(IFileStore fileStore) throws InterruptedException, InvocationTargetException {
+        return downloadResource(fileStore, (Path tempFolder) -> {
+            try {
+                return Files.createTempFile(tempFolder, null, fileStore.getName());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    public Path downloadResourceWithOriginalNameAndDeleteIfExist(IFileStore fileStore) throws InterruptedException, InvocationTargetException, IOException {
+        return downloadResource(fileStore, (Path tempFolder) -> {
+            String fileName = fileStore.getName();
+            Path resolvePath = tempFolder.resolve(fileName);
+            if(!fileStore.fetchInfo().isDirectory()){
+                try {
+                    Files.deleteIfExists(resolvePath);
+                    return Files.createFile(resolvePath);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            } else {
+                if(resolvePath.toFile().exists() && resolvePath.toFile().isDirectory()) {
+                    try {
+                        Files.walkFileTree(resolvePath, new SimpleFileVisitor<>() {
+                            @Override
+                            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                                Files.delete(file);
+                                return FileVisitResult.CONTINUE;
+                            }
+                            @Override
+                            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                                Files.delete(dir);
+                                return FileVisitResult.CONTINUE;
+                            }
+                        });
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+
+            }
+
+        });
+    }
+    private Path downloadResource(IFileStore fileStore, Function<Path, Path> fileProducer) throws InterruptedException, InvocationTargetException {
         final Path[] target = new Path[1];
 
         UIUtils.runInProgressService(monitor -> {
             try {
-                target[0] = Files.createTempFile(
-                    DBWorkbench.getPlatform().getTempFolder(monitor, "external-files"),
-                    null,
-                    fileStore.getName()
-                );
+                Path tempFolder = DBWorkbench.getPlatform().getTempFolder(monitor, "external-files");
+                target[0] = fileProducer.apply(tempFolder);
 
                 try (InputStream is = fileStore.openInputStream(EFS.NONE, null)) {
                     try (OutputStream os = Files.newOutputStream(target[0])) {
