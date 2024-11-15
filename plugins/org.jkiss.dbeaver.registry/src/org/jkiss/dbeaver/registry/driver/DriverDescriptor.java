@@ -225,7 +225,6 @@ public class DriverDescriptor extends AbstractDescriptor implements DBPDriver {
 
     private Class<?> driverClass;
     private boolean isLoaded;
-    private Object driverInstance;
     private DriverClassLoader classLoader;
 
     private transient boolean isFailed = false;
@@ -782,23 +781,17 @@ public class DriverDescriptor extends AbstractDescriptor implements DBPDriver {
     @Override
     public <T extends Driver> T getDriverInstance(@NotNull DBRProgressMonitor monitor)
             throws DBException {
-        if (driverInstance == null) {
+        if (driverClass == null) {
             loadDriver(monitor);
         }
-        if (isInternalDriver() && driverInstance == null) {
-            return (T)createDriverInstance();
-        }
-        return (T)driverInstance;
+        return (T) createDriverInstance();
     }
 
     public void resetDriverInstance() {
-        this.driverInstance = null;
         this.driverClass = null;
         this.isLoaded = false;
 
-        if (!DBWorkbench.isDistributed()) {
-            this.resolvedFiles.clear();
-        }
+        this.resolvedFiles.clear();
     }
 
     private Object createDriverInstance()
@@ -1345,12 +1338,6 @@ public class DriverDescriptor extends AbstractDescriptor implements DBPDriver {
                         ex);
                 }
 
-                // Create driver instance
-                /*if (!this.isInternalDriver())*/
-                {
-                    driverInstance = createDriverInstance();
-                }
-
                 isLoaded = true;
                 isFailed = false;
             }
@@ -1871,6 +1858,8 @@ public class DriverDescriptor extends AbstractDescriptor implements DBPDriver {
                         libraryFiles.add(fileInfo);
                         resolvedFiles.put(library, libraryFiles);
                         continue;
+                    } else {
+                        log.debug("Driver library path '" + library.getPath() + "' cannot be resolved at '" + customFile + "'. Skipping.");
                     }
                 }
                 Path srcLocalFile = library.getLocalFile();
