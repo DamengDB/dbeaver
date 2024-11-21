@@ -38,4 +38,6 @@ public class BigQueryConstants {
     public static final String DATA_TYPE_STRUCT = "STRUCT";
     public static final String DATA_TYPE_ARRAY = "ARRAY";
     public static final String DATA_TYPE_GEOGRAPHY = "GEOGRAPHY";
+
+    public static final int EXEC_JOB_EXECUTION_ERR = 100032;
 }

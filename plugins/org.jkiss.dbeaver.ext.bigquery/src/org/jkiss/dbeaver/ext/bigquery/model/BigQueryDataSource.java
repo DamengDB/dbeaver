@@ -27,10 +27,11 @@ import org.jkiss.dbeaver.model.connection.DBPDriver;
 import org.jkiss.dbeaver.model.exec.DBCException;
 import org.jkiss.dbeaver.model.impl.jdbc.JDBCExecutionContext;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
+import org.jkiss.dbeaver.model.sql.SQLState;
 import org.jkiss.utils.CommonUtils;
 
-import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 
 public class BigQueryDataSource extends GenericDataSource {
@@ -97,5 +98,17 @@ public class BigQueryDataSource extends GenericDataSource {
         }
     }
 
-
+    @Override
+    public ErrorType discoverErrorType(@NotNull Throwable error) {
+        int code = SQLState.getCodeFromException(error);
+        if (code == BigQueryConstants.EXEC_JOB_EXECUTION_ERR) {
+            String message = error.getMessage().toLowerCase(Locale.ROOT);
+            if (message.contains("does not support refreshing the access token") ||
+                message.contains("reauth related error")
+            ) {
+                return ErrorType.CONNECTION_LOST;
+            }
+        }
+        return super.discoverErrorType(error);
+    }
 }
