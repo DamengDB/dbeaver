@@ -103,9 +103,7 @@ public class BigQueryDataSource extends GenericDataSource {
         int code = SQLState.getCodeFromException(error);
         if (code == BigQueryConstants.EXEC_JOB_EXECUTION_ERR) {
             String message = error.getMessage().toLowerCase(Locale.ROOT);
-            if (message.contains("does not support refreshing the access token") ||
-                message.contains("reauth related error")
-            ) {
+            if (message.contains("access token") || message.contains("reauth related error")) {
                 return ErrorType.CONNECTION_LOST;
             }
         }
