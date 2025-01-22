@@ -20,6 +20,7 @@ import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.model.meta.Property;
 
+import java.time.Instant;
 import java.util.Map;
 
 public class SMUser extends SMSubject {
@@ -27,6 +28,9 @@ public class SMUser extends SMSubject {
     private String[] userTeams;
     private boolean enabled;
     private String authRole;
+    @Nullable private Instant disableDate;
+    @Nullable private String disableByUserId;
+    @Nullable private String disableReason;
 
     public SMUser(
         @NotNull String userId,
@@ -35,6 +39,21 @@ public class SMUser extends SMSubject {
     ) {
         this(userId, null, new String[0], enabled, authRole, true);
     }
+
+    public SMUser(
+        @NotNull String userId,
+        boolean enabled,
+        @Nullable String authRole,
+        @Nullable Instant disableDate,
+        @Nullable String disableByUserId,
+        @Nullable String disableReason
+    ) {
+        this(userId, null, new String[0], enabled, authRole, true);
+        this.disableDate = disableDate;
+        this.disableByUserId = disableByUserId;
+        this.disableReason = disableReason;
+    }
+
 
     public SMUser(
         @NotNull String userId,
@@ -97,5 +116,20 @@ public class SMUser extends SMSubject {
 
     public void setAuthRole(String authRole) {
         this.authRole = authRole;
+    }
+
+    @Nullable
+    public Instant getDisableDate() {
+        return disableDate;
+    }
+
+    @Nullable
+    public String getDisableByUserId() {
+        return disableByUserId;
+    }
+
+    @Nullable
+    public String getDisableReason() {
+        return disableReason;
     }
 }
