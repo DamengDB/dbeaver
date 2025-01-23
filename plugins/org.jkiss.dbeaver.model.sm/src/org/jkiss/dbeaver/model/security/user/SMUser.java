@@ -59,9 +59,15 @@ public class SMUser extends SMSubject {
         @NotNull String userId,
         boolean enabled,
         @Nullable String authRole,
-        boolean secretStorage
+        boolean secretStorage,
+        @Nullable Instant disableDate,
+        @Nullable String disableByUserId,
+        @Nullable String disableReason
     ) {
         this(userId, null, new String[0], enabled, authRole, secretStorage);
+        this.disableDate = disableDate;
+        this.disableByUserId = disableByUserId;
+        this.disableReason = disableReason;
     }
 
 
