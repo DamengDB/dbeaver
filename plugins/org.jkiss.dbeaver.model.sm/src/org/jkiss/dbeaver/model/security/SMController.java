@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -232,5 +232,8 @@ public interface SMController extends DBPObjectController,
     @NotNull
     String[] getTeamMembers(String teamId) throws DBException;
 
+    /**
+     * Update attempt connection, insert into internal database
+     */
     void updateConnectionAttempt(@NotNull String connectionId, boolean connectionStatus) throws DBCException;
 }
