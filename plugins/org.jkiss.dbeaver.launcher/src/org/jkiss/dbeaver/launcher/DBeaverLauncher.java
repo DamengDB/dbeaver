@@ -163,9 +163,6 @@ public class DBeaverLauncher {
     private static final String NL = "-nl"; //$NON-NLS-1$
     private static final String ENDSPLASH = "-endsplash"; //$NON-NLS-1$
     private static final String[] SPLASH_IMAGES = {"splash.png", //$NON-NLS-1$
-            "splash.jpg", //$NON-NLS-1$
-            "splash.jpeg", //$NON-NLS-1$
-            "splash.gif", //$NON-NLS-1$
             "splash.bmp", //$NON-NLS-1$
     };
     private static final String CLEAN = "-clean"; //$NON-NLS-1$
@@ -643,7 +640,7 @@ public class DBeaverLauncher {
         } else if (PARENT_CLASSLOADER_CURRENT.equalsIgnoreCase(type))
             parent = this.getClass().getClassLoader();
         @SuppressWarnings("resource")
-        URLClassLoader loader = new StartupClassLoader(bootPath, parent);
+        URLClassLoader loader = new StartupClassLoader(extensionPaths, bootPath, parent);
         Class<?> clazz = loader.loadClass(STARTER);
         Method method = clazz.getDeclaredMethod("run", String[].class, Runnable.class); //$NON-NLS-1$
         try {
@@ -2727,57 +2724,6 @@ public class DBeaverLauncher {
                 }
             }
             System.setProperty(property, result.toString());
-        }
-    }
-
-    public class StartupClassLoader extends URLClassLoader {
-
-        public StartupClassLoader(URL[] urls) {
-            super(urls);
-        }
-
-        public StartupClassLoader(URL[] urls, ClassLoader parent) {
-            super(urls, parent);
-        }
-
-        public StartupClassLoader(URL[] urls, ClassLoader parent, URLStreamHandlerFactory factory) {
-            super(urls, parent, factory);
-        }
-
-        @Override
-        protected String findLibrary(String name) {
-            if (extensionPaths == null)
-                return super.findLibrary(name);
-            String libName = System.mapLibraryName(name);
-            for (String extensionPath : extensionPaths) {
-                File libFile = new File(extensionPath, libName);
-                if (libFile.isFile())
-                    return libFile.getAbsolutePath();
-            }
-            return super.findLibrary(name);
-        }
-
-        /**
-         * Must override addURL to make it public so the framework can
-         * do deep reflection to add URLs on Java 9.
-         */
-        @Override
-        public void addURL(URL url) {
-            super.addURL(url);
-        }
-
-        // preparing for Java 9
-        protected URL findResource(String moduleName, String name) {
-            return findResource(name);
-        }
-
-        // preparing for Java 9
-        protected Class<?> findClass(String moduleName, String name) {
-            try {
-                return findClass(name);
-            } catch (ClassNotFoundException e) {
-                return null;
-            }
         }
     }
 
