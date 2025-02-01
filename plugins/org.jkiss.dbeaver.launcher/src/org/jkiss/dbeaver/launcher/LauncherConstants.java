@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ package org.jkiss.dbeaver.launcher;
 /**
  * @author aniefer
  */
-public class Constants {
+public class LauncherConstants {
     public static final String INTERNAL_AMD64 = "amd64"; //$NON-NLS-1$
     public static final String INTERNAL_OS_SUNOS = "SunOS"; //$NON-NLS-1$
     public static final String INTERNAL_OS_LINUX = "Linux"; //$NON-NLS-1$
@@ -147,4 +147,8 @@ public class Constants {
      * machine running an unknown windowing system.
      */
     public static final String WS_UNKNOWN = "unknown";//$NON-NLS-1$
+    static final String[] SPLASH_IMAGES = {"splash.png", //$NON-NLS-1$
+        "splash.bmp", //$NON-NLS-1$
+    };
+    static final String FILE_SCHEME = "file:"; //$NON-NLS-1$
 }

@@ -138,120 +138,116 @@ public class DBeaverLauncher {
     public static final String SPLASH_LOCATION = "org.eclipse.equinox.launcher.splash.location"; //$NON-NLS-1$
 
     // command line args
-    private static final String FRAMEWORK = "-framework"; //$NON-NLS-1$
-    private static final String INSTALL = "-install"; //$NON-NLS-1$
-    private static final String INITIALIZE = "-initialize"; //$NON-NLS-1$
-    private static final String VM = "-vm"; //$NON-NLS-1$
-    private static final String VMARGS = "-vmargs"; //$NON-NLS-1$
-    private static final String DEBUG = "-debug"; //$NON-NLS-1$
-    private static final String DEV = "-dev"; //$NON-NLS-1$
-    private static final String CONFIGURATION = "-configuration"; //$NON-NLS-1$
-    private static final String NOSPLASH = "-nosplash"; //$NON-NLS-1$
-    private static final String SHOWSPLASH = "-showsplash"; //$NON-NLS-1$
-    private static final String EXITDATA = "-exitdata"; //$NON-NLS-1$
-    private static final String NAME = "-name"; //$NON-NLS-1$
-    private static final String LAUNCHER = "-launcher"; //$NON-NLS-1$
+    static final String FRAMEWORK = "-framework"; //$NON-NLS-1$
+    static final String INSTALL = "-install"; //$NON-NLS-1$
+    static final String INITIALIZE = "-initialize"; //$NON-NLS-1$
+    static final String VM = "-vm"; //$NON-NLS-1$
+    static final String VMARGS = "-vmargs"; //$NON-NLS-1$
+    static final String DEBUG = "-debug"; //$NON-NLS-1$
+    static final String DEV = "-dev"; //$NON-NLS-1$
+    static final String CONFIGURATION = "-configuration"; //$NON-NLS-1$
+    static final String NOSPLASH = "-nosplash"; //$NON-NLS-1$
+    static final String SHOWSPLASH = "-showsplash"; //$NON-NLS-1$
+    static final String EXITDATA = "-exitdata"; //$NON-NLS-1$
+    static final String NAME = "-name"; //$NON-NLS-1$
+    static final String LAUNCHER = "-launcher"; //$NON-NLS-1$
 
-    private static final String PROTECT = "-protect"; //$NON-NLS-1$
+    static final String PROTECT = "-protect"; //$NON-NLS-1$
     //currently the only level of protection we care about.
-    private static final String PROTECT_MASTER = "master"; //$NON-NLS-1$
-    private static final String PROTECT_BASE = "base"; //$NON-NLS-1$
+    static final String PROTECT_MASTER = "master"; //$NON-NLS-1$
+    static final String PROTECT_BASE = "base"; //$NON-NLS-1$
 
-    private static final String LIBRARY = "--launcher.library"; //$NON-NLS-1$
-    private static final String APPEND_VMARGS = "--launcher.appendVmargs"; //$NON-NLS-1$
-    private static final String OVERRIDE_VMARGS = "--launcher.overrideVmargs"; //$NON-NLS-1$
-    private static final String NL = "-nl"; //$NON-NLS-1$
-    private static final String ENDSPLASH = "-endsplash"; //$NON-NLS-1$
-    private static final String[] SPLASH_IMAGES = {"splash.png", //$NON-NLS-1$
-        "splash.bmp", //$NON-NLS-1$
-    };
-    private static final String CLEAN = "-clean"; //$NON-NLS-1$
-    private static final String NOEXIT = "-noExit"; //$NON-NLS-1$
-    private static final String OS = "-os"; //$NON-NLS-1$
-    private static final String WS = "-ws"; //$NON-NLS-1$
-    private static final String ARCH = "-arch"; //$NON-NLS-1$
-    private static final String STARTUP = "-startup"; //$NON-NLS-1$
+    static final String LIBRARY = "--launcher.library"; //$NON-NLS-1$
+    static final String APPEND_VMARGS = "--launcher.appendVmargs"; //$NON-NLS-1$
+    static final String OVERRIDE_VMARGS = "--launcher.overrideVmargs"; //$NON-NLS-1$
+    static final String NL = "-nl"; //$NON-NLS-1$
+    static final String ENDSPLASH = "-endsplash"; //$NON-NLS-1$
+    static final String CLEAN = "-clean"; //$NON-NLS-1$
+    static final String NOEXIT = "-noExit"; //$NON-NLS-1$
+    static final String OS = "-os"; //$NON-NLS-1$
+    static final String WS = "-ws"; //$NON-NLS-1$
+    static final String ARCH = "-arch"; //$NON-NLS-1$
+    static final String STARTUP = "-startup"; //$NON-NLS-1$
 
-    private static final String OSGI = "org.eclipse.osgi"; //$NON-NLS-1$
-    private static final String STARTER = "org.eclipse.core.runtime.adaptor.EclipseStarter"; //$NON-NLS-1$
-    private static final String PLATFORM_URL = "platform:/base/"; //$NON-NLS-1$
-    private static final String ECLIPSE_PROPERTIES = "eclipse.properties"; //$NON-NLS-1$
-    private static final String FILE_SCHEME = "file:"; //$NON-NLS-1$
+    static final String OSGI = "org.eclipse.osgi"; //$NON-NLS-1$
+    static final String STARTER = "org.eclipse.core.runtime.adaptor.EclipseStarter"; //$NON-NLS-1$
+    static final String PLATFORM_URL = "platform:/base/"; //$NON-NLS-1$
+    static final String ECLIPSE_PROPERTIES = "eclipse.properties"; //$NON-NLS-1$
     protected static final String REFERENCE_SCHEME = "reference:"; //$NON-NLS-1$
     protected static final String JAR_SCHEME = "jar:"; //$NON-NLS-1$
 
     // constants: configuration file location
-    private static final String CONFIG_DIR = "configuration/"; //$NON-NLS-1$
-    private static final String CONFIG_FILE = "config.ini"; //$NON-NLS-1$
-    private static final String CONFIG_FILE_TEMP_SUFFIX = ".tmp"; //$NON-NLS-1$
-    private static final String CONFIG_FILE_BAK_SUFFIX = ".bak"; //$NON-NLS-1$
-    private static final String ECLIPSE = "eclipse"; //$NON-NLS-1$
-    private static final String PRODUCT_SITE_MARKER = ".eclipseproduct"; //$NON-NLS-1$
-    private static final String PRODUCT_SITE_ID = "id"; //$NON-NLS-1$
-    private static final String PRODUCT_SITE_VERSION = "version"; //$NON-NLS-1$
-    private static final String PRODUCT_SNAPSHOT_VERSION = "snapshot"; //$NON-NLS-1$
+    static final String CONFIG_DIR = "configuration/"; //$NON-NLS-1$
+    static final String CONFIG_FILE = "config.ini"; //$NON-NLS-1$
+    static final String CONFIG_FILE_TEMP_SUFFIX = ".tmp"; //$NON-NLS-1$
+    static final String CONFIG_FILE_BAK_SUFFIX = ".bak"; //$NON-NLS-1$
+    static final String ECLIPSE = "eclipse"; //$NON-NLS-1$
+    static final String PRODUCT_SITE_MARKER = ".eclipseproduct"; //$NON-NLS-1$
+    static final String PRODUCT_SITE_ID = "id"; //$NON-NLS-1$
+    static final String PRODUCT_SITE_VERSION = "version"; //$NON-NLS-1$
+    static final String PRODUCT_SNAPSHOT_VERSION = "snapshot"; //$NON-NLS-1$
 
     // constants: System property keys and/or configuration file elements
-    private static final String PROP_USER_HOME = "user.home"; //$NON-NLS-1$
-    private static final String PROP_USER_DIR = "user.dir"; //$NON-NLS-1$
-    private static final String PROP_INSTALL_AREA = "osgi.install.area"; //$NON-NLS-1$
-    private static final String PROP_CONFIG_AREA = "osgi.configuration.area"; //$NON-NLS-1$
-    private static final String PROP_CONFIG_AREA_DEFAULT = "osgi.configuration.area.default"; //$NON-NLS-1$
-    private static final String PROP_BASE_CONFIG_AREA = "osgi.baseConfiguration.area"; //$NON-NLS-1$
-    private static final String PROP_SHARED_CONFIG_AREA = "osgi.sharedConfiguration.area"; //$NON-NLS-1$
-    private static final String PROP_CONFIG_CASCADED = "osgi.configuration.cascaded"; //$NON-NLS-1$
-    protected static final String PROP_FRAMEWORK = "osgi.framework"; //$NON-NLS-1$
-    private static final String PROP_SPLASHPATH = "osgi.splashPath"; //$NON-NLS-1$
-    private static final String PROP_SPLASHLOCATION = "osgi.splashLocation"; //$NON-NLS-1$
-    private static final String PROP_CLASSPATH = "osgi.frameworkClassPath"; //$NON-NLS-1$
-    private static final String PROP_EXTENSIONS = "osgi.framework.extensions"; //$NON-NLS-1$
-    private static final String PROP_FRAMEWORK_SYSPATH = "osgi.syspath"; //$NON-NLS-1$
-    private static final String PROP_FRAMEWORK_SHAPE = "osgi.framework.shape"; //$NON-NLS-1$
-    private static final String PROP_LOGFILE = "osgi.logfile"; //$NON-NLS-1$
-    private static final String PROP_REQUIRED_JAVA_VERSION = "osgi.requiredJavaVersion"; //$NON-NLS-1$
-    private static final String PROP_PARENT_CLASSLOADER = "osgi.parentClassloader"; //$NON-NLS-1$
-    private static final String PROP_FRAMEWORK_PARENT_CLASSLOADER = "osgi.frameworkParentClassloader"; //$NON-NLS-1$
-    private static final String PROP_NL = "osgi.nl"; //$NON-NLS-1$
+    static final String PROP_USER_HOME = "user.home"; //$NON-NLS-1$
+    static final String PROP_USER_DIR = "user.dir"; //$NON-NLS-1$
+    static final String PROP_INSTALL_AREA = "osgi.install.area"; //$NON-NLS-1$
+    static final String PROP_CONFIG_AREA = "osgi.configuration.area"; //$NON-NLS-1$
+    static final String PROP_CONFIG_AREA_DEFAULT = "osgi.configuration.area.default"; //$NON-NLS-1$
+    static final String PROP_BASE_CONFIG_AREA = "osgi.baseConfiguration.area"; //$NON-NLS-1$
+    static final String PROP_SHARED_CONFIG_AREA = "osgi.sharedConfiguration.area"; //$NON-NLS-1$
+    static final String PROP_CONFIG_CASCADED = "osgi.configuration.cascaded"; //$NON-NLS-1$
+    static final String PROP_FRAMEWORK = "osgi.framework"; //$NON-NLS-1$
+    static final String PROP_SPLASHPATH = "osgi.splashPath"; //$NON-NLS-1$
+    static final String PROP_SPLASHLOCATION = "osgi.splashLocation"; //$NON-NLS-1$
+    static final String PROP_CLASSPATH = "osgi.frameworkClassPath"; //$NON-NLS-1$
+    static final String PROP_EXTENSIONS = "osgi.framework.extensions"; //$NON-NLS-1$
+    static final String PROP_FRAMEWORK_SYSPATH = "osgi.syspath"; //$NON-NLS-1$
+    static final String PROP_FRAMEWORK_SHAPE = "osgi.framework.shape"; //$NON-NLS-1$
+    static final String PROP_LOGFILE = "osgi.logfile"; //$NON-NLS-1$
+    static final String PROP_REQUIRED_JAVA_VERSION = "osgi.requiredJavaVersion"; //$NON-NLS-1$
+    static final String PROP_PARENT_CLASSLOADER = "osgi.parentClassloader"; //$NON-NLS-1$
+    static final String PROP_FRAMEWORK_PARENT_CLASSLOADER = "osgi.frameworkParentClassloader"; //$NON-NLS-1$
+    static final String PROP_NL = "osgi.nl"; //$NON-NLS-1$
     static final String PROP_NOSHUTDOWN = "osgi.noShutdown"; //$NON-NLS-1$
-    private static final String PROP_DEBUG = "osgi.debug"; //$NON-NLS-1$
-    private static final String PROP_OS = "osgi.os"; //$NON-NLS-1$
-    private static final String PROP_WS = "osgi.ws"; //$NON-NLS-1$
-    private static final String PROP_ARCH = "osgi.arch"; //$NON-NLS-1$
+    static final String PROP_DEBUG = "osgi.debug"; //$NON-NLS-1$
+    static final String PROP_OS = "osgi.os"; //$NON-NLS-1$
+    static final String PROP_WS = "osgi.ws"; //$NON-NLS-1$
+    static final String PROP_ARCH = "osgi.arch"; //$NON-NLS-1$
 
-    private static final String PROP_EXITCODE = "eclipse.exitcode"; //$NON-NLS-1$
-    private static final String PROP_EXITDATA = "eclipse.exitdata"; //$NON-NLS-1$
-    private static final String PROP_LAUNCHER = "eclipse.launcher"; //$NON-NLS-1$
-    private static final String PROP_LAUNCHER_NAME = "eclipse.launcher.name"; //$NON-NLS-1$
-    private static final String PROP_LOG_INCLUDE_COMMAND_LINE = "eclipse.log.include.commandline"; //$NON-NLS-1$
+    static final String PROP_EXITCODE = "eclipse.exitcode"; //$NON-NLS-1$
+    static final String PROP_EXITDATA = "eclipse.exitdata"; //$NON-NLS-1$
+    static final String PROP_LAUNCHER = "eclipse.launcher"; //$NON-NLS-1$
+    static final String PROP_LAUNCHER_NAME = "eclipse.launcher.name"; //$NON-NLS-1$
+    static final String PROP_LOG_INCLUDE_COMMAND_LINE = "eclipse.log.include.commandline"; //$NON-NLS-1$
 
-    private static final String PROP_VM = "eclipse.vm"; //$NON-NLS-1$
-    private static final String PROP_VMARGS = "eclipse.vmargs"; //$NON-NLS-1$
-    private static final String PROP_COMMANDS = "eclipse.commands"; //$NON-NLS-1$
-    private static final String PROP_ECLIPSESECURITY = "eclipse.security"; //$NON-NLS-1$
+    static final String PROP_VM = "eclipse.vm"; //$NON-NLS-1$
+    static final String PROP_VMARGS = "eclipse.vmargs"; //$NON-NLS-1$
+    static final String PROP_COMMANDS = "eclipse.commands"; //$NON-NLS-1$
+    static final String PROP_ECLIPSESECURITY = "eclipse.security"; //$NON-NLS-1$
 
     // Suffix for location properties - see LocationManager.
-    private static final String READ_ONLY_AREA_SUFFIX = ".readOnly"; //$NON-NLS-1$
+    static final String READ_ONLY_AREA_SUFFIX = ".readOnly"; //$NON-NLS-1$
 
     // Data mode constants for user, configuration and data locations.
-    private static final String NONE = "@none"; //$NON-NLS-1$
-    private static final String NO_DEFAULT = "@noDefault"; //$NON-NLS-1$
-    private static final String USER_HOME = "@user.home"; //$NON-NLS-1$
-    private static final String USER_DIR = "@user.dir"; //$NON-NLS-1$
+    static final String NONE = "@none"; //$NON-NLS-1$
+    static final String NO_DEFAULT = "@noDefault"; //$NON-NLS-1$
+    static final String USER_HOME = "@user.home"; //$NON-NLS-1$
+    static final String USER_DIR = "@user.dir"; //$NON-NLS-1$
 
     // Placeholder of program configuration data, depends on OS
-    private static final String XDG_DATA_HOME = "@data.home"; //$NON-NLS-1$
-    private static final String PROP_XDG_DATA_HOME_WIN = "APPDATA"; //$NON-NLS-1$
-    private static final String PROP_XDG_DATA_HOME_UNIX = "XDG_DATA_HOME"; //$NON-NLS-1$
+    static final String XDG_DATA_HOME = "@data.home"; //$NON-NLS-1$
+    static final String PROP_XDG_DATA_HOME_WIN = "APPDATA"; //$NON-NLS-1$
+    static final String PROP_XDG_DATA_HOME_UNIX = "XDG_DATA_HOME"; //$NON-NLS-1$
 
     // Placeholder for hashcode of installation directory
-    private static final String INSTALL_HASH_PLACEHOLDER = "@install.hash"; //$NON-NLS-1$
-    private static final String LAUNCHER_DIR = "@launcher.dir"; //$NON-NLS-1$
+    static final String INSTALL_HASH_PLACEHOLDER = "@install.hash"; //$NON-NLS-1$
+    static final String LAUNCHER_DIR = "@launcher.dir"; //$NON-NLS-1$
 
     // types of parent classloaders the framework can have
-    private static final String PARENT_CLASSLOADER_APP = "app"; //$NON-NLS-1$
-    private static final String PARENT_CLASSLOADER_EXT = "ext"; //$NON-NLS-1$
-    private static final String PARENT_CLASSLOADER_BOOT = "boot"; //$NON-NLS-1$
-    private static final String PARENT_CLASSLOADER_CURRENT = "current"; //$NON-NLS-1$
+    static final String PARENT_CLASSLOADER_APP = "app"; //$NON-NLS-1$
+    static final String PARENT_CLASSLOADER_EXT = "ext"; //$NON-NLS-1$
+    static final String PARENT_CLASSLOADER_BOOT = "boot"; //$NON-NLS-1$
+    static final String PARENT_CLASSLOADER_CURRENT = "current"; //$NON-NLS-1$
 
     // log file handling
     protected static final String SESSION = "!SESSION"; //$NON-NLS-1$
@@ -272,20 +268,20 @@ public class DBeaverLauncher {
 
     //for change detection in the base when running in shared install mode
     private static final long NO_TIMESTAMP = -1;
-    private static final String BASE_TIMESTAMP_FILE_CONFIGINI = ".baseConfigIniTimestamp"; //$NON-NLS-1$
-    private static final String KEY_CONFIGINI_TIMESTAMP = "configIniTimestamp"; //$NON-NLS-1$
-    private static final String PROP_IGNORE_USER_CONFIGURATION = "eclipse.ignoreUserConfiguration"; //$NON-NLS-1$
+    static final String BASE_TIMESTAMP_FILE_CONFIGINI = ".baseConfigIniTimestamp"; //$NON-NLS-1$
+    static final String KEY_CONFIGINI_TIMESTAMP = "configIniTimestamp"; //$NON-NLS-1$
+    static final String PROP_IGNORE_USER_CONFIGURATION = "eclipse.ignoreUserConfiguration"; //$NON-NLS-1$
 
     public static final String DBEAVER_DATA_FOLDER = "DBeaverData";
-    private static final String DBEAVER_INSTALL_FOLDER = "install-data";
-    private static final String ENV_DATA_HOME_WIN = "APPDATA"; //$NON-NLS-1$
-    private static final String LOCATION_DATA_HOME_UNIX = "~/.local/share"; //$NON-NLS-1$
-    private static final String LOCATION_DATA_HOME_MAC = "~/Library"; //$NON-NLS-1$
-    private static final String DB_DATA_HOME = "@data.home"; //$NON-NLS-1$
+    static final String DBEAVER_INSTALL_FOLDER = "install-data";
+    static final String ENV_DATA_HOME_WIN = "APPDATA"; //$NON-NLS-1$
+    static final String LOCATION_DATA_HOME_UNIX = "~/.local/share"; //$NON-NLS-1$
+    static final String LOCATION_DATA_HOME_MAC = "~/Library"; //$NON-NLS-1$
+    static final String DB_DATA_HOME = "@data.home"; //$NON-NLS-1$
 
-    private static final String DBEAVER_CONFIG_FOLDER = "settings";
-    private static final String DBEAVER_CONFIG_FILE = "global-settings.ini";
-    private static final String DBEAVER_PROP_LANGUAGE = "nl";
+    static final String DBEAVER_CONFIG_FOLDER = "settings";
+    static final String DBEAVER_CONFIG_FILE = "global-settings.ini";
+    static final String DBEAVER_PROP_LANGUAGE = "nl";
 
     private String getWS() {
         if (ws != null)
@@ -298,21 +294,21 @@ public class DBeaverLauncher {
         }
 
         String osName = getOS();
-        if (osName.equals(Constants.OS_WIN32))
-            return Constants.WS_WIN32;
-        if (osName.equals(Constants.OS_LINUX))
-            return Constants.WS_GTK;
-        if (osName.equals(Constants.OS_MACOSX))
-            return Constants.WS_COCOA;
-        if (osName.equals(Constants.OS_HPUX))
-            return Constants.WS_GTK;
-        if (osName.equals(Constants.OS_AIX))
-            return Constants.WS_GTK;
-        if (osName.equals(Constants.OS_SOLARIS))
-            return Constants.WS_GTK;
-        if (osName.equals(Constants.OS_QNX))
-            return Constants.WS_PHOTON;
-        return Constants.WS_UNKNOWN;
+        if (osName.equals(LauncherConstants.OS_WIN32))
+            return LauncherConstants.WS_WIN32;
+        if (osName.equals(LauncherConstants.OS_LINUX))
+            return LauncherConstants.WS_GTK;
+        if (osName.equals(LauncherConstants.OS_MACOSX))
+            return LauncherConstants.WS_COCOA;
+        if (osName.equals(LauncherConstants.OS_HPUX))
+            return LauncherConstants.WS_GTK;
+        if (osName.equals(LauncherConstants.OS_AIX))
+            return LauncherConstants.WS_GTK;
+        if (osName.equals(LauncherConstants.OS_SOLARIS))
+            return LauncherConstants.WS_GTK;
+        if (osName.equals(LauncherConstants.OS_QNX))
+            return LauncherConstants.WS_PHOTON;
+        return LauncherConstants.WS_UNKNOWN;
     }
 
     private String getOS() {
@@ -324,29 +320,29 @@ public class DBeaverLauncher {
             return os;
         }
         String osName = System.getProperty("os.name"); //$NON-NLS-1$
-        if (osName.regionMatches(true, 0, Constants.OS_WIN32, 0, 3))
-            return Constants.OS_WIN32;
+        if (osName.regionMatches(true, 0, LauncherConstants.OS_WIN32, 0, 3))
+            return LauncherConstants.OS_WIN32;
         // EXCEPTION: All mappings of SunOS convert to Solaris
-        if (osName.equalsIgnoreCase(Constants.INTERNAL_OS_SUNOS))
-            return Constants.OS_SOLARIS;
-        if (osName.equalsIgnoreCase(Constants.INTERNAL_OS_LINUX))
-            return Constants.OS_LINUX;
-        if (osName.equalsIgnoreCase(Constants.INTERNAL_OS_QNX))
-            return Constants.OS_QNX;
-        if (osName.equalsIgnoreCase(Constants.INTERNAL_OS_AIX))
-            return Constants.OS_AIX;
-        if (osName.equalsIgnoreCase(Constants.INTERNAL_OS_HPUX))
-            return Constants.OS_HPUX;
-        if (osName.equalsIgnoreCase(Constants.INTERNAL_OS_OS400))
-            return Constants.OS_OS400;
-        if (osName.equalsIgnoreCase(Constants.INTERNAL_OS_OS390))
-            return Constants.OS_OS390;
-        if (osName.equalsIgnoreCase(Constants.INTERNAL_OS_ZOS))
-            return Constants.OS_ZOS;
+        if (osName.equalsIgnoreCase(LauncherConstants.INTERNAL_OS_SUNOS))
+            return LauncherConstants.OS_SOLARIS;
+        if (osName.equalsIgnoreCase(LauncherConstants.INTERNAL_OS_LINUX))
+            return LauncherConstants.OS_LINUX;
+        if (osName.equalsIgnoreCase(LauncherConstants.INTERNAL_OS_QNX))
+            return LauncherConstants.OS_QNX;
+        if (osName.equalsIgnoreCase(LauncherConstants.INTERNAL_OS_AIX))
+            return LauncherConstants.OS_AIX;
+        if (osName.equalsIgnoreCase(LauncherConstants.INTERNAL_OS_HPUX))
+            return LauncherConstants.OS_HPUX;
+        if (osName.equalsIgnoreCase(LauncherConstants.INTERNAL_OS_OS400))
+            return LauncherConstants.OS_OS400;
+        if (osName.equalsIgnoreCase(LauncherConstants.INTERNAL_OS_OS390))
+            return LauncherConstants.OS_OS390;
+        if (osName.equalsIgnoreCase(LauncherConstants.INTERNAL_OS_ZOS))
+            return LauncherConstants.OS_ZOS;
         // os.name on Mac OS can be either Mac OS or Mac OS X
-        if (osName.regionMatches(true, 0, Constants.INTERNAL_OS_MACOSX, 0, Constants.INTERNAL_OS_MACOSX.length()))
-            return Constants.OS_MACOSX;
-        return Constants.OS_UNKNOWN;
+        if (osName.regionMatches(true, 0, LauncherConstants.INTERNAL_OS_MACOSX, 0, LauncherConstants.INTERNAL_OS_MACOSX.length()))
+            return LauncherConstants.OS_MACOSX;
+        return LauncherConstants.OS_UNKNOWN;
     }
 
     private String getArch() {
@@ -359,8 +355,8 @@ public class DBeaverLauncher {
         }
         String name = System.getProperty("os.arch");//$NON-NLS-1$
         // Map amd64 architecture to x86_64
-        if (name.equalsIgnoreCase(Constants.INTERNAL_AMD64))
-            return Constants.ARCH_X86_64;
+        if (name.equalsIgnoreCase(LauncherConstants.INTERNAL_AMD64))
+            return LauncherConstants.ARCH_X86_64;
 
         return name;
     }
@@ -368,7 +364,7 @@ public class DBeaverLauncher {
     private String getFragmentString(String fragmentOS, String fragmentWS, String fragmentArch) {
         StringJoiner buffer = new StringJoiner("."); //$NON-NLS-1$
         buffer.add(PLUGIN_ID).add(fragmentWS).add(fragmentOS);
-        if (!(fragmentOS.equals(Constants.OS_MACOSX) && !Constants.ARCH_X86_64.equals(fragmentArch))) {
+        if (!(fragmentOS.equals(LauncherConstants.OS_MACOSX) && !LauncherConstants.ARCH_X86_64.equals(fragmentArch))) {
             buffer.add(fragmentArch);
         }
         return buffer.toString();
@@ -450,7 +446,7 @@ public class DBeaverLauncher {
     }
 
     private String getLibraryFromFragment(String fragment) {
-        if (fragment.startsWith(FILE_SCHEME))
+        if (fragment.startsWith(LauncherConstants.FILE_SCHEME))
             fragment = fragment.substring(5);
 
         File frag = new File(fragment);
@@ -642,7 +638,7 @@ public class DBeaverLauncher {
                 return false;
             }
         }
-        if (!canWrite(configDir)) {
+        if (!LauncherUtils.canWrite(configDir)) {
             return false;
         }
         return true;
@@ -754,7 +750,7 @@ public class DBeaverLauncher {
             //Load a property file of the extension, merge its content, and in case of dev mode add the bin entries
             Properties extensionProperties = null;
             try {
-                extensionProperties = loadProperties(constructURL(extensionURL, ECLIPSE_PROPERTIES));
+                extensionProperties = LauncherUtils.loadProperties(constructURL(extensionURL, ECLIPSE_PROPERTIES));
             } catch (IOException e) {
                 if (debug)
                     System.out.println("\t" + ECLIPSE_PROPERTIES + " not found"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -772,7 +768,7 @@ public class DBeaverLauncher {
             else
                 qualifiedPath = ""; //$NON-NLS-1$
             for (String entry : entries) {
-                qualifiedPath += ", " + FILE_SCHEME + path + entry; //$NON-NLS-1$
+                qualifiedPath += ", " + LauncherConstants.FILE_SCHEME + path + entry; //$NON-NLS-1$
             }
             extensionProperties.put(PROP_CLASSPATH, qualifiedPath);
             mergeWithSystemProperties(extensionProperties, null);
@@ -833,7 +829,7 @@ public class DBeaverLauncher {
                     addEntry(base, result);
                 }
                 URL url;
-                if (string.startsWith(FILE_SCHEME))
+                if (string.startsWith(LauncherConstants.FILE_SCHEME))
                     url = new File(string.substring(5)).toURL();
                 else
                     url = new URL(string);
@@ -883,7 +879,7 @@ public class DBeaverLauncher {
     private URL[] getBootPath(String base) throws IOException {
         URL url;
         if (base != null) {
-            url = buildURL(base, true);
+            url = LauncherUtils.buildURL(base, true);
         } else {
             // search in the root location
             url = getInstallLocation();
@@ -919,7 +915,7 @@ public class DBeaverLauncher {
      * @return the location where target directory was found, <code>null</code> otherwise
      */
     protected String searchFor(final String target, String start) {
-        File root = resolveFile(new File(start));
+        File root = LauncherUtils.resolveFile(new File(start));
 
         // Note that File.list only gives you file names not the complete path from start
         String[] candidates = root.list();
@@ -977,13 +973,13 @@ public class DBeaverLauncher {
         //Only handle "reference:file:" urls, and not simple "file:" because we will be using the jar wherever it is.
         if (target.startsWith(REFERENCE_SCHEME)) {
             target = target.substring(REFERENCE_SCHEME.length());
-            if (!target.startsWith(FILE_SCHEME))
+            if (!target.startsWith(LauncherConstants.FILE_SCHEME))
                 throw new IllegalArgumentException("Bundle URL is invalid: " + target); //$NON-NLS-1$
-            target = target.substring(FILE_SCHEME.length());
+            target = target.substring(LauncherConstants.FILE_SCHEME.length());
             File child = new File(target);
             File fileLocation = child;
             if (!child.isAbsolute()) {
-                File parent = resolveFile(new File(start));
+                File parent = LauncherUtils.resolveFile(new File(start));
                 fileLocation = new File(parent, child.getPath());
             }
             return searchFor(fileLocation.getName(), fileLocation.getParentFile().getAbsolutePath());
@@ -1074,63 +1070,6 @@ public class DBeaverLauncher {
         return result;
     }
 
-    private static URL buildURL(String spec, boolean trailingSlash) {
-        if (spec == null)
-            return null;
-        if (File.separatorChar == '\\')
-            spec = spec.trim();
-        boolean isFile = spec.startsWith(FILE_SCHEME);
-        try {
-            if (isFile) {
-                File toAdjust = new File(spec.substring(5));
-                toAdjust = resolveFile(toAdjust);
-                if (toAdjust.isDirectory())
-                    return adjustTrailingSlash(toAdjust.toURL(), trailingSlash);
-                return toAdjust.toURL();
-            }
-            return new URL(spec);
-        } catch (MalformedURLException e) {
-            // if we failed and it is a file spec, there is nothing more we can do
-            // otherwise, try to make the spec into a file URL.
-            if (isFile)
-                return null;
-            try {
-                File toAdjust = new File(spec);
-                if (toAdjust.isDirectory())
-                    return adjustTrailingSlash(toAdjust.toURL(), trailingSlash);
-                return toAdjust.toURL();
-            } catch (MalformedURLException e1) {
-                return null;
-            }
-        }
-    }
-
-    /**
-     * Resolve the given file against  osgi.install.area.
-     * If osgi.install.area is not set, or the file is not relative, then
-     * the file is returned as is.
-     */
-    private static File resolveFile(File toAdjust) {
-        if (!toAdjust.isAbsolute()) {
-            String installArea = System.getProperty(PROP_INSTALL_AREA);
-            if (installArea != null) {
-                if (installArea.startsWith(FILE_SCHEME))
-                    toAdjust = new File(installArea.substring(5), toAdjust.getPath());
-                else if (new File(installArea).exists())
-                    toAdjust = new File(installArea, toAdjust.getPath());
-            }
-        }
-        return toAdjust;
-    }
-
-    private static URL adjustTrailingSlash(URL url, boolean trailingSlash) throws MalformedURLException {
-        String file = url.getFile();
-        if (trailingSlash == (file.endsWith("/"))) //$NON-NLS-1$
-            return url;
-        file = trailingSlash ? file + "/" : file.substring(0, file.length() - 1); //$NON-NLS-1$
-        return new URL(url.getProtocol(), url.getHost(), file);
-    }
-
     private URL buildLocation(String property, URL defaultLocation, String userDefaultAppendage) {
         URL result = null;
         String location = System.getProperty(property);
@@ -1143,11 +1082,11 @@ public class DBeaverLauncher {
             else if (location.equalsIgnoreCase(NONE))
                 return null;
             else if (location.equalsIgnoreCase(NO_DEFAULT))
-                result = buildURL(location, true);
+                result = LauncherUtils.buildURL(location, true);
             else {
                 if (location.startsWith(XDG_DATA_HOME)) {
                     String base = substituteVar(location, XDG_DATA_HOME, PROP_XDG_DATA_HOME_UNIX);
-                    if (Constants.OS_WIN32.equals(getOS())) {
+                    if (LauncherConstants.OS_WIN32.equals(getOS())) {
                         base = substituteVar(location, XDG_DATA_HOME, PROP_XDG_DATA_HOME_WIN);
                     }
                     location = new File(base, userDefaultAppendage).getAbsolutePath();
@@ -1166,7 +1105,7 @@ public class DBeaverLauncher {
                 } else if (idx > 0) {
                     location = location.substring(0, idx) + getInstallDirHash() + location.substring(idx + INSTALL_HASH_PLACEHOLDER.length());
                 }
-                result = buildURL(location, true);
+                result = LauncherUtils.buildURL(location, true);
             }
         } finally {
             if (result != null)
@@ -1204,33 +1143,11 @@ public class DBeaverLauncher {
         // TODO a little dangerous here.  Basically we have to assume that it is a file URL.
         if (install.getProtocol().equals("file")) { //$NON-NLS-1$
             File installDir = new File(install.getFile());
-            if (canWrite(installDir))
+            if (LauncherUtils.canWrite(installDir))
                 return installDir.getAbsolutePath() + File.separator + CONFIG_DIR;
         }
         // We can't write in the eclipse install dir so try for some place in the user's home dir
         return computeDefaultUserAreaLocation(CONFIG_DIR);
-    }
-
-    private static boolean canWrite(File installDir) {
-        if (!installDir.isDirectory())
-            return false;
-
-        if (Files.isWritable(installDir.toPath()))
-            return true;
-
-        File fileTest = null;
-        try {
-            // we use the .dll suffix to properly test on Vista virtual directories
-            // on Vista you are not allowed to write executable files on virtual directories like "Program Files"
-            fileTest = File.createTempFile("writableArea", ".dll", installDir); //$NON-NLS-1$ //$NON-NLS-2$
-        } catch (IOException e) {
-            //If an exception occured while trying to create the file, it means that it is not writtable
-            return false;
-        } finally {
-            if (fileTest != null)
-                fileTest.delete();
-        }
-        return true;
     }
 
     /**
@@ -1252,7 +1169,7 @@ public class DBeaverLauncher {
         File installDir = new File(installURL.getFile());
         String installDirHash = getInstallDirHash();
 
-        if (protectBase && Constants.OS_MACOSX.equals(os)) {
+        if (protectBase && LauncherConstants.OS_MACOSX.equals(os)) {
             initializeBridgeEarly();
             String macConfiguration = computeConfigurationLocationForMacOS();
             if (macConfiguration != null) {
@@ -1677,7 +1594,7 @@ public class DBeaverLauncher {
             return null;
         try {
             URL location = new URL(arg);
-            return load(location, null);
+            return LauncherUtils.load(location, null);
         } catch (MalformedURLException e) {
             // the arg was not a URL so use it as is.
             Properties result = new Properties();
@@ -1698,7 +1615,7 @@ public class DBeaverLauncher {
             if (configurationLocation == null) {
                 configurationLocation = buildProductURL();
                 if (configurationLocation == null) {
-                    configurationLocation = buildURL(computeDefaultConfigurationLocation(), true);
+                    configurationLocation = LauncherUtils.buildURL(computeDefaultConfigurationLocation(), true);
                 }
             }
         }
@@ -1732,59 +1649,17 @@ public class DBeaverLauncher {
                 System.out.println("Can not read product properties. " + e.getMessage()); //$NON-NLS-1$
             }
         }
-        String base = getWorkingDirectory(DBEAVER_DATA_FOLDER);
+        String base = LauncherUtils.getWorkingDirectory(DBEAVER_DATA_FOLDER);
         try {
             String productPath = getProductProperties();
             Path basePath = Paths.get(base, DBEAVER_INSTALL_FOLDER, productPath);
             String productConfigurationLocation = basePath.toFile().getAbsolutePath();
-            return buildURL(productConfigurationLocation, true);
+            return LauncherUtils.buildURL(productConfigurationLocation, true);
         } catch (IOException e) {
             if (debug)
                 System.out.println("Can not read product properties. " + e.getMessage()); //$NON-NLS-1$
         }
         return null;
-    }
-
-    public static String getWorkingDirectory(String defaultWorkspaceLocation) {
-        String osName = (System.getProperty("os.name")).toUpperCase();
-        String workingDirectory;
-        if (osName.contains("WIN")) {
-            String appData = System.getenv("AppData");
-            if (appData == null) {
-                appData = System.getProperty("user.home");
-            }
-            workingDirectory = appData + "\\" + defaultWorkspaceLocation;
-        } else if (osName.contains("MAC")) {
-            workingDirectory = System.getProperty("user.home") + "/Library/" + defaultWorkspaceLocation;
-        } else {
-            // Linux
-            String dataHome = System.getProperty("XDG_DATA_HOME");
-            if (dataHome == null) {
-                dataHome = System.getProperty("user.home") + "/.local/share";
-            }
-            String badWorkingDir = dataHome + "/." + defaultWorkspaceLocation;
-            String goodWorkingDir = dataHome + "/" + defaultWorkspaceLocation;
-            if (!new File(goodWorkingDir).exists() && new File(badWorkingDir).exists()) {
-                // Let's use bad working dir if it exists (#6316)
-                workingDirectory = badWorkingDir;
-            } else {
-                workingDirectory = goodWorkingDir;
-            }
-        }
-        return workingDirectory;
-    }
-
-    private String resolveEnv(String source, String var, String prop) {
-        String value = System.getenv(prop); // $NON-NLS-1$
-        if (value == null) {
-            value = "";
-        }
-        return value + source.substring(var.length());
-    }
-
-    private String resolveLocation(String source, String var, String location) {
-        String result = location + source.substring(var.length());
-        return result.replaceFirst("^~", System.getProperty(PROP_USER_HOME));
     }
 
     private String getProductProperties() throws IOException {
@@ -1820,14 +1695,14 @@ public class DBeaverLauncher {
     private void processGlobalConfiguration() {
         try {
             final Properties config = readGlobalConfiguration();
-            setSystemPropertyIfNotSet(PROP_NL, config.getProperty(DBEAVER_PROP_LANGUAGE));
+            LauncherUtils.setSystemPropertyIfNotSet(PROP_NL, config.getProperty(DBEAVER_PROP_LANGUAGE));
         } catch (IOException e) {
             log("Unable to read global configuration file: " + e.getMessage());
         }
     }
 
     private Properties readGlobalConfiguration() throws IOException {
-        final Path root = Path.of(getWorkingDirectory(DBEAVER_DATA_FOLDER));
+        final Path root = Path.of(LauncherUtils.getWorkingDirectory(DBEAVER_DATA_FOLDER));
         final Path file = root.resolve(DBEAVER_CONFIG_FOLDER).resolve(DBEAVER_CONFIG_FILE);
         final Properties properties = new Properties();
 
@@ -1838,15 +1713,6 @@ public class DBeaverLauncher {
         }
 
         return properties;
-    }
-
-    private static void setSystemPropertyIfNotSet(String key, String value) {
-        if (value == null || value.isBlank()) {
-            return;
-        }
-        if (System.getProperty(key) == null) {
-            System.setProperty(key, value);
-        }
     }
 
     private void processConfiguration() {
@@ -1863,7 +1729,7 @@ public class DBeaverLauncher {
             if (baseLocation != null)
                 // here the base config cannot have any symbolic (e..g, @xxx) entries.  It must just
                 // point to the config file.
-                baseConfigurationLocation = buildURL(baseLocation, true);
+                baseConfigurationLocation = LauncherUtils.buildURL(baseLocation, true);
             if (baseConfigurationLocation == null)
                 try {
                     // here we access the install location but this is very early.  This case will only happen if
@@ -1958,7 +1824,7 @@ public class DBeaverLauncher {
             urlString = resolve(urlString);
             //ensure that the install location is set before resolving framework
             getInstallLocation();
-            URL url = buildURL(urlString, true);
+            URL url = LauncherUtils.buildURL(urlString, true);
             urlString = url.toExternalForm();
             System.setProperty(PROP_FRAMEWORK, urlString);
             bootLocation = urlString;
@@ -1986,7 +1852,7 @@ public class DBeaverLauncher {
             System.out.println("Loading timestamp file from:\n\t " + getConfigurationLocation() + "   " + BASE_TIMESTAMP_FILE_CONFIGINI); //$NON-NLS-1$ //$NON-NLS-2$
         Properties result;
         try {
-            result = load(getConfigurationLocation(), BASE_TIMESTAMP_FILE_CONFIGINI);
+            result = LauncherUtils.load(getConfigurationLocation(), BASE_TIMESTAMP_FILE_CONFIGINI);
         } catch (IOException e) {
             if (debug)
                 System.out.println("\tNo timestamp file found"); //$NON-NLS-1$
@@ -2046,7 +1912,7 @@ public class DBeaverLauncher {
                     throw new IllegalStateException("Install location depends on launcher, but launcher is not defined"); //$NON-NLS-1$
                 installArea = installArea.replace(LAUNCHER_DIR, new File(launcher).getParent());
             }
-            installLocation = buildURL(installArea, true);
+            installLocation = LauncherUtils.buildURL(installArea, true);
             if (installLocation == null)
                 throw new IllegalStateException("Install location is invalid: " + installArea); //$NON-NLS-1$
             System.setProperty(PROP_INSTALL_AREA, installLocation.toExternalForm());
@@ -2120,64 +1986,14 @@ public class DBeaverLauncher {
         try {
             if (debug)
                 System.out.print("Configuration file:\n    " + url); //$NON-NLS-1$
-            result = loadProperties(url);
+            result = LauncherUtils.loadProperties(url);
             if (debug)
                 System.out.println(" loaded"); //$NON-NLS-1$
         } catch (IOException e) {
             if (debug)
                 System.out.println(" not found or not read"); //$NON-NLS-1$
         }
-        return substituteVars(result);
-    }
-
-    private Properties loadProperties(URL url) throws IOException {
-        // try to load saved configuration file (watch for failed prior save())
-        if (url == null)
-            return null;
-        Properties result;
-        IOException originalException;
-        try {
-            result = load(url, null); // try to load config file
-        } catch (IOException e1) {
-            originalException = e1;
-            try {
-                result = load(url, CONFIG_FILE_TEMP_SUFFIX); // check for failures on save
-            } catch (IOException e2) {
-                try {
-                    result = load(url, CONFIG_FILE_BAK_SUFFIX); // check for failures on save
-                } catch (IOException e3) {
-                    throw originalException; // we tried, but no config here ...
-                }
-            }
-        }
-        return result;
-    }
-
-    /*
-     * Load the configuration
-     */
-    private Properties load(URL url, String suffix) throws IOException {
-        // figure out what we will be loading
-        if (suffix != null && !suffix.isEmpty()) //$NON-NLS-1$
-            url = new URL(url.getProtocol(), url.getHost(), url.getPort(), url.getFile() + suffix);
-
-        // try to load saved configuration file
-        Properties props = new Properties();
-        try (InputStream is = getStream(url)) {
-            props.load(is);
-        }
-        return props;
-    }
-
-    private InputStream getStream(URL location) throws IOException {
-        if ("file".equalsIgnoreCase(location.getProtocol())) { //$NON-NLS-1$
-            // this is done to handle URLs with invalid syntax in the path
-            File f = new File(location.getPath());
-            if (f.exists()) {
-                return new FileInputStream(f);
-            }
-        }
-        return location.openStream();
+        return LauncherUtils.substituteVars(result);
     }
 
     /*
@@ -2284,7 +2100,7 @@ public class DBeaverLauncher {
             ArrayList<String> path = new ArrayList<>(entries.length);
             for (String e : entries) {
                 String entry = resolve(e);
-                if (entry != null && entry.startsWith(FILE_SCHEME)) {
+                if (entry != null && entry.startsWith(LauncherConstants.FILE_SCHEME)) {
                     File entryFile = new File(entry.substring(5).replace('/', File.separatorChar));
                     entry = searchFor(entryFile.getName(), entryFile.getParent());
                     if (entry != null)
@@ -2314,11 +2130,11 @@ public class DBeaverLauncher {
         String locale = System.getProperty(PROP_NL);
         if (locale == null)
             locale = Locale.getDefault().toString();
-        String[] nlVariants = buildNLVariants(locale);
+        String[] nlVariants = LauncherUtils.buildNLVariants(locale);
 
         for (String nlVariant : nlVariants) {
             for (String path : searchPath) {
-                if (path.startsWith(FILE_SCHEME))
+                if (path.startsWith(LauncherConstants.FILE_SCHEME))
                     path = path.substring(5);
                 // do we have a JAR?
                 if (isJAR(path)) {
@@ -2351,7 +2167,7 @@ public class DBeaverLauncher {
             log("Configuration area not set yet. Unable to extract " + jarEntry + " from JAR'd plug-in: " + jarPath); //$NON-NLS-1$ //$NON-NLS-2$
             return null;
         }
-        URL configURL = buildURL(configLocation, false);
+        URL configURL = LauncherUtils.buildURL(configLocation, false);
         if (configURL == null)
             return null;
         // cache the splash in the equinox launcher sub-dir in the config area
@@ -2408,32 +2224,6 @@ public class DBeaverLauncher {
      */
     private boolean isJAR(String path) {
         return new File(path).isFile();
-    }
-
-    /*
-     * Build an array of path suffixes based on the given NL which is suitable
-     * for splash path searching.  The returned array contains paths in order
-     * from most specific to most generic. So, in the FR_fr locale, it will return
-     * candidates in "nl/fr/FR/", then "nl/fr/", and finally in the root.
-     * Candidate names are defined in SPLASH_IMAGES and include splash.png, splash.jpg, etc.
-     */
-    private static String[] buildNLVariants(String locale) {
-        //build list of suffixes for loading resource bundles
-        String nl = locale;
-        ArrayList<String> result = new ArrayList<>(4);
-        int lastSeparator;
-        while (true) {
-            for (String name : SPLASH_IMAGES) {
-                result.add("nl" + File.separatorChar + nl.replace('_', File.separatorChar) + File.separatorChar + name); //$NON-NLS-1$
-            }
-            lastSeparator = nl.lastIndexOf('_');
-            if (lastSeparator == -1)
-                break;
-            nl = nl.substring(0, lastSeparator);
-        }
-        //add the empty suffix last (most general)
-        Collections.addAll(result, SPLASH_IMAGES);
-        return result.toArray(new String[0]);
     }
 
     /*
@@ -2564,7 +2354,7 @@ public class DBeaverLauncher {
         }
 
         // compute the base location and then append the name of the log file
-        URL base = buildURL(System.getProperty(PROP_CONFIG_AREA), false);
+        URL base = LauncherUtils.buildURL(System.getProperty(PROP_CONFIG_AREA), false);
         if (base == null)
             return;
         logFile = new File(base.getPath(), System.currentTimeMillis() + ".log"); //$NON-NLS-1$
@@ -2661,64 +2451,4 @@ public class DBeaverLauncher {
         }
     }
 
-    private Properties substituteVars(Properties result) {
-        if (result == null) {
-            //nothing todo.
-            return null;
-        }
-        for (Enumeration<?> eKeys = result.keys(); eKeys.hasMoreElements(); ) {
-            Object key = eKeys.nextElement();
-            if (key instanceof String) {
-                String value = result.getProperty((String) key);
-                if (value != null)
-                    result.put(key, substituteVars(value));
-            }
-        }
-        return result;
-    }
-
-    public static String substituteVars(String path) {
-        StringBuilder buf = new StringBuilder(path.length());
-        StringTokenizer st = new StringTokenizer(path, VARIABLE_DELIM_STRING, true);
-        boolean varStarted = false; // indicates we are processing a var subtitute
-        String var = null; // the current var key
-        while (st.hasMoreElements()) {
-            String tok = st.nextToken();
-            if (VARIABLE_DELIM_STRING.equals(tok)) {
-                if (!varStarted) {
-                    varStarted = true; // we found the start of a var
-                    var = ""; //$NON-NLS-1$
-                } else {
-                    // we have found the end of a var
-                    String prop = null;
-                    // get the value of the var from system properties
-                    if (var != null && !var.isEmpty())
-                        prop = System.getProperty(var);
-                    if (prop == null) {
-                        prop = System.getenv(var);
-                    }
-                    if (prop != null) {
-                        // found a value; use it
-                        buf.append(prop);
-                    } else {
-                        // could not find a value append the var; keep delemiters
-                        buf.append(VARIABLE_DELIM_CHAR);
-                        buf.append(var == null ? "" : var); //$NON-NLS-1$
-                        buf.append(VARIABLE_DELIM_CHAR);
-                    }
-                    varStarted = false;
-                    var = null;
-                }
-            } else {
-                if (!varStarted)
-                    buf.append(tok); // the token is not part of a var
-                else
-                    var = tok; // the token is the var key; save the key to process when we find the end token
-            }
-        }
-        if (var != null)
-            // found a case of $var at the end of the path with no trailing $; just append it as is.
-            buf.append(VARIABLE_DELIM_CHAR).append(var);
-        return buf.toString();
-    }
 }
