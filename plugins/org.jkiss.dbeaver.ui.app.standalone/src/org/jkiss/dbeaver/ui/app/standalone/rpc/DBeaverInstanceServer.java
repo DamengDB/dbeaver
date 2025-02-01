@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.model.DBPDataSourceContainer;
 import org.jkiss.dbeaver.model.app.DBPPlatformDesktop;
 import org.jkiss.dbeaver.model.app.DBPProject;
-import org.jkiss.dbeaver.model.app.DBPWorkspace;
 import org.jkiss.dbeaver.registry.DataSourceUtils;
 import org.jkiss.dbeaver.runtime.DBWorkbench;
 import org.jkiss.dbeaver.ui.ActionUtils;
@@ -42,14 +41,11 @@ import org.jkiss.dbeaver.ui.editors.sql.handlers.SQLNavigatorContext;
 import org.jkiss.dbeaver.utils.GeneralUtils;
 import org.jkiss.dbeaver.utils.SystemVariablesResolver;
 import org.jkiss.utils.CommonUtils;
-import org.jkiss.utils.rest.RestClient;
 import org.jkiss.utils.rest.RestServer;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.Reader;
-import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
@@ -79,7 +75,7 @@ public class DBeaverInstanceServer implements IInstanceController {
             .create();
 
         configFileChannel = FileChannel.open(
-            getConfigPath(),
+            DBeaverInstanceUtils.getConfigPath(),
             StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE
         );
 
@@ -95,61 +91,12 @@ public class DBeaverInstanceServer implements IInstanceController {
 
     @Nullable
     public static DBeaverInstanceServer createServer() throws IOException {
-        if (createClient() != null) {
+        if (DBeaverInstanceClient.createClient() != null) {
             log.debug("Can't start instance server because other instance is already running");
             return null;
         }
 
         return new DBeaverInstanceServer();
-    }
-
-    @Nullable
-    public static IInstanceController createClient() {
-        return createClient(null);
-    }
-
-    @Nullable
-    public static IInstanceController createClient(@Nullable String workspacePath) {
-        final Path path = getConfigPath(workspacePath);
-
-        if (Files.notExists(path)) {
-            log.trace("No instance controller is available");
-            return null;
-        }
-
-        final Properties properties = new Properties();
-
-        try (Reader reader = Files.newBufferedReader(path)) {
-            properties.load(reader);
-        } catch (IOException e) {
-            log.error("Error reading instance controller configuration: " + e.getMessage());
-            return null;
-        }
-
-        final String port = properties.getProperty("port");
-
-        if (CommonUtils.isEmptyTrimmed(port)) {
-            log.error("No port specified for the instance controller to connect to");
-            return null;
-        }
-
-        final IInstanceController instance = RestClient
-            .builder(URI.create("http://localhost:" + port), IInstanceController.class)
-            .create();
-
-        try {
-            final long payload = System.currentTimeMillis();
-            final long response = instance.ping(payload);
-
-            if (response != payload) {
-                throw new IllegalStateException("Invalid ping response: " + response + ", was expecting " + payload);
-            }
-        } catch (Throwable e) {
-            log.error("Error accessing instance server: " + e.getMessage());
-            return null;
-        }
-
-        return instance;
     }
 
     @Override
@@ -281,26 +228,12 @@ public class DBeaverInstanceServer implements IInstanceController {
 
             if (configFileChannel != null) {
                 configFileChannel.close();
-                Files.delete(getConfigPath());
+                Files.delete(DBeaverInstanceUtils.getConfigPath());
             }
 
             log.debug("Instance server has been stopped");
         } catch (Exception e) {
             log.error("Can't stop instance server", e);
-        }
-    }
-
-    @NotNull
-    private static Path getConfigPath() {
-        return getConfigPath(null);
-    }
-
-    @NotNull
-    private static Path getConfigPath(@Nullable String workspacePath) {
-        if (workspacePath != null) {
-            return Path.of(workspacePath).resolve(DBPWorkspace.METADATA_FOLDER).resolve(CONFIG_PROP_FILE);
-        } else {
-            return GeneralUtils.getMetadataFolder().resolve(CONFIG_PROP_FILE);
         }
     }
 
