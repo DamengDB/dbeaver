@@ -55,12 +55,12 @@ public class LauncherUtils {
 
     public static String substituteVars(String path) {
         StringBuilder buf = new StringBuilder(path.length());
-        StringTokenizer st = new StringTokenizer(path, DBeaverLauncher.VARIABLE_DELIM_STRING, true);
+        StringTokenizer st = new StringTokenizer(path, LauncherConstants.VARIABLE_DELIM_STRING, true);
         boolean varStarted = false; // indicates we are processing a var subtitute
         String var = null; // the current var key
         while (st.hasMoreElements()) {
             String tok = st.nextToken();
-            if (DBeaverLauncher.VARIABLE_DELIM_STRING.equals(tok)) {
+            if (LauncherConstants.VARIABLE_DELIM_STRING.equals(tok)) {
                 if (!varStarted) {
                     varStarted = true; // we found the start of a var
                     var = ""; //$NON-NLS-1$
@@ -78,9 +78,9 @@ public class LauncherUtils {
                         buf.append(prop);
                     } else {
                         // could not find a value append the var; keep delemiters
-                        buf.append(DBeaverLauncher.VARIABLE_DELIM_CHAR);
+                        buf.append(LauncherConstants.VARIABLE_DELIM_CHAR);
                         buf.append(var == null ? "" : var); //$NON-NLS-1$
-                        buf.append(DBeaverLauncher.VARIABLE_DELIM_CHAR);
+                        buf.append(LauncherConstants.VARIABLE_DELIM_CHAR);
                     }
                     varStarted = false;
                     var = null;
@@ -94,7 +94,7 @@ public class LauncherUtils {
         }
         if (var != null)
             // found a case of $var at the end of the path with no trailing $; just append it as is.
-            buf.append(DBeaverLauncher.VARIABLE_DELIM_CHAR).append(var);
+            buf.append(LauncherConstants.VARIABLE_DELIM_CHAR).append(var);
         return buf.toString();
     }
 
@@ -165,7 +165,7 @@ public class LauncherUtils {
      */
     static File resolveFile(File toAdjust) {
         if (!toAdjust.isAbsolute()) {
-            String installArea = System.getProperty(DBeaverLauncher.PROP_INSTALL_AREA);
+            String installArea = System.getProperty(LauncherConstants.PROP_INSTALL_AREA);
             if (installArea != null) {
                 if (installArea.startsWith(LauncherConstants.FILE_SCHEME))
                     toAdjust = new File(installArea.substring(5), toAdjust.getPath());
@@ -225,7 +225,7 @@ public class LauncherUtils {
 
     static String resolveLocation(String source, String var, String location) {
         String result = location + source.substring(var.length());
-        return result.replaceFirst("^~", System.getProperty(DBeaverLauncher.PROP_USER_HOME));
+        return result.replaceFirst("^~", System.getProperty(LauncherConstants.PROP_USER_HOME));
     }
 
     static InputStream getStream(URL location) throws IOException {
@@ -266,10 +266,10 @@ public class LauncherUtils {
         } catch (IOException e1) {
             originalException = e1;
             try {
-                result = load(url, DBeaverLauncher.CONFIG_FILE_TEMP_SUFFIX); // check for failures on save
+                result = load(url, LauncherConstants.CONFIG_FILE_TEMP_SUFFIX); // check for failures on save
             } catch (IOException e2) {
                 try {
-                    result = load(url, DBeaverLauncher.CONFIG_FILE_BAK_SUFFIX); // check for failures on save
+                    result = load(url, LauncherConstants.CONFIG_FILE_BAK_SUFFIX); // check for failures on save
                 } catch (IOException e3) {
                     throw originalException; // we tried, but no config here ...
                 }
