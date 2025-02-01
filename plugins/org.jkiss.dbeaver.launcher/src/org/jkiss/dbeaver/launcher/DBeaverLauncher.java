@@ -36,7 +36,7 @@ import java.util.zip.ZipFile;
 
 /**
  * The launcher for Eclipse.
- *
+ * <p>
  * Copied from org.eclipse.equinox.launcher.Main
  *
  * <b>Note:</b> This class should not be referenced programmatically by
@@ -163,7 +163,7 @@ public class DBeaverLauncher {
     private static final String NL = "-nl"; //$NON-NLS-1$
     private static final String ENDSPLASH = "-endsplash"; //$NON-NLS-1$
     private static final String[] SPLASH_IMAGES = {"splash.png", //$NON-NLS-1$
-            "splash.bmp", //$NON-NLS-1$
+        "splash.bmp", //$NON-NLS-1$
     };
     private static final String CLEAN = "-clean"; //$NON-NLS-1$
     private static final String NOEXIT = "-noExit"; //$NON-NLS-1$
@@ -286,72 +286,6 @@ public class DBeaverLauncher {
     private static final String DBEAVER_CONFIG_FOLDER = "settings";
     private static final String DBEAVER_CONFIG_FILE = "global-settings.ini";
     private static final String DBEAVER_PROP_LANGUAGE = "nl";
-
-    /**
-     * A structured form for a version identifier.
-     *
-     * @see "http://www.oracle.com/technetwork/java/javase/versioning-naming-139433.html for information on valid version strings"
-     * @see "http://openjdk.java.net/jeps/223 for information on the JavaSE-9 version JEP 223"
-     */
-    static class Identifier {
-        private static final String DELIM = ". _-"; //$NON-NLS-1$
-        private int major, minor, service;
-
-        Identifier(int major, int minor, int service) {
-            super();
-            this.major = major;
-            this.minor = minor;
-            this.service = service;
-        }
-
-        /**
-         * @throws NumberFormatException if cannot parse the major and minor version components
-         */
-        Identifier(String versionString) {
-            super();
-            StringTokenizer tokenizer = new StringTokenizer(versionString, DELIM);
-
-            // major
-            if (tokenizer.hasMoreTokens())
-                major = Integer.parseInt(tokenizer.nextToken());
-
-            try {
-                // minor
-                if (tokenizer.hasMoreTokens())
-                    minor = Integer.parseInt(tokenizer.nextToken());
-
-                // service
-                if (tokenizer.hasMoreTokens())
-                    service = Integer.parseInt(tokenizer.nextToken());
-            } catch (NumberFormatException nfe) {
-                // ignore the minor and service qualifiers in that case and default to 0
-                // this will allow us to tolerate other non-conventional version numbers
-            }
-        }
-
-        /**
-         * Returns true if this id is considered to be greater than or equal to the given baseline.
-         * e.g.
-         * 1.2.9 >= 1.3.1 -> false
-         * 1.3.0 >= 1.3.1 -> false
-         * 1.3.1 >= 1.3.1 -> true
-         * 1.3.2 >= 1.3.1 -> true
-         * 2.0.0 >= 1.3.1 -> true
-         */
-        boolean isGreaterEqualTo(Identifier minimum) {
-            if (major < minimum.major)
-                return false;
-            if (major > minimum.major)
-                return true;
-            // major numbers are equivalent so check minor
-            if (minor < minimum.minor)
-                return false;
-            if (minor > minimum.minor)
-                return true;
-            // minor numbers are equivalent so check service
-            return service >= minimum.service;
-        }
-    }
 
     private String getWS() {
         if (ws != null)
@@ -615,7 +549,7 @@ public class DBeaverLauncher {
         String type = PARENT_CLASSLOADER_BOOT;
         try {
             String javaVersion = System.getProperty("java.version"); //$NON-NLS-1$
-            if (javaVersion != null && new Identifier(javaVersion).isGreaterEqualTo(new Identifier("1.9"))) { //$NON-NLS-1$
+            if (javaVersion != null && new BundleIdentifier(javaVersion).isGreaterEqualTo(new BundleIdentifier("1.9"))) { //$NON-NLS-1$
                 // Workaround for bug 466683. Some org.w3c.dom.* packages that used to be available from
                 // JavaSE's boot classpath are only available from the extension path in Java 9 b62.
                 // Workaround for bug 489958. javax.annotation.* types are only available from
@@ -667,8 +601,8 @@ public class DBeaverLauncher {
         if (requiredVersion == null || availableVersion == null)
             return true;
         try {
-            Identifier required = new Identifier(requiredVersion);
-            Identifier available = new Identifier(availableVersion);
+            BundleIdentifier required = new BundleIdentifier(requiredVersion);
+            BundleIdentifier available = new BundleIdentifier(availableVersion);
             boolean compatible = available.isGreaterEqualTo(required);
             if (!compatible) {
                 // any non-zero value should do it - 14 used to be used for version incompatibility in Eclipse 2.1
@@ -1777,10 +1711,10 @@ public class DBeaverLauncher {
 
     /**
      * Specific method for Dbeaver products group to resolve product configuration
-     * location in<br> 
+     * location in<br>
      * case of portable distribution (tar/zip) location used current location:
      * <li>./configuration</><br>
-     *  case of installation in system place:
+     * case of installation in system place:
      * <li>~/user/APP_DATA - WinOS
      * <li>~/Library - MacOS
      * <li>~/.local/share - Unix
