@@ -57,6 +57,7 @@ import org.jkiss.dbeaver.registry.updater.VersionDescriptor;
 import org.jkiss.dbeaver.runtime.DBWorkbench;
 import org.jkiss.dbeaver.runtime.ui.DBPPlatformUI;
 import org.jkiss.dbeaver.runtime.ui.console.ConsoleUserInterface;
+import org.jkiss.dbeaver.ui.app.standalone.rpc.DBeaverInstanceClient;
 import org.jkiss.dbeaver.ui.app.standalone.rpc.DBeaverInstanceServer;
 import org.jkiss.dbeaver.ui.app.standalone.rpc.IInstanceController;
 import org.jkiss.dbeaver.ui.app.standalone.update.VersionUpdateDialog;
@@ -756,7 +757,7 @@ public class DBeaverApplication extends DesktopApplicationImpl implements DBPApp
 
     @Nullable
     public IInstanceController createInstanceClient() {
-        return DBeaverInstanceServer.createClient(getDefaultInstanceLocation());
+        return DBeaverInstanceClient.createClient(getDefaultInstanceLocation());
     }
 
     @Override
