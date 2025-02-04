@@ -21,7 +21,6 @@ import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.model.DBPObjectController;
 import org.jkiss.dbeaver.model.auth.SMAuthCredentialsManager;
-import org.jkiss.dbeaver.model.exec.DBCException;
 import org.jkiss.dbeaver.model.security.user.SMAuthPermissions;
 import org.jkiss.dbeaver.model.security.user.SMObjectPermissions;
 import org.jkiss.dbeaver.model.security.user.SMUser;
@@ -235,5 +234,5 @@ public interface SMController extends DBPObjectController,
     /**
      * Update attempt connection, insert into internal database
      */
-    void updateConnectionAttempt(@NotNull String connectionId, boolean connectionStatus) throws DBCException;
+    void updateConnectionAttempt(@NotNull String datasourceId, boolean connected) throws DBException;
 }
