@@ -231,8 +231,4 @@ public interface SMController extends DBPObjectController,
     @NotNull
     String[] getTeamMembers(String teamId) throws DBException;
 
-    /**
-     * Update attempt connection, insert into internal database
-     */
-    void updateConnectionAttempt(@NotNull String datasourceId, boolean connected) throws DBException;
 }
