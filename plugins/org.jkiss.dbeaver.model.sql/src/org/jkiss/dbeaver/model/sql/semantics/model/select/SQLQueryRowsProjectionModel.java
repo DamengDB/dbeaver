@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,9 +31,10 @@ import org.jkiss.dbeaver.model.sql.semantics.model.expressions.SQLQueryValueExpr
 import org.jkiss.dbeaver.model.sql.semantics.model.expressions.SQLQueryValueTupleReferenceExpression;
 import org.jkiss.dbeaver.model.stm.STMKnownRuleNames;
 import org.jkiss.dbeaver.model.stm.STMTreeNode;
+import org.jkiss.dbeaver.model.stm.STMTreeTermNode;
 
-import java.util.Collections;
 import java.util.EnumSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
@@ -296,7 +297,7 @@ public class SQLQueryRowsProjectionModel extends SQLQueryRowsSourceModel {
         STMTreeNode tableExpr = syntaxNode.findFirstChildOfName(STMKnownRuleNames.tableExpression);
         SQLQueryRowsSourceModel projectionModel;
         if (tableExpr != null) {
-            selectListScope.setInterval(Interval.of(selectListScopeStart, tableExpr.getRealInterval().a));
+            selectListScope.setInterval(Interval.of(selectListScopeStart, tableExpr.getRealInterval().a - 1));
             SQLQueryLexicalScope fromScope = new SQLQueryLexicalScope();
             STMTreeNode[] filterNodes = new STMTreeNode[]{
                 tableExpr.findFirstChildOfName(STMKnownRuleNames.whereClause),
@@ -331,7 +332,8 @@ public class SQLQueryRowsProjectionModel extends SQLQueryRowsSourceModel {
                 SQLQueryLexicalScope scope = scopes[i];
                 if (scope != null) {
                     tailScope = scope;
-                    int from = prevScopes[i].getInterval().b;
+                    // int from = prevScopes[i].getInterval().b;
+                    int from = findLeadingKeywordsInterval(i == 0 ? tableExpr.findFirstNonErrorChild() : filterNodes[i - 1]).b + 2;
                     int to = nextScopeNodes[i] != null ? nextScopeNodes[i].getRealInterval().a : Integer.MAX_VALUE;
                     scope.setInterval(Interval.of(from, to));
                 }
@@ -356,5 +358,21 @@ public class SQLQueryRowsProjectionModel extends SQLQueryRowsSourceModel {
         }
 
         return projectionModel;
+    }
+
+    @Nullable
+    private static Interval findLeadingKeywordsInterval(@NotNull STMTreeNode node) {
+        Iterator<STMTreeNode> it = node.getChildren().iterator();
+        if (it.hasNext() && it.next() instanceof STMTreeTermNode t1) {
+            Interval i = t1.getRealInterval();
+            int from = i.a;
+            int to = i.b;
+            while (it.hasNext() && it.next() instanceof STMTreeTermNode t) {
+                to = t.getRealInterval().b;
+            }
+            return Interval.of(from, to);
+        } else {
+            return null;
+        }
     }
 }
