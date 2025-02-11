@@ -482,6 +482,8 @@ public class PostgreDataSource extends JDBCDataSource implements DBSInstanceCont
         } finally {
             this.isConnectionRefreshing = false;
         }
+        getDefaultInstance().checkInstanceConnection(monitor, false);
+
         this.initialize(monitor);
 
         return this;
