@@ -40,7 +40,7 @@ import org.jkiss.dbeaver.model.sql.semantics.context.*;
 import org.jkiss.dbeaver.model.sql.semantics.model.SQLQueryMemberAccessEntry;
 import org.jkiss.dbeaver.model.sql.semantics.model.SQLQueryModel;
 import org.jkiss.dbeaver.model.sql.semantics.model.SQLQueryModelContent;
-import org.jkiss.dbeaver.model.sql.semantics.model.SQLQueryNodeModel;
+import org.jkiss.dbeaver.model.sql.semantics.model.SQLQueryTupleRefEntry;
 import org.jkiss.dbeaver.model.sql.semantics.model.ddl.SQLQueryObjectDropModel;
 import org.jkiss.dbeaver.model.sql.semantics.model.ddl.SQLQueryTableAlterModel;
 import org.jkiss.dbeaver.model.sql.semantics.model.ddl.SQLQueryTableCreateModel;
@@ -859,11 +859,13 @@ public class SQLQueryModelRecognizer {
         STMTreeNode nameNode = head.findFirstChildOfName(STMKnownRuleNames.qualifiedName);
         STMTreeNode tupleRefNode = head.findLastChildOfName(STMKnownRuleNames.tupleRefSuffix);
         if (tupleRefNode != null) {
+            STMTreeNode asteriskNode = tupleRefNode.findFirstChildOfName(STMKnownRuleNames.ASTERISK_TERM);
+            SQLQueryTupleRefEntry tupleRefEntry = asteriskNode == null ? null : new SQLQueryTupleRefEntry(asteriskNode);
             STMTreeNode periodNode = tupleRefNode.findFirstChildOfName(STMKnownRuleNames.PERIOD_TERM);
             SQLQueryMemberAccessEntry memberAccessEntry = periodNode == null ? null : this.registerScopeItem(new SQLQueryMemberAccessEntry(periodNode));
             STMTreeNode tableNameNode = head.findFirstChildOfName(STMKnownRuleNames.tableName);
             SQLQueryQualifiedName tableName = tableNameNode == null ? null : this.collectTableName(tableNameNode);
-            return new SQLQueryValueTupleReferenceExpression(head, tableName != null ? tableName : this.makeUnknownTableName(head), memberAccessEntry);
+            return new SQLQueryValueTupleReferenceExpression(head, tableName != null ? tableName : this.makeUnknownTableName(head), memberAccessEntry, tupleRefEntry);
         } else if (nameNode == null) {
             return null;
         } else {
@@ -938,7 +940,7 @@ public class SQLQueryModelRecognizer {
         this.currentLexicalScopes.removeLast();
     }
     
-    private <T extends SQLQueryLexicalScopeItem> T registerScopeItem(T item) {
+    public <T extends SQLQueryLexicalScopeItem> T registerScopeItem(T item) {
         if (item instanceof SQLQueryQualifiedName) {
             return item;
         }

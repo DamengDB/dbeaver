@@ -168,7 +168,7 @@ public class LSMInspections {
         return inspectAbstractSyntaxAtState(null, emptyStack, initialState);
     }
 
-    @Nullable
+    @NotNull
     public SyntaxInspectionResult prepareAbstractSyntaxInspection(int position) {
         ATN atn = SQLStandardParser._ATN;
 
@@ -291,7 +291,7 @@ public class LSMInspections {
         return Pair.of(allTerms, allNonErrorTerms);
     }
 
-    @Nullable
+    @NotNull
     private static SyntaxInspectionResult inspectAbstractSyntaxAtTreeState(@NotNull STMTreeNode node, @NotNull ATNState initialState) {
         ListNode<Integer> stack = ListNode.of(null);
         {
@@ -307,8 +307,8 @@ public class LSMInspections {
         }
 
         int atnStateIndex = node.getAtnState();
-        if (atnStateIndex < 0) { 
-            return null;  // TODO error node met, consider using previous valid node 
+        if (atnStateIndex < 0) {
+            return SyntaxInspectionResult.EMPTY; // TODO error node met, consider using previous valid node
         } else {
             return inspectAbstractSyntaxAtState(node, stack, initialState);
         }

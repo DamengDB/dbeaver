@@ -24,7 +24,10 @@ import org.jkiss.dbeaver.model.sql.semantics.SQLQuerySymbolClass;
 import org.jkiss.dbeaver.model.sql.semantics.context.SQLQueryExprType;
 import org.jkiss.dbeaver.model.sql.semantics.context.SQLQueryResultColumn;
 import org.jkiss.dbeaver.model.sql.semantics.context.SourceResolutionResult;
-import org.jkiss.dbeaver.model.struct.*;
+import org.jkiss.dbeaver.model.struct.DBSEntity;
+import org.jkiss.dbeaver.model.struct.DBSEntityAttribute;
+import org.jkiss.dbeaver.model.struct.DBSObject;
+import org.jkiss.dbeaver.model.struct.DBSStructContainer;
 import org.jkiss.dbeaver.model.struct.rdb.DBSProcedure;
 
 import java.util.LinkedList;
@@ -71,6 +74,16 @@ public abstract class SQLQueryCompletionItem {
     @NotNull
     public static SQLQueryCompletionItem forReservedWord(int score, @NotNull SQLQueryWordEntry filterKey, @NotNull String text) {
         return new SQLReservedWordCompletionItem(score, filterKey, text);
+    }
+
+    @NotNull
+    public static SQLQueryCompletionItem forSpecialText(
+        int score,
+        @NotNull SQLQueryWordEntry filterKey,
+        @NotNull String text,
+        @Nullable String description
+    ) {
+        return new SQLSpecialTextCompletionItem(score, filterKey, text, description);
     }
 
     @NotNull
@@ -297,6 +310,32 @@ public abstract class SQLQueryCompletionItem {
         @Override
         protected <R> R applyImpl(@NotNull SQLQueryCompletionItemVisitor<R> visitor) {
             return visitor.visitReservedWord(this);
+        }
+    }
+
+    public static class SQLSpecialTextCompletionItem extends SQLQueryCompletionItem {
+        public final String text, description;
+
+        SQLSpecialTextCompletionItem(
+            int score,
+            @NotNull SQLQueryWordEntry filterKey,
+            @NotNull String text,
+            @Nullable String description
+        ) {
+            super(score, filterKey);
+            this.text = text;
+            this.description = description;
+        }
+
+        @NotNull
+        @Override
+        public SQLQueryCompletionItemKind getKind() {
+            return SQLQueryCompletionItemKind.UNKNOWN;
+        }
+
+        @Override
+        protected <R> R applyImpl(@NotNull SQLQueryCompletionItemVisitor<R> visitor) {
+            return visitor.visitSpecialText(this);
         }
     }
 

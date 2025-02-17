@@ -18,9 +18,9 @@ package org.jkiss.dbeaver.model.sql.completion;
 
 public abstract class CompletionProposalBase {
 
-    protected abstract int getReplacementOffset();
+    public abstract int getReplacementOffset();
     
-    protected abstract String getReplacementString();
+    public abstract String getReplacementString();
 
     @Override
     public boolean equals(Object o) {

@@ -54,4 +54,7 @@ public interface SQLQueryCompletionItemVisitor<R> {
      */
     @Nullable
     R visitBuiltinFunction(@NotNull SQLBuiltinFunctionCompletionItem function);
+
+    @Nullable
+    R visitSpecialText(@NotNull SQLSpecialTextCompletionItem specialText);
 }
