@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,6 +60,8 @@ public class SMAuthInfo {
 
     @Nullable
     private final String errorCode;
+    @Nullable
+    private final String appSessionId;
 
     private SMAuthInfo(
         @NotNull SMAuthStatus authStatus,
@@ -74,7 +76,8 @@ public class SMAuthInfo {
         @Nullable SMAuthPermissions authPermissions,
         boolean mainAuth,
         boolean forceSessionsLogout,
-        @Nullable String errorCode
+        @Nullable String errorCode,
+        @Nullable String appSessionId
     ) {
         this.authStatus = authStatus;
         this.error = error;
@@ -89,6 +92,7 @@ public class SMAuthInfo {
         this.mainAuth = mainAuth;
         this.forceSessionsLogout = forceSessionsLogout;
         this.errorCode = errorCode;
+        this.appSessionId = appSessionId;
     }
 
     public static SMAuthInfo expired(
@@ -125,7 +129,8 @@ public class SMAuthInfo {
         @Nullable String signOutLink,
         @NotNull Map<SMAuthConfigurationReference, Object> authData,
         boolean mainAuth,
-        boolean forceSessionsLogout
+        boolean forceSessionsLogout,
+        @NotNull String appSessionId
     ) {
         return new Builder()
             .setAuthStatus(SMAuthStatus.IN_PROGRESS)
@@ -135,6 +140,7 @@ public class SMAuthInfo {
             .setAuthData(authData)
             .setMainAuth(mainAuth)
             .setForceSessionsLogout(forceSessionsLogout)
+            .setAppSessionId(appSessionId)
             .build();
     }
 
@@ -242,6 +248,11 @@ public class SMAuthInfo {
         return errorCode;
     }
 
+    @Nullable
+    public String getAppSessionId() {
+        return appSessionId;
+    }
+
     private static final class Builder {
         private SMAuthStatus authStatus;
         private String error;
@@ -256,6 +267,7 @@ public class SMAuthInfo {
         private boolean mainAuth;
         private boolean forceSessionsLogout;
         private String errorCode;
+        private String appSessionId;
 
         private Builder() {
         }
@@ -325,6 +337,12 @@ public class SMAuthInfo {
             return this;
         }
 
+
+        public Builder setAppSessionId(String appSessionId) {
+            this.appSessionId = appSessionId;
+            return this;
+        }
+
         public SMAuthInfo build() {
             return new SMAuthInfo(
                 authStatus,
@@ -339,7 +357,8 @@ public class SMAuthInfo {
                 authPermissions,
                 mainAuth,
                 forceSessionsLogout,
-                errorCode
+                errorCode,
+                appSessionId
             );
         }
     }
