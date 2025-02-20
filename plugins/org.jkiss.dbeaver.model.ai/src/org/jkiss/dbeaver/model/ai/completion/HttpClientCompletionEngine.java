@@ -48,7 +48,8 @@ public abstract class HttpClientCompletionEngine extends AbstractAICompletionEng
         }
         return service;
     }
-    private HttpClient initHttpClientInstance() throws DBException {
+
+    private HttpClient initHttpClientInstance() {
         HttpClient.Builder builder = HttpClient.newBuilder();
         builder.connectTimeout(Duration.ofSeconds(30));
         return builder.build();
@@ -59,8 +60,7 @@ public abstract class HttpClientCompletionEngine extends AbstractAICompletionEng
         @NotNull DBRProgressMonitor monitor,
         @NotNull HttpClient client,
         @NotNull HttpRequest completionRequest
-    )
-        throws InterruptedException, DBException {
+    ) throws InterruptedException, DBException {
         CompletableFuture<HttpResponse<String>> responseAsync = client.sendAsync(completionRequest, HttpResponse.BodyHandlers.ofString());
         while (!responseAsync.isDone()) {
             if (monitor.isCanceled()) {
