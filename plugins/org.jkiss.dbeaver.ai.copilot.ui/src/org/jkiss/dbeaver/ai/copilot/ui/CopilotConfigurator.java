@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jkiss.dbeaver.copilot.ui;
+package org.jkiss.dbeaver.ai.copilot.ui;
 
 
 import org.eclipse.core.runtime.IStatus;
@@ -35,8 +35,8 @@ import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.DBeaverPreferences;
 import org.jkiss.dbeaver.ModelPreferences;
-import org.jkiss.dbeaver.copilot.model.CopilotConstants;
-import org.jkiss.dbeaver.copilot.model.auth.CopilotAuthService;
+import org.jkiss.dbeaver.ai.copilot.model.CopilotConstants;
+import org.jkiss.dbeaver.ai.copilot.model.auth.CopilotAuthService;
 import org.jkiss.dbeaver.model.DBIcon;
 import org.jkiss.dbeaver.model.ai.AIEngineSettings;
 import org.jkiss.dbeaver.model.ai.completion.DAICompletionEngine;

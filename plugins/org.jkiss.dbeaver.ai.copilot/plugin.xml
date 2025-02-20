@@ -4,7 +4,7 @@
 <plugin>
 
     <extension point="com.dbeaver.ai.engine">
-        <completionEngine id="copilot" label="Github Copilot" class="org.jkiss.dbeaver.copilot.model.CopilotCompletionEngine">
+        <completionEngine id="copilot" label="Github Copilot" class="org.jkiss.dbeaver.ai.copilot.model.CopilotCompletionEngine">
             <propertyGroup label="Engine settings">
                 <property id="copilot.access.token" label="Copilot Access Token" type="string" hint="OAuth token for Copilot(Acquired manually for now)" features="password"/>
                 <property id="gpt.model.temperature" label="Temperature" type="integer" hint="Lower temperatures give more precise results"/>
