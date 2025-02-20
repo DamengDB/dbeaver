@@ -64,9 +64,11 @@ public class CopilotConfigurator extends OpenAiConfigurator {
     private String accessToken;
 
     @Override
-    public void createControl(@NotNull Composite parent,
-                              DAICompletionEngine<?> object,
-                              @NotNull Runnable propertyChangeListener) {
+    public void createControl(
+        @NotNull Composite parent,
+        DAICompletionEngine<?> object,
+        @NotNull Runnable propertyChangeListener
+    ) {
         Composite authorizeComposite = UIUtils.createComposite(parent, 3);
         authorizeComposite.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
         createConnectionParameters(authorizeComposite);
@@ -79,10 +81,29 @@ public class CopilotConfigurator extends OpenAiConfigurator {
         UIUtils.syncExec(this::applySettings);
     }
 
+    @Override
+    public void saveSettings(@NotNull AIEngineSettings aiSettings) {
+        aiSettings.getProperties().put(CopilotConstants.COPILOT_ACCESS_TOKEN, accessToken);
+
+        super.saveSettings(aiSettings);
+    }
+
+    @Override
+    public void loadSettings(@NotNull AIEngineSettings aiSettings) {
+        accessToken = CommonUtils.toString(aiSettings.getProperties().get(CopilotConstants.COPILOT_ACCESS_TOKEN), "");
+        accessTokenText.setText(accessToken);
+        super.loadSettings(aiSettings);
+    }
+
+    @Override
+    public boolean isComplete() {
+        return true;
+    }
+
     @NotNull
     @Override
     protected GPTModel[] getSupportedGPTModels() {
-        return new GPTModel[]{
+        return new GPTModel[] {
             GPTModel.GPT_4,
             GPTModel.GPT_TURBO
         };
@@ -113,18 +134,19 @@ public class CopilotConfigurator extends OpenAiConfigurator {
                     protected IStatus run(DBRProgressMonitor monitor) {
                         try {
                             CopilotAuthService.ResponseDataDTO responseData = CopilotAuthService.requestAuth(monitor);
-                            AtomicReference<BrowserPopup> oAuthPopup = new AtomicReference<>();
+                            AtomicReference<BrowserPopup> popupOauth = new AtomicReference<>();
                             UIUtils.asyncExec(() -> {
                                 CopyDeviceDialog copyYourCode = new CopyDeviceDialog(
                                     responseData.user_code(),
                                     UIUtils.getActiveShell(),
                                     CopilotMessages.oauth_user_dialog_code_title,
 
-                                    DBIcon.STATUS_INFO);
+                                    DBIcon.STATUS_INFO
+                                );
                                 copyYourCode.open();
                                 if (ModelPreferences.getPreferences().getBoolean(DBeaverPreferences.UI_USE_EMBEDDED_AUTH)) {
                                     try {
-                                        oAuthPopup.set(BrowserPopup.openBrowser("OAuth", new URL(responseData.verification_uri())));
+                                        popupOauth.set(BrowserPopup.openBrowser("OAuth", new URL(responseData.verification_uri())));
                                     } catch (MalformedURLException ex) {
                                         throw new RuntimeException(ex);
                                     }
@@ -138,13 +160,14 @@ public class CopilotConfigurator extends OpenAiConfigurator {
                                 CopilotConfigurator.this.accessToken = token;
                             }
                             UIUtils.syncExec(() -> {
-                                UIUtils.showMessageBox(UIUtils.getActiveShell(),
+                                UIUtils.showMessageBox(
+                                    UIUtils.getActiveShell(),
                                     CopilotMessages.oauth_success_title,
                                     CopilotMessages.oauth_success_message,
                                     SWT.ICON_INFORMATION
                                 );
-                                if (oAuthPopup.get() != null) {
-                                    oAuthPopup.get().close();
+                                if (popupOauth.get() != null) {
+                                    popupOauth.get().close();
                                 }
                             });
 
@@ -153,7 +176,7 @@ public class CopilotConfigurator extends OpenAiConfigurator {
                                     accessTokenText.setText(accessToken);
                                 }
                             });
-                        } catch (IOException  | URISyntaxException | TimeoutException |
+                        } catch (IOException | URISyntaxException | TimeoutException |
                                  DBException ex) {
                             return GeneralUtils.makeErrorStatus("Error during authorization", ex);
                         } catch (InterruptedException ex) {
@@ -183,25 +206,6 @@ public class CopilotConfigurator extends OpenAiConfigurator {
         GridData gd = new GridData(GridData.FILL_HORIZONTAL);
         gd.horizontalSpan = 2;
         link.setLayoutData(gd);
-    }
-
-    @Override
-    public void saveSettings(@NotNull AIEngineSettings aiSettings) {
-        aiSettings.getProperties().put(CopilotConstants.COPILOT_ACCESS_TOKEN, accessToken);
-
-        super.saveSettings(aiSettings);
-    }
-
-    @Override
-    public void loadSettings(@NotNull AIEngineSettings aiSettings) {
-        accessToken = CommonUtils.toString(aiSettings.getProperties().get(CopilotConstants.COPILOT_ACCESS_TOKEN), "");
-        accessTokenText.setText(accessToken);
-        super.loadSettings(aiSettings);
-    }
-
-    @Override
-    public boolean isComplete() {
-        return true;
     }
 
     private static class CopyDeviceDialog extends BaseDialog {
@@ -237,4 +241,4 @@ public class CopilotConfigurator extends OpenAiConfigurator {
             close();
         }
     }
- }
+}

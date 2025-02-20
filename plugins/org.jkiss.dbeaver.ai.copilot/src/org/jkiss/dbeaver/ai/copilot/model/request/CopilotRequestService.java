@@ -29,14 +29,29 @@ import java.util.List;
 
 public class CopilotRequestService {
 
-    public static HttpRequest createChatRequest(String model, List<DAICompletionMessage> messages, Double temperature, int contextSize, String token) throws DBCException {
-        String requestJson = createRequestJson(model, messages, temperature, contextSize);
+    /**
+     * Create a request to the chat endpoint
+     *
+     * @param model model name
+     * @param messages list of messages
+     * @param temperature temperature
+     * @param token token
+     * @return HttpRequest
+     * @throws DBCException on error
+     */
+    public static HttpRequest createChatRequest(
+        String model,
+        List<DAICompletionMessage> messages,
+        Double temperature,
+        String token
+    ) throws DBCException {
+        String requestJson = createRequestJson(model, messages, temperature);
         HttpRequest.Builder builder = HttpRequest.newBuilder();
-        builder.header("Content-type",  "application/json"); //$NON-NLS-1$
+        builder.header("Content-type", "application/json"); //$NON-NLS-1$
         try {
             URI uri = new URI("https://api.githubcopilot.com").resolve("/chat/completions");
             builder.uri(uri);
-            builder.header("authorization", "Bearer " +  token);
+            builder.header("authorization", "Bearer " + token);
             builder.header("Editor-Version", "vscode/1.80.1"); // TODO replace after partnership
 
             builder.POST(HttpRequest.BodyPublishers.ofString(requestJson));
@@ -49,9 +64,8 @@ public class CopilotRequestService {
     private static String createRequestJson(
         String model,
         List<DAICompletionMessage> messages,
-        Double temperature,
-        int contextSize
-    ) {
+        Double temperature
+    ) throws DBCException {
         JsonObject jsonObject = new JsonObject();
         jsonObject.addProperty("model", model);
         jsonObject.addProperty("intent", false);
@@ -70,7 +84,7 @@ public class CopilotRequestService {
     }
 
     @NotNull
-    private static JsonObject getJsonObject(DAICompletionMessage daiCompletionMessage) {
+    private static JsonObject getJsonObject(DAICompletionMessage daiCompletionMessage) throws DBCException {
         JsonObject messageJson = new JsonObject();
         DAICompletionMessage.Role role = daiCompletionMessage.getRole();
         switch (role) {
@@ -80,6 +94,7 @@ public class CopilotRequestService {
                 messageJson.addProperty("role", "assistant");
             case SYSTEM ->
                 messageJson.addProperty("role", "system");
+            default -> throw new DBCException("Unexpected value: " + role);
         }
         messageJson.addProperty("content", daiCompletionMessage.getContent()); //$NON-NLS-1$
         return messageJson;
