@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jkiss.dbeaver.ai.copilot.model;
+package org.jkiss.dbeaver.model.ai.copilot;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -23,14 +23,14 @@ import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
-import org.jkiss.dbeaver.ai.copilot.model.auth.CopilotAuthService;
-import org.jkiss.dbeaver.ai.copilot.model.request.CopilotRequestService;
 import org.jkiss.dbeaver.model.ai.AIConstants;
 import org.jkiss.dbeaver.model.ai.AIEngineSettings;
 import org.jkiss.dbeaver.model.ai.AISettingsRegistry;
 import org.jkiss.dbeaver.model.ai.completion.DAICompletionContext;
 import org.jkiss.dbeaver.model.ai.completion.DAICompletionMessage;
 import org.jkiss.dbeaver.model.ai.completion.HttpClientCompletionEngine;
+import org.jkiss.dbeaver.model.ai.copilot.auth.CopilotAuthService;
+import org.jkiss.dbeaver.model.ai.copilot.request.CopilotRequestService;
 import org.jkiss.dbeaver.model.ai.format.IAIFormatter;
 import org.jkiss.dbeaver.model.ai.metadata.MetadataProcessor;
 import org.jkiss.dbeaver.model.ai.openai.GPTModel;
