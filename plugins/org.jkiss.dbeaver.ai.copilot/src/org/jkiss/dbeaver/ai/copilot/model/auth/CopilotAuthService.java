@@ -45,8 +45,15 @@ public class CopilotAuthService {
         .create();
     private static final String DBEAVER_OAUTH_APP = "Iv1.b507a08c87ecfe98";
 
+
+    /**
+     * Request the authentication to the user
+     *
+     * @param monitor progress monitor
+     * @return ResponseDataDTO
+     */
     public static ResponseDataDTO requestAuth(DBRProgressMonitor monitor)
-        throws IOException, InterruptedException, URISyntaxException, DBException {
+            throws IOException, InterruptedException, URISyntaxException, DBException {
         HttpClient client = HttpClient.newBuilder().build();
         RequestAccessContentDTO requestAccessContent = new RequestAccessContentDTO(DBEAVER_OAUTH_APP, "read:user");
         String json = SECURE_GSON.toJson(requestAccessContent);
@@ -62,14 +69,25 @@ public class CopilotAuthService {
         return SECURE_GSON.fromJson(body, ResponseDataDTO.class);
     }
 
+    /**
+     * Request the access token
+     *
+     * @param deviceCode the device code
+     * @param monitor progress monitor
+     * @return the access token
+     */
     public static String requestAccessToken(String deviceCode, DBRProgressMonitor monitor)
-        throws URISyntaxException, InterruptedException, IOException, TimeoutException, DBException {
+                throws URISyntaxException, InterruptedException, IOException, TimeoutException, DBException {
         String accessToken;
         long duration = System.currentTimeMillis();
         long timeoutValue = duration + 100000;
         while (duration < timeoutValue) {
             HttpClient client = HttpClient.newBuilder().build();
-            AccessTokenRequestBodyDTO requestAccessToken = new AccessTokenRequestBodyDTO(DBEAVER_OAUTH_APP, deviceCode, "urn:ietf:params:oauth:grant-type:device_code");
+            AccessTokenRequestBodyDTO requestAccessToken = new AccessTokenRequestBodyDTO(
+                DBEAVER_OAUTH_APP,
+                deviceCode,
+                "urn:ietf:params:oauth:grant-type:device_code"
+            );
             String json = SECURE_GSON.toJson(requestAccessToken);
             HttpRequest post = HttpRequest.newBuilder()
                 .uri(new URI("https://github.com/login/oauth/access_token"))
@@ -90,8 +108,15 @@ public class CopilotAuthService {
         throw new TimeoutException("OAuth");
     }
 
+    /**
+     * Request the copilot session token
+     *
+     * @param accessToken the access token
+     * @param monitor progress monitor
+     * @return the copilot session token
+     */
     public static String requestCopilotSessionToken(String accessToken, DBRProgressMonitor monitor)
-        throws URISyntaxException, IOException, InterruptedException, DBException {
+                throws URISyntaxException, IOException, InterruptedException, DBException {
         HttpClient client = HttpClient.newBuilder().build();
         HttpRequest getSessionToken = HttpRequest.newBuilder()
             .uri(new URI("https://api.github.com/copilot_internal/v2/token"))
@@ -105,7 +130,7 @@ public class CopilotAuthService {
 
     @NotNull
     private static String sendRequest(DBRProgressMonitor monitor, HttpClient client, HttpRequest post, boolean decode)
-        throws InterruptedException, IOException, DBException {
+                throws InterruptedException, IOException, DBException {
         CompletableFuture<HttpResponse<String>> responseJsonFuture = client.sendAsync(post, HttpResponse.BodyHandlers.ofString());
         while (!responseJsonFuture.isDone()) {
             if (monitor.isCanceled()) {
@@ -137,19 +162,24 @@ public class CopilotAuthService {
         return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
     }
 
+    @SuppressWarnings("checkstyle:RecordComponentName")
     public record ResponseDataDTO(String device_code, String user_code, String verification_uri) {
     }
 
+    @SuppressWarnings("checkstyle:RecordComponentName")
     protected record RequestAccessContentDTO(String client_id, String scope) {
 
     }
 
+    @SuppressWarnings("checkstyle:RecordComponentName")
     protected record AccessTokenRequestBodyDTO(String client_id, String device_code, String grant_type) {
     }
 
+    @SuppressWarnings("checkstyle:RecordComponentName")
     protected record GithubAccessTokenDataDTO(String access_token) {
     }
 
+    @SuppressWarnings("checkstyle:RecordComponentName")
     protected record CopilotSessionTokenDTO(String token) {
 
     }

@@ -57,6 +57,7 @@ public class CopilotCompletionEngine extends HttpClientCompletionEngine {
     private static final Log log = Log.getLog(CopilotCompletionEngine.class);
 
     private String sessionToken = null;
+
     @Override
     public String getEngineName() {
         return CopilotConstants.COPILOT_ENGINE;
@@ -70,30 +71,21 @@ public class CopilotCompletionEngine extends HttpClientCompletionEngine {
     public String getModelName() {
         return CommonUtils.toString(getSettings().getProperties().get(AIConstants.GPT_MODEL), GPTModel.GPT_TURBO16.getName());
     }
+
     @Override
     protected int getMaxTokens() {
         return GPTModel.getByName(getModelName()).getMaxTokens();
     }
 
-    private String acquireSessionToken(DBRProgressMonitor monitor) throws DBException {
-        if (sessionToken == null) {
-            String token = (String) getSettings().getProperties().get(CopilotConstants.COPILOT_ACCESS_TOKEN);
-            try {
-                sessionToken = CopilotAuthService.requestCopilotSessionToken(token, monitor);
-            } catch (URISyntaxException | IOException | InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        return sessionToken;
-    }
-
     @Nullable
     @Override
-    protected String requestCompletion(@NotNull DBRProgressMonitor monitor,
-                                       @NotNull DAICompletionContext context,
-                                       @NotNull List<DAICompletionMessage> messages,
-                                       @NotNull IAIFormatter formatter,
-                                       boolean chatCompletion) throws DBException {
+    protected String requestCompletion(
+        @NotNull DBRProgressMonitor monitor,
+        @NotNull DAICompletionContext context,
+        @NotNull List<DAICompletionMessage> messages,
+        @NotNull IAIFormatter formatter,
+        boolean chatCompletion
+    ) throws DBException {
         final DBCExecutionContext executionContext = context.getExecutionContext();
         DBSObjectContainer mainObject = getScopeObject(context, executionContext);
         final DAICompletionMessage metadataMessage = MetadataProcessor.INSTANCE.createMetadataMessage(
@@ -123,11 +115,13 @@ public class CopilotCompletionEngine extends HttpClientCompletionEngine {
 
     @Nullable
     @Override
-    protected String callCompletion(@NotNull DBRProgressMonitor monitor,
-                                    boolean chatMode,
-                                    @NotNull List<DAICompletionMessage> messages,
-                                    @NotNull HttpClient client,
-                                    @NotNull HttpRequest completionRequest) throws DBException {
+    protected String callCompletion(
+        @NotNull DBRProgressMonitor monitor,
+        boolean chatMode,
+        @NotNull List<DAICompletionMessage> messages,
+        @NotNull HttpClient client,
+        @NotNull HttpRequest completionRequest
+    ) throws DBException {
         monitor.subTask("Request Copilot completion");
         try {
             HttpResponse<String> response = sendRequest(monitor, client, completionRequest);
@@ -143,18 +137,22 @@ public class CopilotCompletionEngine extends HttpClientCompletionEngine {
     }
 
     @Override
-    protected HttpRequest createCompletionRequest(boolean chatMode, @NotNull List<DAICompletionMessage> messages)
-        throws DBCException {
+    protected HttpRequest createCompletionRequest(
+        boolean chatMode,
+        @NotNull List<DAICompletionMessage> messages
+    ) throws DBCException {
         return createCompletionRequest(chatMode, messages, getMaxTokens());
     }
 
     @Override
-    protected HttpRequest createCompletionRequest(boolean chatMode,
-                                                  @NotNull List<DAICompletionMessage> messages,
-                                                  int maxTokens) throws DBCException {
+    protected HttpRequest createCompletionRequest(
+        boolean chatMode,
+        @NotNull List<DAICompletionMessage> messages,
+        int maxTokens
+    ) throws DBCException {
         Double temperature =
             CommonUtils.toDouble(getSettings().getProperties().get(AIConstants.AI_TEMPERATURE), 0.0);
-        return CopilotRequestService.createChatRequest(getModelName(), messages, temperature, 1000, sessionToken);
+        return CopilotRequestService.createChatRequest(getModelName(), messages, temperature, sessionToken);
     }
 
     @Override
@@ -162,7 +160,19 @@ public class CopilotCompletionEngine extends HttpClientCompletionEngine {
         return AISettingsRegistry.getInstance().getSettings().getEngineConfiguration(CopilotConstants.COPILOT_ENGINE);
     }
 
-    private record CopilotResult (Choice[] choices) {
+    private String acquireSessionToken(DBRProgressMonitor monitor) throws DBException {
+        if (sessionToken == null) {
+            String token = (String) getSettings().getProperties().get(CopilotConstants.COPILOT_ACCESS_TOKEN);
+            try {
+                sessionToken = CopilotAuthService.requestCopilotSessionToken(token, monitor);
+            } catch (URISyntaxException | IOException | InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return sessionToken;
+    }
+
+    private record CopilotResult(Choice[] choices) {
         private record Choice(Message message) {
             private record Message(String content) {
 
