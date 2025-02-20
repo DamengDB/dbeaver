@@ -14,17 +14,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jkiss.copilot.model;
+package org.jkiss.dbeaver.copilot.model;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.Strictness;
 import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
-import org.jkiss.copilot.model.auth.CopilotAuthService;
-import org.jkiss.copilot.model.request.CopilotRequestService;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
+import org.jkiss.dbeaver.copilot.model.auth.CopilotAuthService;
+import org.jkiss.dbeaver.copilot.model.request.CopilotRequestService;
 import org.jkiss.dbeaver.model.ai.AIConstants;
 import org.jkiss.dbeaver.model.ai.AIEngineSettings;
 import org.jkiss.dbeaver.model.ai.AISettingsRegistry;
