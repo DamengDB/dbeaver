@@ -1,13 +1,13 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: DBeaver Copilot UI
-Bundle-SymbolicName: org.jkiss.dbeaver.copilot.ui;singleton:=true
+Bundle-SymbolicName: org.jkiss.dbeaver.ai.copilot.ui;singleton:=true
 Bundle-Version: 1.0.15.qualifier
 Bundle-Release-Date: 20250310
 Bundle-Vendor: DBeaver Corp
 Bundle-RequiredExecutionEnvironment: JavaSE-17
-Export-Package: org.jkiss.dbeaver.copilot.ui
-Require-Bundle: org.jkiss.dbeaver.copilot.model,
+Export-Package: org.jkiss.dbeaver.ai.copilot.ui
+Require-Bundle: org.jkiss.dbeaver.ai.copilot,
  org.eclipse.core.runtime,
  org.jkiss.dbeaver.model,
  org.jkiss.dbeaver.model.ai,
@@ -20,4 +20,4 @@ Require-Bundle: org.jkiss.dbeaver.copilot.model,
  org.jkiss.dbeaver.ui.editors.sql.ai,
  org.jkiss.dbeaver.core
 Bundle-ActivationPolicy: lazy
-Automatic-Module-Name: org.jkiss.dbeaver.copilot.ui
+Automatic-Module-Name: org.jkiss.dbeaver.ai.copilot.ui

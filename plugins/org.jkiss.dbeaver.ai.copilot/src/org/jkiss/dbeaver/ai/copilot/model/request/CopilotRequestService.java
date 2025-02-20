@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jkiss.dbeaver.copilot.model.request;
+package org.jkiss.dbeaver.ai.copilot.model.request;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
