@@ -7,7 +7,7 @@ Bundle-Release-Date: 20250310
 Bundle-Vendor: DBeaver Corp
 Bundle-RequiredExecutionEnvironment: JavaSE-17
 Export-Package: org.jkiss.dbeaver.ai.copilot.ui
-Require-Bundle: org.jkiss.dbeaver.ai.copilot,
+Require-Bundle: org.jkiss.dbeaver.model.ai.copilot,
  org.eclipse.core.runtime,
  org.jkiss.dbeaver.model,
  org.jkiss.dbeaver.model.ai,
