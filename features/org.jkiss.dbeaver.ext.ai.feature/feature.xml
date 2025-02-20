@@ -27,4 +27,6 @@
    <plugin id="org.jkiss.bundle.jackson" version="0.0.0" />
    <plugin id="org.jkiss.bundle.okhttp" version="0.0.0" />
    <plugin id="org.jkiss.bundle.gpt3" version="0.0.0" />
+   <plugin id="org.jkiss.copilot.model" version="0.0.0" />
+   <plugin id="org.jkiss.copilot.ui" version="0.0.0" />
 </feature>
