@@ -90,6 +90,10 @@ public class SQLQueryCompletionProposal extends CompletionProposalBase {
         this.proposalScore = proposalScore;
     }
 
+    public SQLQueryCompletionItemKind getItemKind() {
+        return this.itemKind;
+    }
+
     @Override
     public int getReplacementOffset() {
         return this.replacementOffset;
@@ -190,6 +194,7 @@ public class SQLQueryCompletionProposal extends CompletionProposalBase {
                         this.proposalScore = this.filterString.matches(filterKey, this.proposalContext.getCompletionContext().isSearchInsideNames());
                         return this.proposalScore > 0;
                     } else {
+                        this.proposalScore = Integer.MAX_VALUE;
                         return true;
                     }
                 }

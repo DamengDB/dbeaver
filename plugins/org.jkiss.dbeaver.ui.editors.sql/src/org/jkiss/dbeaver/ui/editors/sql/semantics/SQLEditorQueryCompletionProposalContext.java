@@ -39,6 +39,8 @@ public class SQLEditorQueryCompletionProposalContext extends SQLQueryCompletionP
         put(SQLQueryCompletionItemKind.NEW_TABLE_NAME, SQLConstants.CONFIG_COLOR_TABLE);
         put(SQLQueryCompletionItemKind.USED_TABLE_NAME, SQLConstants.CONFIG_COLOR_TABLE);
         put(SQLQueryCompletionItemKind.TABLE_COLUMN_NAME, SQLConstants.CONFIG_COLOR_COLUMN);
+        put(SQLQueryCompletionItemKind.PROCEDURE, SQLConstants.CONFIG_COLOR_FUNCTION);
+        put(SQLQueryCompletionItemKind.COMPOSITE_FIELD_NAME, SQLConstants.CONFIG_COLOR_COMPOSITE_FIELD);
     }};
 
     // per completion request initialized to be in sync with actual preferences, consider listening for preference event

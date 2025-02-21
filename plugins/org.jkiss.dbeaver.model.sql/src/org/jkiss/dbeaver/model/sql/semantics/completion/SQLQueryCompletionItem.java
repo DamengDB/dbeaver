@@ -127,7 +127,28 @@ public abstract class SQLQueryCompletionItem {
         @Nullable ContextObjectInfo resolvedContext,
         @NotNull DBSObject object
     ) {
-        return new SQLDbNamedObjectCompletionItem(score, filterKey, resolvedContext, object);
+        return new SQLDbNamedObjectCompletionItem(score, filterKey, resolvedContext, object, SQLQueryCompletionItemKind.UNKNOWN);
+    }
+
+
+    @NotNull
+    public static SQLQueryCompletionItem forDbCatalogObject(
+        int score,
+        @NotNull SQLQueryWordEntry filterKey,
+        @Nullable ContextObjectInfo resolvedContext,
+        @NotNull DBSObject object
+    ) {
+        return new SQLDbNamedObjectCompletionItem(score, filterKey, resolvedContext, object, SQLQueryCompletionItemKind.CATALOG);
+    }
+
+    @NotNull
+    public static SQLQueryCompletionItem forDbSchemaObject(
+        int score,
+        @NotNull SQLQueryWordEntry filterKey,
+        @Nullable ContextObjectInfo resolvedContext,
+        @NotNull DBSObject object
+    ) {
+        return new SQLDbNamedObjectCompletionItem(score, filterKey, resolvedContext, object, SQLQueryCompletionItemKind.SCHEMA);
     }
 
     @NotNull
@@ -345,19 +366,23 @@ public abstract class SQLQueryCompletionItem {
 
     public static class SQLDbNamedObjectCompletionItem extends SQLDbObjectCompletionItem<DBSObject>  {
 
+        private final SQLQueryCompletionItemKind itemKind;
+
         SQLDbNamedObjectCompletionItem(
             int score,
             @NotNull SQLQueryWordEntry filterKey,
             @Nullable ContextObjectInfo resolvedContext,
-            @NotNull DBSObject object
+            @NotNull DBSObject object,
+            @NotNull SQLQueryCompletionItemKind itemKind
         ) {
             super(score, filterKey, resolvedContext, object);
+            this.itemKind = itemKind;
         }
 
         @NotNull
         @Override
         public SQLQueryCompletionItemKind getKind() {
-            return SQLQueryCompletionItemKind.UNKNOWN;
+            return this.itemKind;
         }
 
         @Override
