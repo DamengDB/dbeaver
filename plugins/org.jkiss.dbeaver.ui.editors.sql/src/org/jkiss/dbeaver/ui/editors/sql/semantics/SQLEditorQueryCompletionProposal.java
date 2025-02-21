@@ -116,10 +116,9 @@ public class SQLEditorQueryCompletionProposal extends SQLQueryCompletionProposal
 
     @Override
     public IInformationControlCreator getInformationControlCreator() {
-        return this.object == null
-           || !this.getProposalContext().getActivityTracker().isAdditionalInfoExpected()
-               ? null
-               : SuggestionInformationControlCreator.INSTANCE;
+        return this.object == null || !this.getProposalContext().getActivityTracker().isAdditionalInfoExpected()
+            ? null
+            : SuggestionInformationControlCreator.INSTANCE;
     }
 
     @Override

@@ -18,8 +18,14 @@ package org.jkiss.dbeaver.model.sql.completion;
 
 public abstract class CompletionProposalBase {
 
+    /**
+     * The offset at which completion proposal will be applied
+     */
     public abstract int getReplacementOffset();
-    
+
+    /**
+     * The string that will be inserted to the replacement offset when completion proposal is applied
+     */
     public abstract String getReplacementString();
 
     @Override

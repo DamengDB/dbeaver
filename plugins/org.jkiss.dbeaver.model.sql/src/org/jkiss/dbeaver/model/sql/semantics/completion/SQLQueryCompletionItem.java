@@ -76,6 +76,9 @@ public abstract class SQLQueryCompletionItem {
         return new SQLReservedWordCompletionItem(score, filterKey, text);
     }
 
+    /**
+     * Build completion item for columns expansion
+     */
     @NotNull
     public static SQLQueryCompletionItem forSpecialText(
         int score,
@@ -314,7 +317,8 @@ public abstract class SQLQueryCompletionItem {
     }
 
     public static class SQLSpecialTextCompletionItem extends SQLQueryCompletionItem {
-        public final String text, description;
+        public final String text;
+        public final String description;
 
         SQLSpecialTextCompletionItem(
             int score,

@@ -55,6 +55,9 @@ public interface SQLQueryCompletionItemVisitor<R> {
     @Nullable
     R visitBuiltinFunction(@NotNull SQLBuiltinFunctionCompletionItem function);
 
+    /**
+     * Visit method for columns expansion
+     */
     @Nullable
     R visitSpecialText(@NotNull SQLSpecialTextCompletionItem specialText);
 }

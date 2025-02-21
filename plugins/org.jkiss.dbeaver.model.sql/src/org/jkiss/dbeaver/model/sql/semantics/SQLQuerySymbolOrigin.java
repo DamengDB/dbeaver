@@ -49,6 +49,9 @@ public abstract class SQLQuerySymbolOrigin {
 
         void visitDataContextSymbol(DataContextSymbolOrigin origin);
 
+        /**
+         * Visitor for * or table-alias.* which are supposed to be expanded to the list of columns on completion
+         */
         void visitExpandableTupleRef(ExpandableTupleRef tupleRef);
     }
 

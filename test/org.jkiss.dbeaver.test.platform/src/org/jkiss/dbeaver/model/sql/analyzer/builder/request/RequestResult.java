@@ -77,10 +77,16 @@ public class RequestResult {
         return analyzer.getProposals();
     }
 
+    /**
+     * Returns the list of proposals that semantic autocompletion engine returns for the provided text in simple mode
+     */
     public Set<String> requestNewStrings(@NotNull String sql) throws DBException {
         return this.requestNewStrings(sql, true);
     }
 
+    /**
+     * Returns the list of proposals that semantic autocompletion engine returns for the provided text
+     */
     public Set<String> requestNewStrings(@NotNull String sql, boolean simpleMode) throws DBException {
         var r = this.requestNewInternal(sql, simpleMode);
         return r.getSecond().stream().map(p -> {

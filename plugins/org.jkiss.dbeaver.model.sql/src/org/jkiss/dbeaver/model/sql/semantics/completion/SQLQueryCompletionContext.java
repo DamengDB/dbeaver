@@ -1315,7 +1315,11 @@ public abstract class SQLQueryCompletionContext {
         this.makeFilteredCompletionSet(filterOrNull, items, results);
     }
 
-    protected void makeFilteredCompletionSet(@Nullable SQLQueryWordEntry filterOrNull, List<? extends SQLQueryCompletionItem> items, @NotNull List<SQLQueryCompletionSet> results) {
+    protected void makeFilteredCompletionSet(
+        @Nullable SQLQueryWordEntry filterOrNull,
+        List<? extends SQLQueryCompletionItem> items,
+        @NotNull List<SQLQueryCompletionSet> results
+    ) {
         int replacementPosition = filterOrNull == null ? this.getRequestOffset() : this.getOffset() + filterOrNull.offset;
         int replacementLength = this.getRequestOffset() - replacementPosition;
         results.add(new SQLQueryCompletionSet(replacementPosition, replacementLength, items));
@@ -1348,6 +1352,9 @@ public abstract class SQLQueryCompletionContext {
         SQLQueryCompletionItem produce(int score, SQLQueryWordEntry key, T object);
     }
 
+    /**
+     * Gather and prepare the information of the completion request
+     */
     @NotNull
     public static SQLQueryCompletionContext prepareCompletionContext(
         @NotNull SQLScriptItemAtOffset scriptItem,
@@ -1390,14 +1397,12 @@ public abstract class SQLQueryCompletionContext {
                 //     || (lexicalItem != null&& nameNodes.getLast().getRealInterval().b != lexicalItem.getSyntaxNode().getRealInterval().b)
                 // ) {
                 // no name nodes OR
-                if (
-                    (lexicalItem instanceof SQLQuerySymbolEntry && (
+                if ((lexicalItem instanceof SQLQuerySymbolEntry && (
                         nameNodes.isEmpty() || (
                             nameNodes.getFirst().getRealInterval().a > lexicalItem.getSyntaxNode().getRealInterval().a ||
                             nameNodes.getLast().getRealInterval().b < lexicalItem.getSyntaxNode().getRealInterval().b
                         )
-                    )) ||
-                    (lexicalItem instanceof SQLQueryTupleRefEntry e &&  e.getSyntaxNode().getRealInterval().b + 1 != position)
+                    )) || (lexicalItem instanceof SQLQueryTupleRefEntry e &&  e.getSyntaxNode().getRealInterval().b + 1 != position)
                 ) {
                     // lexicalItem is identifier (not an isolated Period character) outside nameNodes (actually, WTF?!)
                     lexicalItem = null;

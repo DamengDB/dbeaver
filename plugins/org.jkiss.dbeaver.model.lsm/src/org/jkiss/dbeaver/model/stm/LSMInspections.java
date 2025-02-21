@@ -168,6 +168,9 @@ public class LSMInspections {
         return inspectAbstractSyntaxAtState(null, emptyStack, initialState);
     }
 
+    /**
+     * Returns information about the syntax tree state in the specified position, providing info about expected tokens
+     */
     @NotNull
     public SyntaxInspectionResult prepareAbstractSyntaxInspection(int position) {
         ATN atn = SQLStandardParser._ATN;
