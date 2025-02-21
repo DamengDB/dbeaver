@@ -588,7 +588,7 @@ public abstract class SQLQueryCompletionContext {
                             SQLQueryWordEntry filter = makeFilterInfo(componentNamePart, o.getName());
                             int score = filter.matches(componentNamePart, this.searchInsideWords);
                             if (score > 0) {
-                                items.addLast(makeDbObjectCompletionItem(score, filter, null, o));
+                                items.addLast(this.makeDbObjectCompletionItem(score, filter, null, o));
                             }
                         }
                     }
@@ -1180,7 +1180,7 @@ public abstract class SQLQueryCompletionContext {
                         return List.of(defaultSchema);
                     }
                 } else if (dbcExecutionContext.getDataSource() instanceof DBSObjectContainer container) {
-                    return container;
+                    return List.of(container);
                 }
                 return Collections.emptyList();
             }
@@ -1220,7 +1220,7 @@ public abstract class SQLQueryCompletionContext {
                                 SQLQueryWordEntry childName = makeFilterInfo(filterOrNull, child.getName());
                                 int score = childName.matches(filterOrNull, this.searchInsideWords);
                                 if (score > 0) {
-                                    completions.addLast(makeDbObjectCompletionItem(score, childName, contextObject, child));
+                                    completions.addLast(this.makeDbObjectCompletionItem(score, childName, contextObject, child));
                                 }
                             }
                         }

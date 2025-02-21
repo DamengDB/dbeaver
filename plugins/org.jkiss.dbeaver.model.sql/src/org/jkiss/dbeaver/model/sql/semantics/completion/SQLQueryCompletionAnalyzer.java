@@ -75,7 +75,8 @@ public class SQLQueryCompletionAnalyzer implements DBRRunnableParametrized<DBRPr
         if (completionContext != null && this.request.getContext().getDataSource() != null) {
             // TODO don't we want to be able to accomplish subqueries and such even without the connection?
             this.proposalContext = this.createProposalContext(completionContext);
-            result = this.prepareProposals(monitor, completionContext);
+            List<SQLQueryCompletionProposal> proposals = this.prepareContextfulCompletion(monitor, completionContext);
+            result = Pair.of(completionContext.getRequestOffset(), proposals);
         } else {
             int completionRequestPosition = completionContext != null
                 ? completionContext.getRequestOffset()
@@ -89,14 +90,6 @@ public class SQLQueryCompletionAnalyzer implements DBRRunnableParametrized<DBRPr
     @NotNull
     protected SQLQueryCompletionProposalContext createProposalContext(@NotNull SQLQueryCompletionContext completionContext) {
         return new SQLQueryCompletionProposalContext(this.request, completionContext.getRequestOffset());
-    }
-
-    @NotNull
-    private Pair<Integer, List<SQLQueryCompletionProposal>> prepareProposals(DBRProgressMonitor monitor, SQLQueryCompletionContext completionContext) {
-        List<SQLQueryCompletionProposal> proposals = this.prepareContextfulCompletion(monitor, completionContext);
-        }
-
-        return Pair.of(completionContext.getRequestOffset(), proposals);
     }
 
     private String getTextFragmentAt(int offset, int length) {
@@ -197,22 +190,8 @@ public class SQLQueryCompletionAnalyzer implements DBRRunnableParametrized<DBRPr
         return this.result.get().getFirst();
     }
 
-    @NotNull
-    private DBPImage prepareProposalImage(@NotNull SQLQueryCompletionItem item) {
-        return switch (item.getKind()) {
-            case SCHEMA, CATALOG, UNKNOWN ->  DBValueFormatting.getObjectImage(item.getObject());
-            case RESERVED -> UIIcon.SQL_TEXT;
-            case SUBQUERY_ALIAS -> DBIcon.TREE_TABLE_ALIAS;
-            case DERIVED_COLUMN_NAME -> DBIcon.TREE_DERIVED_COLUMN;
-            case NEW_TABLE_NAME, USED_TABLE_NAME -> {
-                DBPObject object = item.getObject();
-                yield object == null ? DBIcon.TREE_TABLE : DBValueFormatting.getObjectImage(object);
-            }
-            case TABLE_COLUMN_NAME -> DBIcon.TREE_COLUMN;
-            case COMPOSITE_FIELD_NAME -> DBIcon.TREE_DATA_TYPE;
-            case JOIN_CONDITION -> DBIcon.TREE_CONSTRAINT;
-            case PROCEDURE -> item.getObject() == null ? DBIcon.TREE_FUNCTION : DBValueFormatting.getObjectImage(item.getObject());
-            default -> throw new IllegalStateException("Unexpected completion item kind " + item.getKind());
-        };
+    @Nullable
+    protected DBPImage prepareProposalImage(@NotNull SQLQueryCompletionItem item) {
+        return null;
     }
 }

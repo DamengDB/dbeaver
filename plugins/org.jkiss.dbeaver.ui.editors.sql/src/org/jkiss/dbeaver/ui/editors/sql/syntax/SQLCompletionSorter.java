@@ -19,6 +19,7 @@ package org.jkiss.dbeaver.ui.editors.sql.syntax;
 import org.eclipse.jface.text.contentassist.ICompletionProposal;
 import org.eclipse.jface.text.contentassist.ICompletionProposalSorter;
 import org.jkiss.dbeaver.model.preferences.DBPPreferenceStore;
+import org.jkiss.dbeaver.model.sql.semantics.completion.SQLQueryCompletionProposal;
 import org.jkiss.dbeaver.ui.editors.sql.SQLEditorBase;
 import org.jkiss.dbeaver.ui.editors.sql.SQLPreferenceConstants;
 import org.jkiss.dbeaver.ui.editors.sql.semantics.SQLEditorQueryCompletionProposal;
