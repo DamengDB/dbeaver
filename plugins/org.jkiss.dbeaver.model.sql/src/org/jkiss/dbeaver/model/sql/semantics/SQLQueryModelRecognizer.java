@@ -227,7 +227,8 @@ public class SQLQueryModelRecognizer {
                             this.recognitionContext,
                             e,
                             objectNameOrigin,
-                            Set.of(RelationalObjectType.TYPE_UNKNOWN)
+                            Set.of(RelationalObjectType.TYPE_UNKNOWN),
+                            SQLQuerySymbolClass.ERROR
                         );
                     }
                 }
