@@ -21,8 +21,7 @@ import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
-import org.jkiss.dbeaver.model.app.DBPWorkspace;
-import org.jkiss.dbeaver.runtime.DBWorkbench;
+import org.jkiss.dbeaver.utils.GeneralUtils;
 import org.jkiss.utils.IOUtils;
 
 import java.io.IOException;
@@ -56,8 +55,7 @@ public class FileLockController {
 
     // for tests
     public FileLockController(@NotNull String applicationId, long maxLockTime) throws DBException {
-        this.lockFolderPath = DBWorkbench.getPlatform().getWorkspace().getAbsolutePath()
-            .resolve(DBPWorkspace.METADATA_FOLDER)
+        this.lockFolderPath =  GeneralUtils.getMetadataFolder()
             .resolve(LOCK_META_FOLDER);
         this.applicationId = applicationId;
         this.maxLockTime = maxLockTime;
