@@ -63,15 +63,13 @@ class ScriptsExportWizardPage extends WizardPage {
     private DatabaseNavigatorTree scriptsNavigator;
     private final List<DBNResource> selectedResources = new ArrayList<>();
 
-    protected ScriptsExportWizardPage(String pageName)
-    {
+    protected ScriptsExportWizardPage(String pageName) {
         super(pageName);
         setTitle(CoreMessages.dialog_project_export_wizard_page_title);
     }
 
     @Override
-    public boolean isPageComplete()
-    {
+    public boolean isPageComplete() {
         if (directoryText == null || directoryText.isDisposed() || scriptsNavigator == null || scriptsNavigator.isDisposed()) {
             return false;
         }
@@ -96,8 +94,7 @@ class ScriptsExportWizardPage extends WizardPage {
     }
 
     @Override
-    public void createControl(Composite parent)
-    {
+    public void createControl(Composite parent) {
         String outDir = DBWorkbench.getPlatform().getPreferenceStore().getString(PREF_SCRIPTS_EXPORT_OUT_DIR);
         if (CommonUtils.isEmpty(outDir)) {
             outDir = RuntimeUtils.getUserHomeDir().getAbsolutePath();
@@ -112,7 +109,11 @@ class ScriptsExportWizardPage extends WizardPage {
             return;
         }
 
-        scriptsNavigator = new DatabaseNavigatorTree(placeholder, activeProject.getNavigatorModel().getRoot().getProjectNode(activeProject), SWT.BORDER | SWT.CHECK);
+        scriptsNavigator = new DatabaseNavigatorTree(
+            placeholder,
+            activeProject.getNavigatorModel().getRoot().getProjectNode(activeProject),
+            SWT.BORDER | SWT.CHECK
+        );
         GridData gd = new GridData(GridData.FILL_BOTH);
         scriptsNavigator.setLayoutData(gd);
         CheckboxTreeViewer viewer = (CheckboxTreeViewer) scriptsNavigator.getViewer();
