@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2025 DBeaver Corp and others
+ * Copyright (C) 2010-2024 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -123,7 +123,7 @@ public class MySQLEvent implements MySQLSourceObject, DBPSaveableObject, DBPQual
 
     @Nullable
     @Override
-    @Property(viewable = true, length = PropertyLength.MULTILINE, category = CAT_DETAILS, order = 100, updatable = true)
+    @Property(viewable = true, length = PropertyLength.MULTILINE, category = CAT_DETAILS, order = 100)
     public String getDescription() {
         return eventComment;
     }
@@ -158,17 +158,17 @@ public class MySQLEvent implements MySQLSourceObject, DBPSaveableObject, DBPQual
         return executeAt;
     }
 
-    @Property(viewable = true, order = 12, updatable = true)
+    @Property(viewable = true, order = 12)
     public String getIntervalValue() {
         return intervalValue;
     }
 
-    @Property(viewable = true, order = 13, updatable = true)
+    @Property(viewable = true, order = 13)
     public String getIntervalField() {
         return intervalField;
     }
 
-    @Property(viewable = true, category = CAT_DETAILS, order = 14, updatable = true)
+    @Property(viewable = true, category = CAT_DETAILS, order = 14)
     public String getEventBody() {
         return eventBody;
     }
@@ -198,12 +198,12 @@ public class MySQLEvent implements MySQLSourceObject, DBPSaveableObject, DBPQual
         return ends;
     }
 
-    @Property(category = DBConstants.CAT_STATISTICS, order = 35, updatable = true)
+    @Property(category = DBConstants.CAT_STATISTICS, order = 35)
     public String getStatus() {
         return status;
     }
 
-    @Property(category = CAT_DETAILS, order = 36, updatable = true)
+    @Property(category = CAT_DETAILS, order = 36)
     public String getOnCompletion() {
         return onCompletion;
     }
@@ -288,30 +288,6 @@ public class MySQLEvent implements MySQLSourceObject, DBPSaveableObject, DBPQual
     @Override
     public void setObjectDefinitionText(String sourceText) {
         eventFullDefinitionText = sourceText;
-    }
-
-    public void setDescription(String description) {
-        this.eventComment = description;
-    }
-
-    public void setEventBody(String eventBody) {
-        this.eventBody = eventBody;
-    }
-
-    public void setIntervalField(String intervalField) {
-        this.intervalField = intervalField;
-    }
-
-    public void setIntervalValue(String intervalValue) {
-        this.intervalValue = intervalValue;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public void setOnCompletion(String onCompletion) {
-        this.onCompletion = onCompletion;
     }
 
     public MySQLCatalog getCatalog() {

@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2025 DBeaver Corp and others
+ * Copyright (C) 2010-2024 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,12 +37,9 @@ public class OracleSourceDeclarationEditor extends SQLSourceViewer<OracleSourceO
     private Map<String, Object> oracleDDLOptions = new HashMap<>();
 
     @Override
-    protected String getCompileCommandId() {
-        var sourceObject = getSourceObject();
-        if (sourceObject != null) {
-            return sourceObject.supportsCompile() ? OracleConstants.CMD_COMPILE : null;
-        }
-        return null;
+    protected String getCompileCommandId()
+    {
+        return OracleConstants.CMD_COMPILE;
     }
 
     @Override
