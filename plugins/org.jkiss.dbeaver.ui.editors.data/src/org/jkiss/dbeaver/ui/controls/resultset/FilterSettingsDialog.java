@@ -35,11 +35,7 @@ import org.eclipse.ui.dialogs.FilteredTree;
 import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.model.DBIcon;
-import org.jkiss.dbeaver.model.DBValueFormatting;
-import org.jkiss.dbeaver.model.data.DBDAttributeBinding;
-import org.jkiss.dbeaver.model.data.DBDAttributeConstraint;
-import org.jkiss.dbeaver.model.data.DBDAttributeConstraintBase;
-import org.jkiss.dbeaver.model.data.DBDDataFilter;
+import org.jkiss.dbeaver.model.data.*;
 import org.jkiss.dbeaver.model.exec.DBCExecutionContext;
 import org.jkiss.dbeaver.model.sql.SQLUtils;
 import org.jkiss.dbeaver.ui.DBeaverIcons;
@@ -133,7 +129,7 @@ class FilterSettingsDialog extends HelpEnabledDialog {
                     final DBDAttributeBinding binding = (DBDAttributeBinding) cell.getElement();
                     final DBDAttributeConstraint constraint = getBindingConstraint(binding);
                     cell.setText(constraint.getAttribute().getName());
-                    cell.setImage(DBeaverIcons.getImage(DBValueFormatting.getObjectImage(binding.getMetaAttribute())));
+                    cell.setImage(DBeaverIcons.getImage(DBDValueFormatting.getObjectImage(binding.getMetaAttribute())));
                 }
             });
 
@@ -561,7 +557,7 @@ class FilterSettingsDialog extends HelpEnabledDialog {
             DBDAttributeBinding binding = (DBDAttributeBinding) element;
             if (columnIndex == 0) {
                 return DBeaverIcons.getImage(
-                    DBValueFormatting.getObjectImage(binding.getMetaAttribute()));
+                    DBDValueFormatting.getObjectImage(binding.getMetaAttribute()));
             }
             if (columnIndex == 2) {
                 DBDAttributeConstraint constraint = getBindingConstraint(binding);

@@ -40,6 +40,7 @@ import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.model.*;
 import org.jkiss.dbeaver.model.data.DBDDisplayFormat;
+import org.jkiss.dbeaver.model.data.DBDValueFormatting;
 import org.jkiss.dbeaver.model.navigator.DBNNode;
 import org.jkiss.dbeaver.model.navigator.DBNNodeReference;
 import org.jkiss.dbeaver.model.preferences.DBPPropertyDescriptor;
@@ -980,7 +981,7 @@ public abstract class ObjectListControl<OBJECT_TYPE> extends ProgressPageControl
                         if (object instanceof DBPNamedObject) {
                             objectName = ((DBPNamedObject) object).getName();
                         } else {
-                            objectName = DBValueFormatting.getDefaultValueDisplayString(object, DBDDisplayFormat.UI);
+                            objectName = DBDValueFormatting.getDefaultValueDisplayString(object, DBDDisplayFormat.UI);
                         }
                     }
                     if (buf.length() > 0) buf.append("\n");
@@ -1484,7 +1485,7 @@ public abstract class ObjectListControl<OBJECT_TYPE> extends ProgressPageControl
                 try {
                     Object cellValue = property == null ? null : property.readValue(object, new VoidProgressMonitor(), true);
                     if (i > 0) buf.append("\t");
-                    String strValue = DBValueFormatting.getDefaultValueDisplayString(cellValue, DBDDisplayFormat.UI);
+                    String strValue = DBDValueFormatting.getDefaultValueDisplayString(cellValue, DBDDisplayFormat.UI);
                     if (strValue.contains("\n") || strValue.contains("\t")) {
                         strValue = '"' + strValue + '"';
                     }

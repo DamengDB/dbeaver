@@ -26,6 +26,7 @@ import org.jkiss.dbeaver.model.*;
 import org.jkiss.dbeaver.model.app.DBPProject;
 import org.jkiss.dbeaver.model.data.DBDDataContainer;
 import org.jkiss.dbeaver.model.data.DBDDataFilter;
+import org.jkiss.dbeaver.model.data.DBDValueFormatting;
 import org.jkiss.dbeaver.model.exec.*;
 import org.jkiss.dbeaver.model.impl.AbstractExecutionSource;
 import org.jkiss.dbeaver.model.impl.DataSourceContextProvider;
@@ -126,7 +127,7 @@ public class DatabaseTransferProducer implements IDataTransferProducer<DatabaseP
     @Override
     public DBPImage getObjectIcon() {
         if (dataContainer instanceof DBPImageProvider) {
-            return DBValueFormatting.getObjectImage(dataContainer);
+            return DBDValueFormatting.getObjectImage(dataContainer);
         }
         return DBIcon.TREE_TABLE;
     }

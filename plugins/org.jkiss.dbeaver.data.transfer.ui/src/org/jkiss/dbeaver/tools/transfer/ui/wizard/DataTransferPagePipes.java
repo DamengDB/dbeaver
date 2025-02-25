@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import org.jkiss.code.NotNull;
 import org.jkiss.dbeaver.model.DBPEvaluationContext;
 import org.jkiss.dbeaver.model.DBPImage;
 import org.jkiss.dbeaver.model.DBUtils;
-import org.jkiss.dbeaver.model.DBValueFormatting;
+import org.jkiss.dbeaver.model.data.DBDValueFormatting;
 import org.jkiss.dbeaver.model.navigator.DBNDatabaseNode;
 import org.jkiss.dbeaver.model.navigator.DBNModel;
 import org.jkiss.dbeaver.model.rm.RMConstants;
@@ -210,7 +210,7 @@ class DataTransferPagePipes extends ActiveWizardPage<DataTransferWizard> {
                 DBSObject element = (DBSObject) cell.getElement();
                 if (cell.getColumnIndex() == 0) {
                     DBNDatabaseNode objectNode = nModel.getNodeByObject(element);
-                    DBPImage icon = objectNode != null ? objectNode.getNodeIconDefault() : DBValueFormatting.getObjectImage(element);
+                    DBPImage icon = objectNode != null ? objectNode.getNodeIconDefault() : DBDValueFormatting.getObjectImage(element);
                     cell.setImage(DBeaverIcons.getImage(icon));
                     final SQLQueryContainer queryContainer = DBUtils.getAdapter(SQLQueryContainer.class, element);
                     if (queryContainer != null) {

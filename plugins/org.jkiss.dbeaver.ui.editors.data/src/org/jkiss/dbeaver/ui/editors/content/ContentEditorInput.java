@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,11 +30,7 @@ import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.model.DBIcon;
 import org.jkiss.dbeaver.model.DBPContextProvider;
-import org.jkiss.dbeaver.model.DBValueFormatting;
-import org.jkiss.dbeaver.model.data.DBDContent;
-import org.jkiss.dbeaver.model.data.DBDContentCached;
-import org.jkiss.dbeaver.model.data.DBDContentStorage;
-import org.jkiss.dbeaver.model.data.DBDContentStorageLocal;
+import org.jkiss.dbeaver.model.data.*;
 import org.jkiss.dbeaver.model.data.storage.BytesContentStorage;
 import org.jkiss.dbeaver.model.data.storage.ExternalContentStorage;
 import org.jkiss.dbeaver.model.data.storage.StringContentStorage;
@@ -421,7 +417,7 @@ public class ContentEditorInput implements IPathEditorInput, IStatefulEditorInpu
         if (valueController.getExecutionContext() == null) {
             return GeneralUtils.getDefaultFileEncoding();
         }
-        return DBValueFormatting.getDefaultBinaryFileEncoding(valueController.getExecutionContext().getDataSource());
+        return DBDValueFormatting.getDefaultBinaryFileEncoding(valueController.getExecutionContext().getDataSource());
     }
 
     public void setEncoding(String fileCharset) {

@@ -26,10 +26,7 @@ import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.model.*;
-import org.jkiss.dbeaver.model.data.DBDDictionary;
-import org.jkiss.dbeaver.model.data.DBDDisplayFormat;
-import org.jkiss.dbeaver.model.data.DBDLabelValuePair;
-import org.jkiss.dbeaver.model.data.DBDValueHandler;
+import org.jkiss.dbeaver.model.data.*;
 import org.jkiss.dbeaver.model.exec.DBCExecutionContext;
 import org.jkiss.dbeaver.model.exec.DBCExecutionContextDefaults;
 import org.jkiss.dbeaver.model.exec.DBCExecutionPurpose;
@@ -1227,7 +1224,7 @@ public class SQLCompletionAnalyzer implements DBRRunnableParametrized<DBRProgres
 
         DBPImage objectIcon = node == null ? null : node.getNodeIconDefault();
         if (objectIcon == null) {
-            objectIcon = DBValueFormatting.getObjectImage(object);
+            objectIcon = DBDValueFormatting.getObjectImage(object);
         }
         return makeProposalsFromObject(object, useShortName, objectIcon, params);
     }

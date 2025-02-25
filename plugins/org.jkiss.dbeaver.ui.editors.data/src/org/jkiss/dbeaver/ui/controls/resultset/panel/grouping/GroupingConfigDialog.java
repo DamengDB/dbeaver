@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,8 @@ import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.model.DBIcon;
 import org.jkiss.dbeaver.model.DBPImage;
-import org.jkiss.dbeaver.model.DBValueFormatting;
 import org.jkiss.dbeaver.model.data.DBDAttributeBinding;
+import org.jkiss.dbeaver.model.data.DBDValueFormatting;
 import org.jkiss.dbeaver.model.sql.SQLGroupingAttribute;
 import org.jkiss.dbeaver.model.struct.DBSDataType;
 import org.jkiss.dbeaver.ui.UIUtils;
@@ -91,7 +91,7 @@ class GroupingConfigDialog extends BaseDialog {
         public DBPImage getIcon(@Nullable SQLGroupingAttribute value) {
             if (value instanceof SQLGroupingAttribute.BoundAttribute bound) {
                 DBSDataType type = bound.getBinding().getDataType();
-                return type == null ? DBIcon.TYPE_UNKNOWN : DBValueFormatting.getTypeImage(type);
+                return type == null ? DBIcon.TYPE_UNKNOWN : DBDValueFormatting.getTypeImage(type);
             } else {
                 return DBIcon.TREE_ATTRIBUTE;
             }

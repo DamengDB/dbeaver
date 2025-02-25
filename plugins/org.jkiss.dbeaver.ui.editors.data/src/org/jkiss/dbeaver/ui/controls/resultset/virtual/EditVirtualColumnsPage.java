@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableItem;
 import org.jkiss.dbeaver.model.DBIcon;
-import org.jkiss.dbeaver.model.DBValueFormatting;
+import org.jkiss.dbeaver.model.data.DBDValueFormatting;
 import org.jkiss.dbeaver.model.struct.DBSObject;
 import org.jkiss.dbeaver.model.virtual.DBVEntity;
 import org.jkiss.dbeaver.model.virtual.DBVEntityAttribute;
@@ -158,7 +158,7 @@ public class EditVirtualColumnsPage extends BaseObjectEditPage implements IHelpC
 
     private void createAttributeItem(Table attrTable, DBVEntityAttribute attribute) {
         TableItem item = new TableItem(attrTable, SWT.NONE);
-        item.setImage(0, DBeaverIcons.getImage(DBValueFormatting.getObjectImage(attribute)));
+        item.setImage(0, DBeaverIcons.getImage(DBDValueFormatting.getObjectImage(attribute)));
         item.setText(0, attribute.getName());
         item.setText(1, attribute.getTypeName());
         if (attribute.getExpression() != null) {

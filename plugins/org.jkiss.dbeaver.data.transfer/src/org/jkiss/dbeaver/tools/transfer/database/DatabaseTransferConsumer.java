@@ -865,7 +865,7 @@ public class DatabaseTransferConsumer implements IDataTransferConsumer<DatabaseC
         }
         DBDDataManipulator targetObject = getTargetObject();
         if (targetObject instanceof DBPImageProvider) {
-            return DBValueFormatting.getObjectImage(targetObject);
+            return DBDValueFormatting.getObjectImage(targetObject);
         }
         return DBIcon.TREE_TABLE;
     }

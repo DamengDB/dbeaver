@@ -16,11 +16,6 @@
  */
 package org.jkiss.dbeaver.model;
 
-import org.jkiss.dbeaver.model.data.DBDBinaryFormatter;
-import org.jkiss.dbeaver.model.impl.data.formatters.BinaryFormatterBase64;
-import org.jkiss.dbeaver.model.impl.data.formatters.BinaryFormatterHex;
-import org.jkiss.dbeaver.model.impl.data.formatters.BinaryFormatterString;
-
 import java.util.Locale;
 
 /**
@@ -87,12 +82,6 @@ public class DBConstants {
 
     public static final String BOOLEAN_PROP_YES = "yes";
     public static final String BOOLEAN_PROP_NO = "no";
-
-    public static final DBDBinaryFormatter[] BINARY_FORMATS = {
-        new BinaryFormatterString(),
-        new BinaryFormatterHex(),
-        new BinaryFormatterBase64(),
-    };
 
     public static final String TYPE_NAME_CHAR = "CHAR";
     public static final String TYPE_NAME_CHAR2 = TYPE_NAME_CHAR.toLowerCase(Locale.ENGLISH);

@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.model.*;
 import org.jkiss.dbeaver.model.access.DBAObject;
+import org.jkiss.dbeaver.model.data.DBDValueFormatting;
 import org.jkiss.dbeaver.model.dpi.DPIClientObject;
 import org.jkiss.dbeaver.model.exec.DBCException;
 import org.jkiss.dbeaver.model.exec.DBCExecutionContext;
@@ -177,7 +178,7 @@ public abstract class DBNDatabaseNode extends DBNNode implements DBNLazyNode, DB
     @Override
     public DBPImage getNodeIcon() {
         final DBSObject object = getObject();
-        DBPImage image = DBValueFormatting.getObjectImage(object, false);
+        DBPImage image = DBDValueFormatting.getObjectImage(object, false);
         if (image == null) {
             DBXTreeNode meta = getMeta();
             if (meta != null) {

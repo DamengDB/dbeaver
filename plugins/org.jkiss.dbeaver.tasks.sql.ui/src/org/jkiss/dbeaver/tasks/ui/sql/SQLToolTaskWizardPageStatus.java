@@ -33,7 +33,7 @@ import org.jkiss.code.NotNull;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.model.DBPImage;
 import org.jkiss.dbeaver.model.DBPObject;
-import org.jkiss.dbeaver.model.DBValueFormatting;
+import org.jkiss.dbeaver.model.data.DBDValueFormatting;
 import org.jkiss.dbeaver.model.runtime.AbstractJob;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 import org.jkiss.dbeaver.model.runtime.load.AbstractLoadService;
@@ -101,7 +101,7 @@ class SQLToolTaskWizardPageStatus extends ActiveWizardPage<SQLToolTaskWizard> im
 
             @Override
             protected DBPImage getObjectImage(SQLToolStatistics item) {
-                return DBValueFormatting.getObjectImage(item.getObject());
+                return DBDValueFormatting.getObjectImage(item.getObject());
             }
 
             @Override

@@ -22,10 +22,9 @@ import org.eclipse.swt.widgets.*;
 import org.jkiss.code.NotNull;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.ModelPreferences;
-import org.jkiss.dbeaver.model.DBConstants;
 import org.jkiss.dbeaver.model.DBPDataSourceContainer;
-import org.jkiss.dbeaver.model.DBValueFormatting;
 import org.jkiss.dbeaver.model.data.DBDBinaryFormatter;
+import org.jkiss.dbeaver.model.data.DBDValueFormatting;
 import org.jkiss.dbeaver.model.preferences.DBPPreferenceStore;
 import org.jkiss.dbeaver.runtime.DBWorkbench;
 import org.jkiss.dbeaver.ui.UIUtils;
@@ -121,7 +120,7 @@ public class PrefPageResultSetEditors extends TargetPrefPage
             binaryGroup.setLayoutData(gd);
 
             binaryPresentationCombo = UIUtils.createLabelCombo(binaryGroup, ResultSetMessages.pref_page_database_resultsets_label_binary_presentation, SWT.DROP_DOWN | SWT.READ_ONLY);
-            for (DBDBinaryFormatter formatter : DBConstants.BINARY_FORMATS) {
+            for (DBDBinaryFormatter formatter : DBDValueFormatting.BINARY_FORMATS) {
                 binaryPresentationCombo.add(formatter.getTitle());
             }
 
@@ -178,7 +177,7 @@ public class PrefPageResultSetEditors extends TargetPrefPage
             memoryContentSize.setSelection(store.getInt(ModelPreferences.MEMORY_CONTENT_MAX_SIZE));
             binaryStringMaxLength.setSelection(store.getInt(ModelPreferences.RESULT_SET_BINARY_STRING_MAX_LEN));
 
-            DBDBinaryFormatter formatter = DBValueFormatting.getBinaryPresentation(store.getString(ModelPreferences.RESULT_SET_BINARY_PRESENTATION));
+            DBDBinaryFormatter formatter = DBDValueFormatting.getBinaryPresentation(store.getString(ModelPreferences.RESULT_SET_BINARY_PRESENTATION));
             for (int i = 0; i < binaryPresentationCombo.getItemCount(); i++) {
                 if (binaryPresentationCombo.getItem(i).equals(formatter.getTitle())) {
                     binaryPresentationCombo.select(i);
@@ -216,7 +215,7 @@ public class PrefPageResultSetEditors extends TargetPrefPage
             store.setValue(ModelPreferences.MEMORY_CONTENT_MAX_SIZE, memoryContentSize.getSelection());
 
             String presentationTitle = binaryPresentationCombo.getItem(binaryPresentationCombo.getSelectionIndex());
-            for (DBDBinaryFormatter formatter : DBConstants.BINARY_FORMATS) {
+            for (DBDBinaryFormatter formatter : DBDValueFormatting.BINARY_FORMATS) {
                 if (formatter.getTitle().equals(presentationTitle)) {
                     store.setValue(ModelPreferences.RESULT_SET_BINARY_PRESENTATION, formatter.getId());
                     break;

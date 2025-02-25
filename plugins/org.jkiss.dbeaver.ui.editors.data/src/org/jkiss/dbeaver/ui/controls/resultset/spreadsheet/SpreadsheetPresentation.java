@@ -2895,11 +2895,11 @@ public class SpreadsheetPresentation extends AbstractPresentation
             }
 
             if (item.getElement() instanceof DBDAttributeBinding attr) {
-                DBPImage image = DBValueFormatting.getObjectImage(attr.getAttribute());
+                DBPImage image = DBDValueFormatting.getObjectImage(attr.getAttribute());
                 return DBeaverIcons.getImage(image);
             } else if (item.getElement() instanceof DBSAttributeBase attrBase) {
                 return DBeaverIcons.getImage(
-                    DBValueFormatting.getObjectImage(attrBase));
+                    DBDValueFormatting.getObjectImage(attrBase));
             }
 
             return null;

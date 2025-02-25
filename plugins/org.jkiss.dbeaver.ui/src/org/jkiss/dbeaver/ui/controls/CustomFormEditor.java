@@ -30,6 +30,7 @@ import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.model.*;
 import org.jkiss.dbeaver.model.data.DBDDisplayFormat;
+import org.jkiss.dbeaver.model.data.DBDValueFormatting;
 import org.jkiss.dbeaver.model.edit.DBECommandContext;
 import org.jkiss.dbeaver.model.edit.DBEObjectManager;
 import org.jkiss.dbeaver.model.edit.DBEObjectRenamer;
@@ -438,7 +439,7 @@ public class CustomFormEditor {
         } else if (value instanceof Enum) {
             return ((Enum<?>) value).name();
         } else {
-            return DBValueFormatting.getDefaultValueDisplayString(value, DBDDisplayFormat.EDIT);
+            return DBDValueFormatting.getDefaultValueDisplayString(value, DBDDisplayFormat.EDIT);
         }
     }
 

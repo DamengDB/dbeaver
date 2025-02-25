@@ -34,7 +34,6 @@ import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.model.DBPDataKind;
 import org.jkiss.dbeaver.model.DBSDocumentAttributeEnumerable;
 import org.jkiss.dbeaver.model.DBUtils;
-import org.jkiss.dbeaver.model.DBValueFormatting;
 import org.jkiss.dbeaver.model.data.*;
 import org.jkiss.dbeaver.model.exec.DBCExecutionContext;
 import org.jkiss.dbeaver.model.exec.DBCLogicalOperator;
@@ -498,7 +497,7 @@ class GenericFilterValueEdit {
                 }
             }
             if (!nullPresents) {
-                sortedList.add(0, new DBDLabelValuePair(DBValueFormatting.getDefaultValueDisplayString(null, DBDDisplayFormat.UI), null));
+                sortedList.add(0, new DBDLabelValuePair(DBDValueFormatting.getDefaultValueDisplayString(null, DBDDisplayFormat.UI), null));
             }
         }
 

@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
  */
 package org.jkiss.dbeaver.model;
 
+import org.jkiss.dbeaver.model.data.DBDValueFormatting;
 import org.jkiss.dbeaver.model.struct.DBSEntity;
 import org.jkiss.dbeaver.model.struct.DBSEntityAssociation;
 import org.jkiss.dbeaver.model.struct.DBSObject;
@@ -29,7 +30,7 @@ import org.junit.Test;
 
 import static org.mockito.Mockito.mock;
 
-public class DBValueFormattingTest extends DBeaverUnitTest {
+public class DBDValueFormattingTest extends DBeaverUnitTest {
 	
 	private DBSObject objectAssociation;
 	private DBSObject objectProcedure;
@@ -54,7 +55,7 @@ public class DBValueFormattingTest extends DBeaverUnitTest {
         
         Assert.assertTrue(objectAssociation instanceof DBSEntityAssociation);
         Assert.assertTrue(objectAssociation instanceof DBPObject);
-        DBPImage image = DBValueFormatting.getObjectImage(objectAssociation, true);
+        DBPImage image = DBDValueFormatting.getObjectImage(objectAssociation, true);
         Assert.assertNotNull(image);
         Assert.assertEquals(DBIcon.TREE_ASSOCIATION,image);        
 	}	
@@ -64,7 +65,7 @@ public class DBValueFormattingTest extends DBeaverUnitTest {
         
         Assert.assertTrue(objectProcedure instanceof DBSProcedure);
         Assert.assertTrue(objectProcedure instanceof DBPObject);
-        DBPImage image = DBValueFormatting.getObjectImage(objectProcedure, true);
+        DBPImage image = DBDValueFormatting.getObjectImage(objectProcedure, true);
         Assert.assertNotNull(image);
         Assert.assertEquals(DBIcon.TREE_PROCEDURE,image);
 	}
@@ -73,7 +74,7 @@ public class DBValueFormattingTest extends DBeaverUnitTest {
 	public void testGetObjectImagePackage() {
 
         Assert.assertTrue(objectPackage instanceof DBPObject);
-        DBPImage image = DBValueFormatting.getObjectImage(objectPackage, true);
+        DBPImage image = DBDValueFormatting.getObjectImage(objectPackage, true);
         Assert.assertNotNull(image);
         Assert.assertEquals(DBIcon.TREE_PACKAGE,image);
 	}
@@ -82,7 +83,7 @@ public class DBValueFormattingTest extends DBeaverUnitTest {
 	public void testGetObjectImageTrigger() {
 
         Assert.assertTrue(objectTrigger instanceof DBPObject);
-        DBPImage image = DBValueFormatting.getObjectImage(objectTrigger, true);
+        DBPImage image = DBDValueFormatting.getObjectImage(objectTrigger, true);
         Assert.assertNotNull(image);
         Assert.assertEquals(DBIcon.TREE_TRIGGER,image);
 	}
@@ -91,7 +92,7 @@ public class DBValueFormattingTest extends DBeaverUnitTest {
 	public void testGetObjectImage() {
         
         Assert.assertTrue(object instanceof DBPObject);
-        DBPImage image = DBValueFormatting.getObjectImage(object, true);
+        DBPImage image = DBDValueFormatting.getObjectImage(object, true);
         Assert.assertNotNull(image);
         Assert.assertEquals(DBIcon.TYPE_OBJECT,image);
 	}
@@ -100,7 +101,7 @@ public class DBValueFormattingTest extends DBeaverUnitTest {
 	public void testGetObjectImageEntity() {
         
         Assert.assertTrue(objectEntity instanceof DBPObject);
-        DBPImage image = DBValueFormatting.getObjectImage(objectEntity, true);
+        DBPImage image = DBDValueFormatting.getObjectImage(objectEntity, true);
         Assert.assertNotNull(image);
         Assert.assertEquals(DBIcon.TREE_TABLE,image);
 	}
@@ -108,7 +109,7 @@ public class DBValueFormattingTest extends DBeaverUnitTest {
 	@Test
 	public void testGetObjectReturnsNull() {
 
-        DBPImage image = DBValueFormatting.getObjectImage(object, false);
+        DBPImage image = DBDValueFormatting.getObjectImage(object, false);
         Assert.assertNull(image);
 	}
 }

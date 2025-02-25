@@ -33,7 +33,11 @@ import org.eclipse.ui.views.contentoutline.ContentOutlinePage;
 import org.eclipse.ui.views.contentoutline.IContentOutlinePage;
 import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
-import org.jkiss.dbeaver.model.*;
+import org.jkiss.dbeaver.model.DBIcon;
+import org.jkiss.dbeaver.model.DBPEvaluationContext;
+import org.jkiss.dbeaver.model.DBPImage;
+import org.jkiss.dbeaver.model.DBUtils;
+import org.jkiss.dbeaver.model.data.DBDValueFormatting;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 import org.jkiss.dbeaver.model.sql.SQLConstants;
 import org.jkiss.dbeaver.model.sql.semantics.*;
@@ -869,7 +873,7 @@ public class SQLEditorOutlinePage extends ContentOutlinePage implements IContent
             return type == null
                 ? DBIcon.TYPE_UNKNOWN
                 : type.getTypedDbObject() != null
-                    ? DBValueFormatting.getTypeImage(type.getTypedDbObject())
+                    ? DBDValueFormatting.getTypeImage(type.getTypedDbObject())
                     : wellKnownTypeIcons.getOrDefault(type, DBIcon.TYPE_UNKNOWN);
         }
         
@@ -893,7 +897,7 @@ public class SQLEditorOutlinePage extends ContentOutlinePage implements IContent
         @Override
         public Object visitRowsTableData(@NotNull SQLQueryRowsTableDataModel tableData, @NotNull OutlineQueryNode node) {
             DBSEntity table = tableData.getTable();
-            DBPImage icon = DBValueFormatting.getObjectImage(table);
+            DBPImage icon = DBDValueFormatting.getObjectImage(table);
             String text = table == null
                 ? (tableData.getName() == null ? SQLConstants.QUESTION : tableData.getName().toIdentifierString())
                 : DBUtils.getObjectFullName(table, DBPEvaluationContext.DML);

@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.views.properties.IPropertyDescriptor;
 import org.eclipse.ui.views.properties.IPropertySheetEntry;
 import org.jkiss.dbeaver.model.*;
+import org.jkiss.dbeaver.model.data.DBDValueFormatting;
 import org.jkiss.dbeaver.model.preferences.DBPPropertyDescriptor;
 import org.jkiss.dbeaver.model.preferences.DBPPropertySource;
 import org.jkiss.dbeaver.ui.DBeaverIcons;
@@ -49,7 +50,7 @@ public class PropertyDescriptorDelegate implements IPropertyDescriptor
         @Override
         public Image getImage(Object element) {
             if (element instanceof DBPObject) {
-                DBPImage image = DBValueFormatting.getObjectImage((DBPObject) element, false);
+                DBPImage image = DBDValueFormatting.getObjectImage((DBPObject) element, false);
 /*
                 if (image == null && element instanceof DBSObject) {
                     final DBNDatabaseNode node = DBWorkbench.getPlatform().getNavigatorModel().findNode((DBSObject) element);

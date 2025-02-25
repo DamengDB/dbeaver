@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,10 @@ import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.model.DBConstants;
 import org.jkiss.dbeaver.model.DBUtils;
-import org.jkiss.dbeaver.model.DBValueFormatting;
 import org.jkiss.dbeaver.model.data.DBDDataFormatter;
 import org.jkiss.dbeaver.model.data.DBDDataFormatterProfile;
 import org.jkiss.dbeaver.model.data.DBDDisplayFormat;
+import org.jkiss.dbeaver.model.data.DBDValueFormatting;
 import org.jkiss.dbeaver.model.exec.DBCException;
 import org.jkiss.dbeaver.model.exec.jdbc.JDBCPreparedStatement;
 import org.jkiss.dbeaver.model.exec.jdbc.JDBCResultSet;
@@ -61,7 +61,7 @@ public class JDBCPreparedStatementImpl extends JDBCStatementImpl<PreparedStateme
                 displayString = SQLUtils.quoteString(session.getDataSource(), new String(((RowId) value).getBytes()));
             } else if (value instanceof byte[]) {
                 byte[] bytes = (byte[])value;
-                displayString = DBValueFormatting.formatBinaryString(session.getDataSource(), bytes, DBDDisplayFormat.NATIVE, true);
+                displayString = DBDValueFormatting.formatBinaryString(session.getDataSource(), bytes, DBDDisplayFormat.NATIVE, true);
             } else {
                 displayString = "DATA(" + (value == null ? DBConstants.NULL_VALUE_LABEL : value.getClass().getSimpleName()) + ")";
             }
@@ -153,7 +153,7 @@ public class JDBCPreparedStatementImpl extends JDBCStatementImpl<PreparedStateme
         if (value instanceof CharSequence) {
             return SQLUtils.quoteString(connection.getDataSource(), value.toString());
         } else if (value instanceof Number) {
-            return DBValueFormatting.convertNumberToNativeString((Number) value, false);
+            return DBDValueFormatting.convertNumberToNativeString((Number) value, false);
         } else if (value instanceof java.util.Date) {
             try {
                 DBDDataFormatterProfile formatterProfile = getSession().getDataFormatterProfile();

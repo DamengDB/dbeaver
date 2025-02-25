@@ -3210,7 +3210,7 @@ public class ResultSetViewer extends Viewer
                 if (valueController.getValueHandler() instanceof DBDValueDefaultGenerator) {
                     String commandName = ActionUtils.findCommandName(ResultSetHandlerMain.CMD_CELL_SET_DEFAULT) +
                         " (" + ((DBDValueDefaultGenerator) valueController.getValueHandler()).getDefaultValueLabel() + ")";
-                    DBPImage image = DBValueFormatting.getObjectImage(attr);
+                    DBPImage image = DBDValueFormatting.getObjectImage(attr);
                     editMenu.add(ActionUtils.makeCommandContribution(site, ResultSetHandlerMain.CMD_CELL_SET_DEFAULT, commandName, image));
                 }
             }
@@ -3517,7 +3517,7 @@ public class ResultSetViewer extends Viewer
     private void fillBinaryFormatMenu(@NotNull IMenuManager manager, @Nullable DBDAttributeBinding attribute) {
         if (attribute != null) {
             manager.add(new Separator());
-            for (DBDBinaryFormatter formatter : DBConstants.BINARY_FORMATS) {
+            for (DBDBinaryFormatter formatter : DBDValueFormatting.BINARY_FORMATS) {
                 manager.add(new BinaryFormatAction(this, formatter, attribute));
             }
         }

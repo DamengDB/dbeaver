@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,9 +29,9 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableItem;
 import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
-import org.jkiss.dbeaver.model.DBValueFormatting;
 import org.jkiss.dbeaver.model.data.DBDAttributeBinding;
 import org.jkiss.dbeaver.model.data.DBDDisplayFormat;
+import org.jkiss.dbeaver.model.data.DBDValueFormatting;
 import org.jkiss.dbeaver.ui.UIStyles;
 import org.jkiss.dbeaver.ui.UIUtils;
 import org.jkiss.dbeaver.ui.UIWidgets;
@@ -98,7 +98,7 @@ public class StatisticsPresentation extends AbstractPresentation {
             for (int i = 0; i < visibleAttributes.size(); i++) {
                 DBDAttributeBinding attr = visibleAttributes.get(i);
                 Object value = row.getValues()[i];
-                String valueString = DBValueFormatting.getDefaultValueDisplayString(value, DBDDisplayFormat.UI);
+                String valueString = DBDValueFormatting.getDefaultValueDisplayString(value, DBDDisplayFormat.UI);
                 String[] lines = valueString.split("\n");
                 for (int k = 0; k < lines.length; k++) {
                     String line = lines[k];

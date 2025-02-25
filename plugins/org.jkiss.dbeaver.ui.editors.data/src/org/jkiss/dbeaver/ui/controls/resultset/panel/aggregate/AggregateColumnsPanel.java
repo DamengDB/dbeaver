@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,8 +31,8 @@ import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.model.DBIcon;
 import org.jkiss.dbeaver.model.DBPImage;
-import org.jkiss.dbeaver.model.DBValueFormatting;
 import org.jkiss.dbeaver.model.data.DBDAttributeBinding;
+import org.jkiss.dbeaver.model.data.DBDValueFormatting;
 import org.jkiss.dbeaver.model.data.aggregate.IAggregateFunction;
 import org.jkiss.dbeaver.registry.functions.AggregateFunctionDescriptor;
 import org.jkiss.dbeaver.registry.functions.FunctionsRegistry;
@@ -245,7 +245,7 @@ public class AggregateColumnsPanel implements IResultSetPanel {
             for (Map.Entry<DBDAttributeBinding, List<Object>> entry : attrValues.entrySet()) {
                 TreeItem attrItem = new TreeItem(aggregateTable, SWT.NONE);
                 attrItem.setText(entry.getKey().getName());
-                attrItem.setImage(DBeaverIcons.getImage(DBValueFormatting.getObjectImage(entry.getKey())));
+                attrItem.setImage(DBeaverIcons.getImage(DBDValueFormatting.getObjectImage(entry.getKey())));
                 aggregateValues(attrItem, entry.getValue());
                 attrItem.setExpanded(true);
             }

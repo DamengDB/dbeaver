@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.model.data.DBDDisplayFormat;
+import org.jkiss.dbeaver.model.data.DBDValueFormatting;
 import org.jkiss.dbeaver.model.preferences.DBPPropertyDescriptor;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 import org.jkiss.dbeaver.model.struct.DBSObjectReference;
@@ -89,7 +90,7 @@ public final class DBInfoUtils {
         if (propValue instanceof DBPNamedObject) {
             propString = ((DBPNamedObject) propValue).getName();
         } else {
-            propString = DBValueFormatting.getDefaultValueDisplayString(propValue, DBDDisplayFormat.UI);
+            propString = DBDValueFormatting.getDefaultValueDisplayString(propValue, DBDDisplayFormat.UI);
         }
         if (CommonUtils.isEmpty(propString)) {
             return null;

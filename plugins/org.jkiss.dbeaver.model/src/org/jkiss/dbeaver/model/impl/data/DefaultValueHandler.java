@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ import org.jkiss.code.NotNull;
 import org.jkiss.dbeaver.model.DBPEvaluationContext;
 import org.jkiss.dbeaver.model.DBPNamedObject;
 import org.jkiss.dbeaver.model.DBUtils;
-import org.jkiss.dbeaver.model.DBValueFormatting;
 import org.jkiss.dbeaver.model.data.DBDDisplayFormat;
+import org.jkiss.dbeaver.model.data.DBDValueFormatting;
 import org.jkiss.dbeaver.model.exec.DBCException;
 import org.jkiss.dbeaver.model.exec.DBCResultSet;
 import org.jkiss.dbeaver.model.exec.DBCSession;
@@ -61,7 +61,7 @@ public class DefaultValueHandler extends BaseValueHandler {
         Object value) throws DBCException
     {
         String objectName = type instanceof DBPNamedObject namedObject ? DBUtils.getObjectFullName(namedObject, DBPEvaluationContext.UI) : type.getTypeName();
-        throw new DBCException("Parameter [" + objectName + "] value [" + DBValueFormatting.getDefaultValueDisplayString(value, DBDDisplayFormat.UI) + "] binding not supported");
+        throw new DBCException("Parameter [" + objectName + "] value [" + DBDValueFormatting.getDefaultValueDisplayString(value, DBDDisplayFormat.UI) + "] binding not supported");
     }
 
     @Override

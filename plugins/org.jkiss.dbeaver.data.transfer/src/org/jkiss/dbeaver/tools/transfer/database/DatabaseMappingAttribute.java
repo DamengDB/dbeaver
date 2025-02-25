@@ -24,6 +24,7 @@ import org.jkiss.dbeaver.model.*;
 import org.jkiss.dbeaver.model.data.DBDAttributeBinding;
 import org.jkiss.dbeaver.model.data.DBDDataContainer;
 import org.jkiss.dbeaver.model.data.DBDDataManipulator;
+import org.jkiss.dbeaver.model.data.DBDValueFormatting;
 import org.jkiss.dbeaver.model.impl.DBObjectNameCaseTransformer;
 import org.jkiss.dbeaver.model.preferences.DBPPreferenceStore;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
@@ -83,7 +84,7 @@ public class DatabaseMappingAttribute implements DatabaseMappingObject {
 
     @Override
     public DBPImage getIcon() {
-        return DBValueFormatting.getObjectImage(source);
+        return DBDValueFormatting.getObjectImage(source);
     }
 
     @Nullable

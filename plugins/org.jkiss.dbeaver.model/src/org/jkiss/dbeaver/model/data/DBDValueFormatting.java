@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jkiss.dbeaver.model;
+package org.jkiss.dbeaver.model.data;
 
 import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.ModelPreferences;
-import org.jkiss.dbeaver.model.data.DBDBinaryFormatter;
-import org.jkiss.dbeaver.model.data.DBDComposite;
-import org.jkiss.dbeaver.model.data.DBDDataFormatter;
-import org.jkiss.dbeaver.model.data.DBDDisplayFormat;
+import org.jkiss.dbeaver.model.*;
 import org.jkiss.dbeaver.model.exec.DBCException;
+import org.jkiss.dbeaver.model.impl.data.formatters.BinaryFormatterBase64;
+import org.jkiss.dbeaver.model.impl.data.formatters.BinaryFormatterHex;
+import org.jkiss.dbeaver.model.impl.data.formatters.BinaryFormatterString;
 import org.jkiss.dbeaver.model.preferences.DBPPreferenceStore;
 import org.jkiss.dbeaver.model.struct.*;
 import org.jkiss.dbeaver.model.struct.rdb.*;
@@ -44,12 +44,17 @@ import java.util.Locale;
 /**
  * DB value formatting utilities
  */
-public final class DBValueFormatting {
+public final class DBDValueFormatting {
 
     public static final DecimalFormat NATIVE_FLOAT_FORMATTER = new DecimalFormat("#.########", DecimalFormatSymbols.getInstance(Locale.ENGLISH));
     public static final DecimalFormat NATIVE_DOUBLE_FORMATTER = new DecimalFormat("#.################", DecimalFormatSymbols.getInstance(Locale.ENGLISH));
+    public static final DBDBinaryFormatter[] BINARY_FORMATS = {
+        new BinaryFormatterString(),
+        new BinaryFormatterHex(),
+        new BinaryFormatterBase64(),
+    };
 
-    private static final Log log = Log.getLog(DBValueFormatting.class);
+    private static final Log log = Log.getLog(DBDValueFormatting.class);
 
     static {
         //NATIVE_FLOAT_FORMATTER.setMaximumFractionDigits(NumberDataFormatter.MAX_FLOAT_FRACTION_DIGITS);
@@ -174,13 +179,13 @@ public final class DBValueFormatting {
                 return formatter;
             }
         }
-        return DBConstants.BINARY_FORMATS[0];
+        return BINARY_FORMATS[0];
     }
 
     @Nullable
     public static DBDBinaryFormatter getBinaryPresentation(String id)
     {
-        for (DBDBinaryFormatter formatter : DBConstants.BINARY_FORMATS) {
+        for (DBDBinaryFormatter formatter : BINARY_FORMATS) {
             if (formatter.getId().equals(id)) {
                 return formatter;
             }

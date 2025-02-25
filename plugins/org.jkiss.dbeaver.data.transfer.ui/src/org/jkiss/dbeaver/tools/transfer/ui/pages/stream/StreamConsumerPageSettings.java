@@ -34,11 +34,11 @@ import org.jkiss.code.NotNull;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.model.DBIcon;
 import org.jkiss.dbeaver.model.DBPNamedObject;
-import org.jkiss.dbeaver.model.DBValueFormatting;
 import org.jkiss.dbeaver.model.app.DBPDataFormatterRegistry;
 import org.jkiss.dbeaver.model.app.DBPPlatformDesktop;
 import org.jkiss.dbeaver.model.data.DBDDataContainer;
 import org.jkiss.dbeaver.model.data.DBDDataFormatterProfile;
+import org.jkiss.dbeaver.model.data.DBDValueFormatting;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 import org.jkiss.dbeaver.model.runtime.VoidProgressMonitor;
 import org.jkiss.dbeaver.runtime.DBWorkbench;
@@ -375,7 +375,7 @@ public class StreamConsumerPageSettings extends DataTransferPageNodeSettings {
                         final Object element = cell.getElement();
                         final DBPNamedObject object = (DBPNamedObject) element;
                         cell.setText(object.getName());
-                        cell.setImage(DBeaverIcons.getImage(DBValueFormatting.getObjectImage(object)));
+                        cell.setImage(DBeaverIcons.getImage(DBDValueFormatting.getObjectImage(object)));
                     }
                 });
                 column.getColumn().setText(DTUIMessages.stream_consumer_page_mapping_name_column_name);

@@ -729,7 +729,7 @@ public class ResultSetHandlerMain extends AbstractHandler implements IElementUpd
 
     @NotNull
     private static DBPImage obtainAttributeIcon(@NotNull DBDAttributeBinding attr) {
-        DBPImage image = DBValueFormatting.getObjectImage(attr.getAttribute());
+        DBPImage image = DBDValueFormatting.getObjectImage(attr.getAttribute());
 
         if (DBExecUtils.isAttributeReadOnly(attr)) {
             image = new DBIconComposite(image, false, null, null, null, DBIcon.OVER_LOCK);

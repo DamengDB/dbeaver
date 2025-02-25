@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,9 +36,9 @@ import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
-import org.jkiss.dbeaver.model.DBValueFormatting;
 import org.jkiss.dbeaver.model.data.DBDAttributeBinding;
 import org.jkiss.dbeaver.model.data.DBDDisplayFormat;
+import org.jkiss.dbeaver.model.data.DBDValueFormatting;
 import org.jkiss.dbeaver.model.exec.DBCLogicalOperator;
 import org.jkiss.dbeaver.model.virtual.DBVColorOverride;
 import org.jkiss.dbeaver.model.virtual.DBVEntity;
@@ -177,7 +177,7 @@ public class ColorSettingsDialog extends BaseDialog {
             TableItem attrItem = new TableItem(attributeTable, SWT.NONE);
             attrItem.setData(attr);
             attrItem.setText(0, attr.getName());
-            attrItem.setImage(0, DBeaverIcons.getImage(DBValueFormatting.getObjectImage(attr, true)));
+            attrItem.setImage(0, DBeaverIcons.getImage(DBDValueFormatting.getObjectImage(attr, true)));
 
             if (this.attribute == attr) {
                 attributeTable.setSelection(attrItem);
@@ -613,7 +613,7 @@ public class ColorSettingsDialog extends BaseDialog {
         if (ArrayUtils.isEmpty(values)) {
             text = co.getOperator().getExpression() + " ?";
         } else if (values.length == 1) {
-            text = co.getOperator().getExpression() + " " + DBValueFormatting.getDefaultValueDisplayString(values[0], DBDDisplayFormat.UI);
+            text = co.getOperator().getExpression() + " " + DBDValueFormatting.getDefaultValueDisplayString(values[0], DBDDisplayFormat.UI);
         } else {
             if (co.isRange()) {
                 text = "In " + Arrays.toString(values);

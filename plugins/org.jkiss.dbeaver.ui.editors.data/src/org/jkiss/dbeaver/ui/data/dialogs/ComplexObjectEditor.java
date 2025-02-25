@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,6 @@ import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.model.DBPMessageType;
 import org.jkiss.dbeaver.model.DBUtils;
-import org.jkiss.dbeaver.model.DBValueFormatting;
 import org.jkiss.dbeaver.model.data.*;
 import org.jkiss.dbeaver.model.exec.DBCException;
 import org.jkiss.dbeaver.model.exec.DBCExecutionContext;
@@ -311,7 +310,7 @@ public class ComplexObjectEditor extends TreeViewer {
     @Nullable
     private Image getColumnImage(@NotNull ComplexElementItem item, int columnIndex) {
         if (columnIndex == 0) {
-            return DBeaverIcons.getImage(DBValueFormatting.getTypeImage(item.getDataType()));
+            return DBeaverIcons.getImage(DBDValueFormatting.getTypeImage(item.getDataType()));
         } else {
             return null;
         }

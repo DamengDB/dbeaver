@@ -41,10 +41,7 @@ import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.model.*;
-import org.jkiss.dbeaver.model.data.DBDAttributeBinding;
-import org.jkiss.dbeaver.model.data.DBDAttributeConstraint;
-import org.jkiss.dbeaver.model.data.DBDDataContainer;
-import org.jkiss.dbeaver.model.data.DBDDataFilter;
+import org.jkiss.dbeaver.model.data.*;
 import org.jkiss.dbeaver.model.exec.DBCExecutionContext;
 import org.jkiss.dbeaver.model.navigator.DBNDatabaseNode;
 import org.jkiss.dbeaver.model.runtime.DBRRunnableWithProgress;
@@ -647,7 +644,7 @@ class ResultSetFilterPanel extends Composite implements IContentProposalProvider
                             attribute.getName(),
                             DBInfoUtils.makeObjectDescription(monitor, attribute.getAttribute(), false),
                             content.length(),
-                            DBValueFormatting.getObjectImage(attribute)));
+                            DBDValueFormatting.getObjectImage(attribute)));
                 }
             }
         };
