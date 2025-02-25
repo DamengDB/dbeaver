@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -128,7 +128,7 @@ public abstract class DBDAttributeBinding implements DBSObject, DBSAttributeBase
         return false;
     }
 
-    public DBSDataContainer getDataContainer() {
+    public DBDDataContainer getDataContainer() {
         DBDAttributeBinding parentObject = getParentObject();
         return parentObject == null ? null : parentObject.getDataContainer();
     }
@@ -340,7 +340,7 @@ public abstract class DBDAttributeBinding implements DBSObject, DBSAttributeBase
     }
 
     protected List<DBSEntityReferrer> findVirtualReferrers() {
-        DBSDataContainer dataContainer = getDataContainer();
+        DBDDataContainer dataContainer = getDataContainer();
         if (dataContainer instanceof DBSEntity) {
             DBSEntity attrEntity = (DBSEntity) dataContainer;
             DBVEntity vEntity = DBVUtils.getVirtualEntity(attrEntity, false);

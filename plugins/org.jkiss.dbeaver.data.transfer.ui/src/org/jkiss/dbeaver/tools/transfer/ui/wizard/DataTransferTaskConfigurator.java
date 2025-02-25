@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,8 @@ import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.model.*;
 import org.jkiss.dbeaver.model.app.DBPProject;
+import org.jkiss.dbeaver.model.data.DBDDataContainer;
+import org.jkiss.dbeaver.model.data.DBDDataManipulator;
 import org.jkiss.dbeaver.model.exec.DBCExecutionContext;
 import org.jkiss.dbeaver.model.exec.DBCExecutionContextDefaults;
 import org.jkiss.dbeaver.model.exec.DBExecUtils;
@@ -38,7 +40,9 @@ import org.jkiss.dbeaver.model.runtime.VoidProgressMonitor;
 import org.jkiss.dbeaver.model.sql.SQLQuery;
 import org.jkiss.dbeaver.model.sql.SQLScriptContext;
 import org.jkiss.dbeaver.model.sql.data.SQLQueryDataContainer;
-import org.jkiss.dbeaver.model.struct.*;
+import org.jkiss.dbeaver.model.struct.DBSInstance;
+import org.jkiss.dbeaver.model.struct.DBSObject;
+import org.jkiss.dbeaver.model.struct.DBSObjectContainer;
 import org.jkiss.dbeaver.model.struct.rdb.DBSCatalog;
 import org.jkiss.dbeaver.model.struct.rdb.DBSSchema;
 import org.jkiss.dbeaver.model.task.DBTTask;
@@ -128,7 +132,7 @@ public class DataTransferTaskConfigurator implements DBTTaskConfigurator, DBTTas
             UIUtils.createDialogButton(buttonsPanel, DTUIMessages.data_transfer_task_configurator_dialog_button_label_add_table, new SelectionAdapter() {
                 @Override
                 public void widgetSelected(SelectionEvent e) {
-                    Class<?> tableClass = isExport ? DBSDataContainer.class : DBSDataManipulator.class;
+                    Class<?> tableClass = isExport ? DBDDataContainer.class : DBDDataManipulator.class;
                     DBNProjectDatabases rootNode = currentProject.getNavigatorModel().getRoot().getProjectNode(currentProject).getDatabases();
                     DBNNode selNode = null;
                     if (objectsTable.getItemCount() > 0) {
@@ -150,8 +154,8 @@ public class DataTransferTaskConfigurator implements DBTTaskConfigurator, DBTTas
                             if (node instanceof DBNDatabaseNode) {
                                 DBSObject object = ((DBNDatabaseNode) node).getObject();
                                 DataTransferPipe pipe = new DataTransferPipe(
-                                    isExport ? new DatabaseTransferProducer((DBSDataContainer) object) : null,
-                                    isExport ? null : new DatabaseTransferConsumer((DBSDataManipulator) object));
+                                    isExport ? new DatabaseTransferProducer((DBDDataContainer) object) : null,
+                                    isExport ? null : new DatabaseTransferConsumer((DBDDataManipulator) object));
                                 addPipeToTable(pipe);
                             }
                         }

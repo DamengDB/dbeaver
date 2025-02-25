@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.delete.Delete;
 import net.sf.jsqlparser.statement.insert.Insert;
 import net.sf.jsqlparser.statement.select.PlainSelect;
-import net.sf.jsqlparser.statement.select.Select;
 import net.sf.jsqlparser.statement.update.Update;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -41,6 +40,7 @@ import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.ModelPreferences;
 import org.jkiss.dbeaver.model.*;
 import org.jkiss.dbeaver.model.connection.DBPConnectionType;
+import org.jkiss.dbeaver.model.data.DBDDataContainer;
 import org.jkiss.dbeaver.model.data.DBDDataFilter;
 import org.jkiss.dbeaver.model.data.DBDDataReceiver;
 import org.jkiss.dbeaver.model.exec.*;
@@ -55,7 +55,6 @@ import org.jkiss.dbeaver.model.sql.data.SQLQueryDataContainer;
 import org.jkiss.dbeaver.model.sql.parser.SQLSemanticProcessor;
 import org.jkiss.dbeaver.model.sql.registry.SQLCommandsRegistry;
 import org.jkiss.dbeaver.model.sql.registry.SQLPragmaHandlerDescriptor;
-import org.jkiss.dbeaver.model.struct.DBSDataContainer;
 import org.jkiss.dbeaver.runtime.DBWorkbench;
 import org.jkiss.dbeaver.runtime.jobs.DataSourceJob;
 import org.jkiss.dbeaver.runtime.ui.DBPPlatformUI;
@@ -94,7 +93,7 @@ public class SQLQueryJob extends DataSourceJob
     private static final int MAX_QUERY_PREVIEW_LENGTH = 8192;
     private static final int MAX_UPDATE_COUNT_READS = 1000;
 
-    private final DBSDataContainer dataContainer;
+    private final DBDDataContainer dataContainer;
     private final List<SQLScriptElement> queries;
     private final SQLScriptContext scriptContext;
     private final SQLResultsConsumer resultsConsumer;
@@ -130,7 +129,7 @@ public class SQLQueryJob extends DataSourceJob
         @NotNull IWorkbenchPartSite partSite,
         @NotNull String name,
         @NotNull DBCExecutionContext executionContext,
-        @Nullable DBSDataContainer dataContainer,
+        @Nullable DBDDataContainer dataContainer,
         @NotNull List<SQLScriptElement> queries,
         @NotNull SQLScriptContext scriptContext,
         @Nullable SQLResultsConsumer resultsConsumer,
@@ -464,7 +463,7 @@ public class SQLQueryJob extends DataSourceJob
         if (!scriptContext.fillQueryParameters(
             originalQuery,
             () -> resultsConsumer.getDataReceiver(originalQuery, resultSetNumber),
-            CommonUtils.isBitSet(fetchFlags, DBSDataContainer.FLAG_REFRESH)
+            CommonUtils.isBitSet(fetchFlags, DBDDataContainer.FLAG_REFRESH)
         )) {
             // User canceled
             return false;

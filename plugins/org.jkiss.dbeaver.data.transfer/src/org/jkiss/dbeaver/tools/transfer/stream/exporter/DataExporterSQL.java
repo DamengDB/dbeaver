@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import org.jkiss.dbeaver.model.sql.SQLDialect;
 import org.jkiss.dbeaver.model.sql.SQLQueryContainer;
 import org.jkiss.dbeaver.model.sql.SQLUtils;
 import org.jkiss.dbeaver.model.sql.parser.SQLIdentifierDetector;
-import org.jkiss.dbeaver.model.struct.DBSDataManipulator;
 import org.jkiss.dbeaver.tools.transfer.DTConstants;
 import org.jkiss.dbeaver.tools.transfer.DTUtils;
 import org.jkiss.dbeaver.tools.transfer.stream.IAppendableDataExporter;
@@ -150,8 +149,8 @@ public class DataExporterSQL extends StreamExporterAbstract implements IAppendab
         rowDelimiter = GeneralUtils.getDefaultLineSeparator();
         dialect = SQLUtils.getDialectFromObject(site.getSource());
 
-        if (properties.containsKey(DBSDataManipulator.OPTION_USE_CURRENT_DIALECT_SETTINGS)) {
-            boolean useDBDefaultValueMode = CommonUtils.toBoolean(properties.get(DBSDataManipulator.OPTION_USE_CURRENT_DIALECT_SETTINGS));
+        if (properties.containsKey(DBDDataManipulator.OPTION_USE_CURRENT_DIALECT_SETTINGS)) {
+            boolean useDBDefaultValueMode = CommonUtils.toBoolean(properties.get(DBDDataManipulator.OPTION_USE_CURRENT_DIALECT_SETTINGS));
             if (useDBDefaultValueMode && getDefaultMultiValueInsertMode() != SQLDialect.MultiValueInsertMode.GROUP_ROWS) {
                 rowsInStatement = 1;
             }

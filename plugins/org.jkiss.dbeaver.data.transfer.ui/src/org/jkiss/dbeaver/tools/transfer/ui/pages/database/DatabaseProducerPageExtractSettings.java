@@ -24,9 +24,9 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.*;
 import org.jkiss.dbeaver.model.DBPDataSource;
+import org.jkiss.dbeaver.model.DBSDocumentContainer;
 import org.jkiss.dbeaver.model.data.DBDCellValue;
-import org.jkiss.dbeaver.model.struct.DBSDataContainer;
-import org.jkiss.dbeaver.model.struct.DBSDocumentContainer;
+import org.jkiss.dbeaver.model.data.DBDDataContainer;
 import org.jkiss.dbeaver.model.struct.DBSObject;
 import org.jkiss.dbeaver.tools.transfer.database.DatabaseProducerSettings;
 import org.jkiss.dbeaver.tools.transfer.database.DatabaseTransferProducer;
@@ -163,7 +163,7 @@ public class DatabaseProducerPageExtractSettings extends DataTransferPageNodeSet
                 if (!CommonUtils.isEmpty(sourceObjects)) {
                     DBSObject sourceObject = sourceObjects.get(0);
                     if (sourceObject instanceof IAdaptable) {
-                        DBSDataContainer adapter = ((IAdaptable) sourceObject).getAdapter(DBSDataContainer.class);
+                        DBDDataContainer adapter = ((IAdaptable) sourceObject).getAdapter(DBDDataContainer.class);
                         if (adapter instanceof DBSDocumentContainer) {
                             supportsColumnsExport = false;
                         } else if (adapter != null) {

@@ -13,7 +13,7 @@
               description="%dataTransfer.producer.database.description"
               settings="org.jkiss.dbeaver.tools.transfer.database.DatabaseProducerSettings"
               advanced="true">
-            <sourceType type="org.jkiss.dbeaver.model.struct.DBSDataContainer"/>
+            <sourceType type="org.jkiss.dbeaver.model.data.DBDDataContainer"/>
 <!--            <sourceType type="org.jkiss.dbeaver.model.struct.DBSObjectContainer"/>-->
         </node>
 
@@ -25,7 +25,7 @@
             description="%dataTransfer.consumer.database.description"
             settings="org.jkiss.dbeaver.tools.transfer.database.DatabaseConsumerSettings"
             advanced="true">
-            <sourceType type="org.jkiss.dbeaver.model.struct.DBSDataContainer"/>
+            <sourceType type="org.jkiss.dbeaver.model.data.DBDDataContainer"/>
         </node>
 
         <node type="producer"
@@ -284,11 +284,11 @@
 
         <task id="dataExport" name="%task.name.export" description="%task.description.export" icon="icons/export.png" type="common"
               handler="org.jkiss.dbeaver.tools.transfer.task.DTTaskHandlerExport" supportsVariables="true">
-            <objectType name="org.jkiss.dbeaver.model.struct.DBSDataContainer"/>
+            <objectType name="org.jkiss.dbeaver.model.data.DBDDataContainer"/>
         </task>
         <task id="dataImport" name="%task.name.import" description="%task.description.import" icon="icons/import.png" type="common"
               handler="org.jkiss.dbeaver.tools.transfer.task.DTTaskHandlerImport">
-            <objectType name="org.jkiss.dbeaver.model.struct.DBSDataManipulator"/>
+            <objectType name="org.jkiss.dbeaver.model.data.DBDDataManipulator"/>
         </task>
 
         <task id="scriptExecute" name="%task.name.sql.script" description="%task.description.sql.script" icon="icons/task_script.png"

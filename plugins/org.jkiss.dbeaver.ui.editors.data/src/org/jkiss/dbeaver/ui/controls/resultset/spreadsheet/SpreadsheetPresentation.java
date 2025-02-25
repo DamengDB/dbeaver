@@ -905,7 +905,7 @@ public class SpreadsheetPresentation extends AbstractPresentation
         supportsAttributeFilter =
             controller.getDataContainer() != null &&
                 (controller.getDecorator().getDecoratorFeatures() & IResultSetDecorator.FEATURE_FILTERS) != 0 &&
-                controller.getDataContainer().isFeatureSupported(DBSDataContainer.FEATURE_DATA_FILTER) &&
+                controller.getDataContainer().isFeatureSupported(DBDDataContainer.FEATURE_DATA_FILTER) &&
                 controller.getPreferenceStore().getBoolean(ResultSetPreferences.RESULT_SET_SHOW_ATTR_FILTERS);
         autoFetchSegments = controller.getPreferenceStore().getBoolean(ResultSetPreferences.RESULT_SET_AUTO_FETCH_NEXT_SEGMENT);
         calcColumnWidthByValue = getPreferenceStore().getBoolean(ResultSetPreferences.RESULT_SET_CALC_COLUMN_WIDTH_BY_VALUES);
@@ -1422,9 +1422,9 @@ public class SpreadsheetPresentation extends AbstractPresentation
     // Ordering
 
     private boolean supportsDataFilter() {
-        DBSDataContainer dataContainer = controller.getDataContainer();
+        DBDDataContainer dataContainer = controller.getDataContainer();
         return dataContainer != null &&
-            dataContainer.isFeatureSupported(DBSDataContainer.FEATURE_DATA_FILTER);
+            dataContainer.isFeatureSupported(DBDDataContainer.FEATURE_DATA_FILTER);
     }
 
     public void changeSorting(Object columnElement, final int state) {
@@ -2087,8 +2087,8 @@ public class SpreadsheetPresentation extends AbstractPresentation
                                 rowIdentifier.getAttributes().stream()
                                     .map(DBDAttributeBinding::getName).collect(Collectors.joining(","));
                         } else {
-                            DBSDataContainer dataContainer = getController().getDataContainer();
-                            if (dataContainer instanceof DBSEntity && !dataContainer.isFeatureSupported(DBSDataManipulator.FEATURE_DATA_UPDATE)) {
+                            DBDDataContainer dataContainer = getController().getDataContainer();
+                            if (dataContainer instanceof DBSEntity && !dataContainer.isFeatureSupported(DBDDataManipulator.FEATURE_DATA_UPDATE)) {
                                 return "Data modification is not supported by database.";
                             }
                             if (rowIdentifier == null) {
@@ -2194,7 +2194,8 @@ public class SpreadsheetPresentation extends AbstractPresentation
                 rowNum == controller.getModel().getRowCount() - 1 &&
                 autoFetchSegments &&
                 !controller.isRefreshInProgress() &&
-                !(controller.getContainer().getDataContainer() != null && controller.getContainer().getDataContainer().isFeatureSupported(DBSDataContainer.FEATURE_DATA_MODIFIED_ON_REFRESH)) &&
+                !(controller.getContainer().getDataContainer() != null && controller.getContainer().getDataContainer().isFeatureSupported(
+                    DBDDataContainer.FEATURE_DATA_MODIFIED_ON_REFRESH)) &&
                 !(getPreferenceStore().getInt(ModelPreferences.RESULT_SET_MAX_ROWS) < getSpreadsheet().getMaxVisibleRows()) &&
                 (controller.isRecordMode() || spreadsheet.isRowVisible(rowNum))) {
                 controller.readNextSegment();

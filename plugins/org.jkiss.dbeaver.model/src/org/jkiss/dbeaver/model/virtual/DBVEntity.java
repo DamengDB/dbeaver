@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,7 @@ import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.ModelPreferences;
 import org.jkiss.dbeaver.model.*;
-import org.jkiss.dbeaver.model.data.DBDAttributeBinding;
-import org.jkiss.dbeaver.model.data.DBDAttributeValue;
-import org.jkiss.dbeaver.model.data.DBDLabelValuePair;
+import org.jkiss.dbeaver.model.data.*;
 import org.jkiss.dbeaver.model.data.json.JSONUtils;
 import org.jkiss.dbeaver.model.exec.DBCLogicalOperator;
 import org.jkiss.dbeaver.model.preferences.DBPPreferenceStore;
@@ -37,7 +35,7 @@ import java.util.*;
 /**
  * Virtual entity descriptor
  */
-public class DBVEntity extends DBVObject implements DBSEntity, DBPQualifiedObject, DBSDictionary, DBPAdaptable {
+public class DBVEntity extends DBVObject implements DBSEntity, DBPQualifiedObject, DBDDictionary, DBPAdaptable {
 
     public static final String[] DEFAULT_DESCRIPTION_COLUMN_PATTERNS = {
         "title",
@@ -699,7 +697,7 @@ public class DBVEntity extends DBVObject implements DBSEntity, DBPQualifiedObjec
 
     @NotNull
     @Override
-    public DBSDictionaryAccessor getDictionaryAccessor(
+    public DBDDictionaryAccessor getDictionaryAccessor(
         @NotNull DBRProgressMonitor monitor,
         List<DBDAttributeValue> precedingKeys,
         @NotNull DBSEntityAttribute keyColumn,
@@ -707,8 +705,8 @@ public class DBVEntity extends DBVObject implements DBSEntity, DBPQualifiedObjec
         boolean sortByDesc
     ) throws DBException {
         final DBSEntity realEntity = getRealEntity(monitor);
-        if (realEntity instanceof DBSDictionary) {
-            return ((DBSDictionary) realEntity).getDictionaryAccessor(
+        if (realEntity instanceof DBDDictionary) {
+            return ((DBDDictionary) realEntity).getDictionaryAccessor(
                 monitor,
                     precedingKeys,
                 keyColumn,
@@ -720,7 +718,7 @@ public class DBVEntity extends DBVObject implements DBSEntity, DBPQualifiedObjec
         }
     }
 
-    private static final DBSDictionaryAccessor emptyDictionaryAccessor = new DBSDictionaryAccessor() {
+    private static final DBDDictionaryAccessor emptyDictionaryAccessor = new DBDDictionaryAccessor() {
 
         @NotNull
         @Override
@@ -802,8 +800,8 @@ public class DBVEntity extends DBVObject implements DBSEntity, DBPQualifiedObjec
         int maxResults
     ) throws DBException {
         final DBSEntity realEntity = getRealEntity(monitor);
-        if (realEntity instanceof DBSDictionary) {
-            return ((DBSDictionary) realEntity).getDictionaryEnumeration(
+        if (realEntity instanceof DBDDictionary) {
+            return ((DBDDictionary) realEntity).getDictionaryEnumeration(
                 monitor,
                 keyColumn,
                 keyPattern,
@@ -824,7 +822,7 @@ public class DBVEntity extends DBVObject implements DBSEntity, DBPQualifiedObjec
     @Override
     public List<DBDLabelValuePair> getDictionaryValues(@NotNull DBRProgressMonitor monitor, @NotNull List<DBSEntityAttribute> keyColumns, @NotNull List<Object[]> keyValues, @Nullable List<DBDAttributeValue[]> preceedingKeys, boolean sortByValue, boolean sortAsc, boolean omitNonDescriptive) throws DBException {
         DBSEntity realEntity = getRealEntity(monitor);
-        return realEntity instanceof DBSDictionary dictionary ?
+        return realEntity instanceof DBDDictionary dictionary ?
             dictionary.getDictionaryValues(monitor, keyColumns, keyValues, preceedingKeys, sortByValue, sortAsc, false) :
             Collections.emptyList();
     }

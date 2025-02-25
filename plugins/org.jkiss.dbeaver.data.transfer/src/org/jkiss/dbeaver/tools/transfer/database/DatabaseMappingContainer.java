@@ -28,6 +28,8 @@ import org.jkiss.dbeaver.model.DBPEvaluationContext;
 import org.jkiss.dbeaver.model.DBPImage;
 import org.jkiss.dbeaver.model.DBUtils;
 import org.jkiss.dbeaver.model.data.DBDAttributeBinding;
+import org.jkiss.dbeaver.model.data.DBDDataContainer;
+import org.jkiss.dbeaver.model.data.DBDDataManipulator;
 import org.jkiss.dbeaver.model.data.json.JSONUtils;
 import org.jkiss.dbeaver.model.preferences.DBPPropertyDescriptor;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
@@ -36,7 +38,9 @@ import org.jkiss.dbeaver.model.runtime.VoidProgressMonitor;
 import org.jkiss.dbeaver.model.sql.SQLQuery;
 import org.jkiss.dbeaver.model.sql.SQLQueryContainer;
 import org.jkiss.dbeaver.model.sql.parser.SQLSemanticProcessor;
-import org.jkiss.dbeaver.model.struct.*;
+import org.jkiss.dbeaver.model.struct.DBSAttributeBase;
+import org.jkiss.dbeaver.model.struct.DBSObject;
+import org.jkiss.dbeaver.model.struct.DBSObjectContainer;
 import org.jkiss.dbeaver.model.struct.rdb.DBSCatalog;
 import org.jkiss.dbeaver.model.struct.rdb.DBSSchema;
 import org.jkiss.dbeaver.runtime.DBWorkbench;
@@ -54,28 +58,28 @@ public class DatabaseMappingContainer implements DatabaseMappingObject {
     private static final Log log = Log.getLog(DatabaseMappingContainer.class);
 
     private final DatabaseConsumerSettings consumerSettings;
-    private final DBSDataContainer source;
-    private DBSDataManipulator target;
+    private final DBDDataContainer source;
+    private DBDDataManipulator target;
     private String targetName;
     private DatabaseMappingType mappingType;
     private final List<DatabaseMappingAttribute> attributeMappings = new ArrayList<>();
     private Map<DBPPropertyDescriptor, Object> changedPropertiesMap;
     private Map<String, Object> rawChangedPropertiesMap; // For tasks with empty container
 
-    public DatabaseMappingContainer(DatabaseConsumerSettings consumerSettings, DBSDataContainer source) {
+    public DatabaseMappingContainer(DatabaseConsumerSettings consumerSettings, DBDDataContainer source) {
         this.consumerSettings = consumerSettings;
         this.source = source;
         this.mappingType = DatabaseMappingType.unspecified;
     }
 
-    public DatabaseMappingContainer(DBRProgressMonitor monitor, DatabaseConsumerSettings consumerSettings, DBSDataContainer sourceObject, DBSDataManipulator targetObject) throws DBException {
+    public DatabaseMappingContainer(DBRProgressMonitor monitor, DatabaseConsumerSettings consumerSettings, DBDDataContainer sourceObject, DBDDataManipulator targetObject) throws DBException {
         this.consumerSettings = consumerSettings;
         this.source = sourceObject;
         this.target = targetObject;
         refreshMappingType(monitor, DatabaseMappingType.existing, false, false);
     }
 
-    public DatabaseMappingContainer(DatabaseMappingContainer container, DBSDataContainer sourceObject) {
+    public DatabaseMappingContainer(DatabaseMappingContainer container, DBDDataContainer sourceObject) {
         this.consumerSettings = container.consumerSettings;
         this.source = sourceObject;
         this.target = container.target;
@@ -91,11 +95,11 @@ public class DatabaseMappingContainer implements DatabaseMappingObject {
     }
 
     @Override
-    public DBSDataManipulator getTarget() {
+    public DBDDataManipulator getTarget() {
         return target;
     }
 
-    public void setTarget(DBSDataManipulator target) {
+    public void setTarget(DBDDataManipulator target) {
         this.target = target;
         this.targetName = null;
     }
@@ -154,7 +158,7 @@ public class DatabaseMappingContainer implements DatabaseMappingObject {
     }
 
     @Override
-    public DBSDataContainer getSource() {
+    public DBDDataContainer getSource() {
         return source;
     }
 
@@ -177,10 +181,10 @@ public class DatabaseMappingContainer implements DatabaseMappingObject {
             if (target != null) {
                 targetTableName = target.getName();
             } else {
-                DBSDataContainer theSource = this.source;
+                DBDDataContainer theSource = this.source;
                 if (theSource != null) {
                     if (theSource instanceof IAdaptable adaptable) {
-                        DBSDataContainer adapterSource = adaptable.getAdapter(DBSDataContainer.class);
+                        DBDDataContainer adapterSource = adaptable.getAdapter(DBDDataContainer.class);
                         if (adapterSource != null) {
                             theSource = adapterSource;
                         }
@@ -313,8 +317,8 @@ public class DatabaseMappingContainer implements DatabaseMappingObject {
                     DBSObjectContainer objectContainer = consumerSettings.getContainer();
                     if (objectContainer != null) {
                         DBSObject child = objectContainer.getChild(new VoidProgressMonitor(), targetName);
-                        if (child instanceof DBSDataManipulator) {
-                            target = (DBSDataManipulator) child;
+                        if (child instanceof DBDDataManipulator) {
+                            target = (DBDDataManipulator) child;
                         }
                     }
                 }

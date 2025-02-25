@@ -36,6 +36,7 @@ import org.jkiss.dbeaver.model.admin.sessions.DBAServerSessionManager;
 import org.jkiss.dbeaver.model.connection.DBPConnectionConfiguration;
 import org.jkiss.dbeaver.model.connection.DBPDriver;
 import org.jkiss.dbeaver.model.connection.DBPDriverConfigurationType;
+import org.jkiss.dbeaver.model.data.DBDDataBulkLoader;
 import org.jkiss.dbeaver.model.exec.*;
 import org.jkiss.dbeaver.model.exec.jdbc.*;
 import org.jkiss.dbeaver.model.exec.output.DBCServerOutputReader;
@@ -611,7 +612,7 @@ public class PostgreDataSource extends JDBCDataSource implements DBSInstanceCont
             return adapter.cast(new PostgreSessionManager(this));
         } else if (adapter == DBCQueryPlanner.class) {
             return adapter.cast(new PostgreQueryPlaner(this));
-        } else if (adapter == DBSDataBulkLoader.class) {
+        } else if (adapter == DBDDataBulkLoader.class) {
             if (getServerType().supportsCopyFromStdIn()) {
                 return adapter.cast(new PostgreCopyLoader(this));
             }

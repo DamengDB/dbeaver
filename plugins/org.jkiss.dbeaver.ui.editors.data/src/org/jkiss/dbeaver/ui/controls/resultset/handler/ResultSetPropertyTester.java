@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import org.eclipse.ui.IWorkbenchPart;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.model.DBUtils;
 import org.jkiss.dbeaver.model.data.DBDAttributeBinding;
-import org.jkiss.dbeaver.model.struct.DBSDataContainer;
+import org.jkiss.dbeaver.model.data.DBDDataContainer;
 import org.jkiss.dbeaver.model.struct.DBSEntity;
 import org.jkiss.dbeaver.runtime.DBWorkbench;
 import org.jkiss.dbeaver.ui.ActionUtils;
@@ -141,7 +141,7 @@ public class ResultSetPropertyTester extends PropertyTester
             case PROP_SUPPORTS_COUNT:
                 return rsv.hasData() && rsv.isHasMoreData() &&
                     rsv.getDataContainer() != null &&
-                    rsv.getDataContainer().isFeatureSupported(DBSDataContainer.FEATURE_DATA_COUNT);
+                    rsv.getDataContainer().isFeatureSupported(DBDDataContainer.FEATURE_DATA_COUNT);
             case PROP_CAN_NAVIGATE_LINK:
                 if (!actionsDisabled && rsv.getModel().hasData()) {
                     final ResultSetRow row = rsv.getCurrentRow();

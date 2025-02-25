@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,15 +65,15 @@ class ResultSetPersister {
 
     class ExecutionSource implements DBCExecutionSource {
 
-        private final DBSDataContainer dataContainer;
+        private final DBDDataContainer dataContainer;
 
-        ExecutionSource(DBSDataContainer dataContainer) {
+        ExecutionSource(DBDDataContainer dataContainer) {
             this.dataContainer = dataContainer;
         }
 
         @Nullable
         @Override
-        public DBSDataContainer getDataContainer() {
+        public DBDDataContainer getDataContainer() {
             return dataContainer;
         }
 
@@ -285,7 +285,7 @@ class ResultSetPersister {
         if (rowIdentifier == null) {
             throw new DBCException("Internal error: can't find entity identifier, delete is not possible");
         }
-        DBSDataManipulator dataManipulator = getDataManipulator(rowIdentifier.getEntity());
+        DBDDataManipulator dataManipulator = getDataManipulator(rowIdentifier.getEntity());
         boolean supportsRI = dataManipulator.getDataSource().getInfo().supportsReferentialIntegrity();
 
         for (ResultSetRow row : deletedRows) {
@@ -406,7 +406,7 @@ class ResultSetPersister {
             if (rowIdentifier != null) {
                 table = rowIdentifier.getEntity();
             } else {
-                DBSDataContainer dataContainer = viewer.getDataContainer();
+                DBDDataContainer dataContainer = viewer.getDataContainer();
                 if (dataContainer instanceof DBSEntity) {
                     table = (DBSEntity) dataContainer;
                 } else {
@@ -612,9 +612,9 @@ class ResultSetPersister {
     }
 
     @NotNull
-    private DBSDataManipulator getDataManipulator(DBSEntity entity) throws DBCException {
-        if (entity instanceof DBSDataManipulator) {
-            return (DBSDataManipulator) entity;
+    private DBDDataManipulator getDataManipulator(DBSEntity entity) throws DBCException {
+        if (entity instanceof DBDDataManipulator) {
+            return (DBDDataManipulator) entity;
         } else {
             throw new DBCException("Entity " + entity.getName() + " doesn't support data manipulation");
         }
@@ -828,8 +828,9 @@ class ResultSetPersister {
                 for (DataStatementInfo statement : ResultSetPersister.this.deleteStatements) {
                     if (monitor.isCanceled()) break;
                     try {
-                        DBSDataManipulator dataContainer = getDataManipulator(statement.entity);
-                        try (DBSDataManipulator.ExecuteBatch batch = dataContainer.deleteData(
+                        DBDDataManipulator dataContainer = getDataManipulator(statement.entity);
+                        try (
+                            DBDDataManipulator.ExecuteBatch batch = dataContainer.deleteData(
                             session,
                             DBDAttributeValue.getAttributes(statement.keyAttributes),
                             new ExecutionSource(dataContainer))) {
@@ -854,8 +855,9 @@ class ResultSetPersister {
                 for (DataStatementInfo statement : ResultSetPersister.this.insertStatements) {
                     if (monitor.isCanceled()) break;
                     try {
-                        DBSDataManipulator dataContainer = getDataManipulator(statement.entity);
-                        try (DBSDataManipulator.ExecuteBatch batch = dataContainer.insertData(
+                        DBDDataManipulator dataContainer = getDataManipulator(statement.entity);
+                        try (
+                            DBDDataManipulator.ExecuteBatch batch = dataContainer.insertData(
                             session,
                             DBDAttributeValue.getAttributes(statement.keyAttributes),
                             statement.needKeys() ? new KeyDataReceiver(statement) : null,
@@ -882,8 +884,9 @@ class ResultSetPersister {
                 for (DataStatementInfo statement : ResultSetPersister.this.updateStatements) {
                     if (monitor.isCanceled()) break;
                     try {
-                        DBSDataManipulator dataContainer = getDataManipulator(statement.entity);
-                        try (DBSDataManipulator.ExecuteBatch batch = dataContainer.updateData(
+                        DBDDataManipulator dataContainer = getDataManipulator(statement.entity);
+                        try (
+                            DBDDataManipulator.ExecuteBatch batch = dataContainer.updateData(
                             session,
                             DBDAttributeValue.getAttributes(statement.updateAttributes),
                             DBDAttributeValue.getAttributes(statement.keyAttributes),
@@ -1079,7 +1082,7 @@ class ResultSetPersister {
             }
             monitor.beginTask("Refresh updated rows", 1);
             try {
-                final DBSDataContainer dataContainer = executionSource.getDataContainer();
+                final DBDDataContainer dataContainer = executionSource.getDataContainer();
                 final Object[][] refreshValues = new Object[rows.size()][];
 
                 final DBDAttributeBinding[] curAttributes = viewer.getModel().getAttributes();
@@ -1118,7 +1121,7 @@ class ResultSetPersister {
                             filter,
                             0,
                             0,
-                            DBSDataContainer.FLAG_REFRESH,
+                            DBDDataContainer.FLAG_REFRESH,
                             0);
                         refreshValues[i] = dataReceiver.getRowValues();
                     }

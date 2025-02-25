@@ -26,6 +26,7 @@ import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.model.*;
+import org.jkiss.dbeaver.model.data.DBDDictionary;
 import org.jkiss.dbeaver.model.data.DBDDisplayFormat;
 import org.jkiss.dbeaver.model.data.DBDLabelValuePair;
 import org.jkiss.dbeaver.model.data.DBDValueHandler;
@@ -573,7 +574,7 @@ public class SQLCompletionAnalyzer implements DBRRunnableParametrized<DBRProgres
                         if (dictEntity != null) {
                             DBSEntityAttribute refAttribute = DBUtils.getReferenceAttribute(monitor, (DBSEntityAssociation) enumConstraint, attribute, false);
                             if (refAttribute != null) {
-                                valueEnumeration = ((DBSDictionary) dictEntity).getDictionaryEnumeration(
+                                valueEnumeration = ((DBDDictionary) dictEntity).getDictionaryEnumeration(
                                     monitor,
                                     refAttribute,
                                     null,

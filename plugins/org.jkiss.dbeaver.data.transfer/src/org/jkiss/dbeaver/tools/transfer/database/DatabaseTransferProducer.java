@@ -24,6 +24,7 @@ import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.model.*;
 import org.jkiss.dbeaver.model.app.DBPProject;
+import org.jkiss.dbeaver.model.data.DBDDataContainer;
 import org.jkiss.dbeaver.model.data.DBDDataFilter;
 import org.jkiss.dbeaver.model.exec.*;
 import org.jkiss.dbeaver.model.impl.AbstractExecutionSource;
@@ -36,7 +37,6 @@ import org.jkiss.dbeaver.model.sql.SQLQueryContainer;
 import org.jkiss.dbeaver.model.sql.SQLScriptContext;
 import org.jkiss.dbeaver.model.sql.SQLScriptElement;
 import org.jkiss.dbeaver.model.sql.data.SQLQueryDataContainer;
-import org.jkiss.dbeaver.model.struct.DBSDataContainer;
 import org.jkiss.dbeaver.model.struct.DBSEntity;
 import org.jkiss.dbeaver.model.task.DBTTask;
 import org.jkiss.dbeaver.model.task.DBTaskUtils;
@@ -69,7 +69,7 @@ public class DatabaseTransferProducer implements IDataTransferProducer<DatabaseP
     private final DBCStatistics producerStatistics = new DBCStatistics();
 
     private DBPDataSourceContainer dataSourceContainer;
-    private DBSDataContainer dataContainer;
+    private DBDDataContainer dataContainer;
     private String objectId;
     @Nullable
     private DBDDataFilter dataFilter;
@@ -81,23 +81,23 @@ public class DatabaseTransferProducer implements IDataTransferProducer<DatabaseP
     public DatabaseTransferProducer() {
     }
 
-    public DatabaseTransferProducer(@NotNull DBSDataContainer dataContainer)
+    public DatabaseTransferProducer(@NotNull DBDDataContainer dataContainer)
     {
         this.dataContainer = dataContainer;
     }
 
-    public DatabaseTransferProducer(@NotNull DBSDataContainer dataContainer, @Nullable DBDDataFilter dataFilter)
+    public DatabaseTransferProducer(@NotNull DBDDataContainer dataContainer, @Nullable DBDDataFilter dataFilter)
     {
         this.dataContainer = dataContainer;
         this.dataFilter = dataFilter;
     }
 
-    public void setDataContainer(@NotNull DBSDataContainer dataContainer) {
+    public void setDataContainer(@NotNull DBDDataContainer dataContainer) {
         this.dataContainer = dataContainer;
     }
 
     @Override
-    public DBSDataContainer getDatabaseObject()
+    public DBDDataContainer getDatabaseObject()
     {
         return dataContainer;
     }
@@ -185,7 +185,7 @@ public class DatabaseTransferProducer implements IDataTransferProducer<DatabaseP
         throws DBException {
         String contextTask = DTMessages.data_transfer_wizard_job_task_export;
 
-        DBSDataContainer databaseObject = getDatabaseObject();
+        DBDDataContainer databaseObject = getDatabaseObject();
         if (databaseObject == null) {
             throw new DBException("No input database object found");
         }
@@ -193,12 +193,12 @@ public class DatabaseTransferProducer implements IDataTransferProducer<DatabaseP
         assert (dataSource != null);
 
         DBExecUtils.tryExecuteRecover(monitor1, dataSource, monitor -> {
-            long readFlags = DBSDataContainer.FLAG_NONE;
+            long readFlags = DBDDataContainer.FLAG_NONE;
             if (settings.isSelectedColumnsOnly()) {
-                readFlags |= DBSDataContainer.FLAG_USE_SELECTED_COLUMNS;
+                readFlags |= DBDDataContainer.FLAG_USE_SELECTED_COLUMNS;
             }
             if (settings.isSelectedRowsOnly()) {
-                readFlags |= DBSDataContainer.FLAG_USE_SELECTED_ROWS;
+                readFlags |= DBDDataContainer.FLAG_USE_SELECTED_ROWS;
             }
 
             boolean newConnection = settings.isOpenNewConnections() && !getDatabaseObject().getDataSource().getContainer().getDriver().isEmbedded();
@@ -248,7 +248,7 @@ public class DatabaseTransferProducer implements IDataTransferProducer<DatabaseP
 
                         }
                         long totalRows = 0;
-                        if (settings.isQueryRowCount() && dataContainer.isFeatureSupported(DBSDataContainer.FEATURE_DATA_COUNT)) {
+                        if (settings.isQueryRowCount() && dataContainer.isFeatureSupported(DBDDataContainer.FEATURE_DATA_COUNT)) {
                             monitor.beginTask(DTMessages.data_transfer_wizard_job_task_retrieve, 1);
                             try {
                                 totalRows = dataContainer.countData(transferSource, session, dataFilter, readFlags);
@@ -338,9 +338,9 @@ public class DatabaseTransferProducer implements IDataTransferProducer<DatabaseP
 
         @Override
         public void serializeObject(@NotNull DBRRunnableContext runnableContext, @NotNull DBTTask context, @NotNull DatabaseTransferProducer object, @NotNull Map<String, Object> state) {
-            DBSDataContainer dataContainer = object.dataContainer;
+            DBDDataContainer dataContainer = object.dataContainer;
             if (dataContainer instanceof IAdaptable) {
-                DBSDataContainer nestedDataContainer = ((IAdaptable) dataContainer).getAdapter(DBSDataContainer.class);
+                DBDDataContainer nestedDataContainer = ((IAdaptable) dataContainer).getAdapter(DBDDataContainer.class);
                 if (nestedDataContainer != null) {
                     dataContainer = nestedDataContainer;
                 }
@@ -407,7 +407,7 @@ public class DatabaseTransferProducer implements IDataTransferProducer<DatabaseP
                                 producer.dataSourceContainer = DBUtils.findDataSourceByObjectId(project, id);
                                 if (producer.dataSourceContainer != null && !serializeContext.isDataSourceFailed(producer.dataSourceContainer)) {
                                     try {
-                                        producer.dataContainer = (DBSDataContainer) DBUtils.findObjectById(monitor, project, id);
+                                        producer.dataContainer = (DBDDataContainer) DBUtils.findObjectById(monitor, project, id);
                                     } catch (DBException e) {
                                         serializeContext.addError(e);
                                         serializeContext.addDataSourceFail(producer.dataSourceContainer);

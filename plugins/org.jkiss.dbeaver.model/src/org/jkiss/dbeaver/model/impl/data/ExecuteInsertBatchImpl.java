@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import org.jkiss.dbeaver.model.impl.sql.BaseInsertMethod;
 import org.jkiss.dbeaver.model.sql.SQLConstants;
 import org.jkiss.dbeaver.model.sql.SQLUtils;
 import org.jkiss.dbeaver.model.struct.DBSAttributeBase;
-import org.jkiss.dbeaver.model.struct.DBSDataManipulator;
 import org.jkiss.dbeaver.model.struct.DBSEntityAttribute;
 import org.jkiss.dbeaver.model.struct.DBStructUtils;
 import org.jkiss.dbeaver.model.struct.rdb.DBSTable;
@@ -76,7 +75,7 @@ public class ExecuteInsertBatchImpl extends ExecuteBatchImpl {
     protected DBCStatement prepareStatement(@NotNull DBCSession session, DBDValueHandler[] handlers, Object[] attributeValues, Map<String, Object> options) throws DBCException {
         StringBuilder queryForStatement = prepareQueryForStatement(session, handlers, attributeValues, attributes, table,false, options);
         // Execute. USe plain statement if binding was disabled
-        boolean skipBindValues = CommonUtils.toBoolean(options.get(DBSDataManipulator.OPTION_SKIP_BIND_VALUES));
+        boolean skipBindValues = CommonUtils.toBoolean(options.get(DBDDataManipulator.OPTION_SKIP_BIND_VALUES));
         DBCStatement dbStat = session.prepareStatement(
             skipBindValues ? DBCStatementType.SCRIPT : DBCStatementType.QUERY,
             queryForStatement.toString(),
@@ -127,7 +126,7 @@ public class ExecuteInsertBatchImpl extends ExecuteBatchImpl {
         String tableName = DBUtils.getEntityScriptName(table, options);
         StringBuilder query = new StringBuilder(200);
 
-        DBDInsertReplaceMethod method = (DBDInsertReplaceMethod) options.get(DBSDataManipulator.OPTION_INSERT_REPLACE_METHOD);
+        DBDInsertReplaceMethod method = (DBDInsertReplaceMethod) options.get(DBDDataManipulator.OPTION_INSERT_REPLACE_METHOD);
         if (method == null) {
             method = new BaseInsertMethod();
         }
@@ -172,7 +171,7 @@ public class ExecuteInsertBatchImpl extends ExecuteBatchImpl {
         int usedAttributesArr[] = usedAttributes.stream().mapToInt(Integer::intValue).toArray();
 
         StringJoiner valuesPart = new StringJoiner(",");
-        boolean skipBindValues = CommonUtils.toBoolean(options.get(DBSDataManipulator.OPTION_SKIP_BIND_VALUES));
+        boolean skipBindValues = CommonUtils.toBoolean(options.get(DBDDataManipulator.OPTION_SKIP_BIND_VALUES));
         for (int i = 0; i < attributeValues.length / attributes.length; i++) {
             StringJoiner rowValuesPart = new StringJoiner(",", "(", ")");
             for (int j : usedAttributesArr) {

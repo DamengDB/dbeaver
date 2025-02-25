@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,10 @@ import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.model.*;
+import org.jkiss.dbeaver.model.data.DBDDataContainer;
 import org.jkiss.dbeaver.model.data.json.JSONUtils;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 import org.jkiss.dbeaver.model.struct.DBSAttributeBase;
-import org.jkiss.dbeaver.model.struct.DBSDataContainer;
 import org.jkiss.dbeaver.runtime.DBWorkbench;
 import org.jkiss.dbeaver.tools.transfer.DTUtils;
 import org.jkiss.dbeaver.tools.transfer.internal.DTMessages;
@@ -35,10 +35,10 @@ import java.util.List;
 import java.util.Map;
 
 public class StreamMappingContainer implements DBPNamedObject, DBPImageProvider {
-    private final DBSDataContainer source;
+    private final DBDDataContainer source;
     private final List<StreamMappingAttribute> attributes;
 
-    public StreamMappingContainer(@NotNull DBSDataContainer source) {
+    public StreamMappingContainer(@NotNull DBDDataContainer source) {
         this.source = source;
         this.attributes = new ArrayList<>();
     }
@@ -80,7 +80,7 @@ public class StreamMappingContainer implements DBPNamedObject, DBPImageProvider 
     }
 
     @NotNull
-    public DBSDataContainer getSource() {
+    public DBDDataContainer getSource() {
         return source;
     }
 

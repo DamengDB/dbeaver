@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import org.jkiss.dbeaver.model.DBUtils;
 import org.jkiss.dbeaver.model.exec.DBCAttributeMetaData;
 import org.jkiss.dbeaver.model.exec.DBCException;
 import org.jkiss.dbeaver.model.exec.DBCSession;
-import org.jkiss.dbeaver.model.struct.DBSDataContainer;
 import org.jkiss.dbeaver.model.struct.DBSEntityAttribute;
 import org.jkiss.dbeaver.model.struct.DBSEntityReferrer;
 import org.jkiss.dbeaver.model.struct.DBSTypedObject;
@@ -39,7 +38,7 @@ import java.util.List;
  */
 public class DBDAttributeBindingMeta extends DBDAttributeBinding {
     @Nullable
-    private final DBSDataContainer dataContainer;
+    private final DBDDataContainer dataContainer;
     @NotNull
     private final DBCAttributeMetaData metaAttribute;
     @Nullable
@@ -56,7 +55,7 @@ public class DBDAttributeBindingMeta extends DBDAttributeBinding {
     private boolean showLabel;
 
     public DBDAttributeBindingMeta(
-        @Nullable DBSDataContainer dataContainer,
+        @Nullable DBDDataContainer dataContainer,
         @NotNull DBCSession session,
         @NotNull DBCAttributeMetaData metaAttribute) {
         super(DBUtils.findValueHandler(session, metaAttribute));
@@ -105,7 +104,7 @@ public class DBDAttributeBindingMeta extends DBDAttributeBinding {
 
     @NotNull
     @Override
-    public DBSDataContainer getDataContainer() {
+    public DBDDataContainer getDataContainer() {
         return dataContainer;
     }
 

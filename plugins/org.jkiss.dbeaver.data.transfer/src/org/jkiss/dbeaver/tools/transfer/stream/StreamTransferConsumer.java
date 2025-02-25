@@ -35,7 +35,6 @@ import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 import org.jkiss.dbeaver.model.runtime.DBRRunnableContext;
 import org.jkiss.dbeaver.model.sql.SQLQueryContainer;
 import org.jkiss.dbeaver.model.struct.DBSAttributeBase;
-import org.jkiss.dbeaver.model.struct.DBSDataContainer;
 import org.jkiss.dbeaver.model.struct.DBSObject;
 import org.jkiss.dbeaver.model.struct.rdb.DBSCatalog;
 import org.jkiss.dbeaver.model.struct.rdb.DBSSchema;
@@ -126,7 +125,7 @@ public class StreamTransferConsumer implements IDataTransferConsumer<StreamConsu
     private IStreamDataExporter processor;
     private StreamConsumerSettings settings;
     private ConsumerRuntimeParameters runtimeParameters;
-    private DBSDataContainer dataContainer;
+    private DBDDataContainer dataContainer;
     @Nullable
     private DBPProject project;
 
@@ -590,7 +589,7 @@ public class StreamTransferConsumer implements IDataTransferConsumer<StreamConsu
         @Nullable Map<String, Object> processorProperties,
         @Nullable DBPProject project
     ) {
-        this.dataContainer = (DBSDataContainer) sourceObject;
+        this.dataContainer = (DBDDataContainer) sourceObject;
         this.parameters = parameters;
         this.processor = processor;
         this.settings = settings;

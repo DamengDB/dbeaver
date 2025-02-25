@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import org.jkiss.dbeaver.model.DBUtils;
 import org.jkiss.dbeaver.model.exec.DBCAttributeMetaData;
 import org.jkiss.dbeaver.model.exec.DBCException;
 import org.jkiss.dbeaver.model.exec.DBCSession;
-import org.jkiss.dbeaver.model.struct.DBSDataContainer;
 import org.jkiss.dbeaver.model.struct.DBSEntityReferrer;
 import org.jkiss.dbeaver.model.virtual.DBVEntityAttribute;
 import org.jkiss.utils.CommonUtils;
@@ -39,7 +38,7 @@ public class DBDAttributeBindingCustom extends DBDAttributeBinding {
     @Nullable
     private final DBDAttributeBindingCustom parent;
     @NotNull
-    private DBSDataContainer dataContainer;
+    private final DBDDataContainer dataContainer;
     @NotNull
     private final DBVEntityAttribute vAttribute;
     private List<DBSEntityReferrer> referrers;
@@ -47,7 +46,7 @@ public class DBDAttributeBindingCustom extends DBDAttributeBinding {
 
     public DBDAttributeBindingCustom(
         @Nullable DBDAttributeBindingCustom parent,
-        @NotNull DBSDataContainer dataContainer,
+        @NotNull DBDDataContainer dataContainer,
         @NotNull DBPDataSource dataSource,
         @NotNull DBVEntityAttribute vAttribute,
         int ordinalPosition) {
@@ -101,7 +100,7 @@ public class DBDAttributeBindingCustom extends DBDAttributeBinding {
 
     @NotNull
     @Override
-    public DBSDataContainer getDataContainer() {
+    public DBDDataContainer getDataContainer() {
         return dataContainer;
     }
 

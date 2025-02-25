@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jkiss.dbeaver.model.struct;
+package org.jkiss.dbeaver.model.data;
 
 import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
-import org.jkiss.dbeaver.model.data.DBDAttributeValue;
-import org.jkiss.dbeaver.model.data.DBDLabelValuePair;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
+import org.jkiss.dbeaver.model.struct.DBSEntityAttribute;
 
 import java.util.List;
 
@@ -29,7 +28,7 @@ import java.util.List;
  * Dictionary table (entity).
  * May return possible values for a set of attributes.
  */
-public interface DBSDictionary {
+public interface DBDDictionary {
     /**
      * Checks that this constraint supports key enumerations.
      * Usually it depends on constraint type (enumerations makes sense only for unique constraints).
@@ -77,7 +76,7 @@ public interface DBSDictionary {
         boolean omitNonDescriptive) throws DBException;
 
     @NotNull
-    DBSDictionaryAccessor getDictionaryAccessor(
+    DBDDictionaryAccessor getDictionaryAccessor(
         @NotNull DBRProgressMonitor monitor,
         @Nullable List<DBDAttributeValue> precedingKeys,
         @NotNull DBSEntityAttribute keyColumn,

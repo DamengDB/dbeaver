@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,13 +22,13 @@ import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.model.DBPDataSource;
 import org.jkiss.dbeaver.model.data.DBDAttributeBinding;
+import org.jkiss.dbeaver.model.data.DBDDataContainer;
 import org.jkiss.dbeaver.model.data.DBDValueRow;
 import org.jkiss.dbeaver.model.data.hints.DBDAttributeHintProvider;
 import org.jkiss.dbeaver.model.data.hints.DBDCellHintProvider;
 import org.jkiss.dbeaver.model.data.hints.DBDValueHintContext;
 import org.jkiss.dbeaver.model.data.hints.DBDValueHintProvider;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
-import org.jkiss.dbeaver.model.struct.DBSDataContainer;
 import org.jkiss.dbeaver.model.struct.DBSEntity;
 import org.jkiss.dbeaver.registry.data.hints.ValueHintContextConfiguration;
 import org.jkiss.dbeaver.registry.data.hints.ValueHintProviderDescriptor;
@@ -44,7 +44,7 @@ import java.util.function.Supplier;
 public class ResultSetHintContext implements DBDValueHintContext {
     private static final Log log = Log.getLog(ResultSetHintContext.class);
 
-    private final Supplier<DBSDataContainer> dataContainerSupplier;
+    private final Supplier<DBDDataContainer> dataContainerSupplier;
     private final Supplier<DBSEntity> entitySupplier;
     private final Map<String, Object> contextAttributes = new HashMap<>();
 
@@ -61,14 +61,14 @@ public class ResultSetHintContext implements DBDValueHintContext {
         }
     }
 
-    ResultSetHintContext(Supplier<DBSDataContainer> dataContainerSupplier, Supplier<DBSEntity> entitySupplier) {
+    ResultSetHintContext(Supplier<DBDDataContainer> dataContainerSupplier, Supplier<DBSEntity> entitySupplier) {
         this.dataContainerSupplier = dataContainerSupplier;
         this.entitySupplier = entitySupplier;
     }
 
     @Nullable
     @Override
-    public DBSDataContainer getDataContainer() {
+    public DBDDataContainer getDataContainer() {
         return dataContainerSupplier.get();
     }
 
@@ -110,7 +110,7 @@ public class ResultSetHintContext implements DBDValueHintContext {
         }
 
         // Detect new config
-        DBSDataContainer dataContainer = getDataContainer();
+        DBDDataContainer dataContainer = getDataContainer();
         DBPDataSource ds = dataContainer == null || level == HintConfigurationLevel.GLOBAL ? null : dataContainer.getDataSource();
         DBSEntity entity = ds == null || level != HintConfigurationLevel.ENTITY ? null : entitySupplier.get();
         contextConfiguration = ValueHintRegistry.getInstance().getContextConfiguration(
@@ -156,7 +156,7 @@ public class ResultSetHintContext implements DBDValueHintContext {
     }
 
     void initProviders(DBDAttributeBinding[] attributes) {
-        DBSDataContainer dataContainer = getDataContainer();
+        DBDDataContainer dataContainer = getDataContainer();
         DBPDataSource ds = dataContainer == null ? null : dataContainer.getDataSource();
         DBSEntity entity = ds == null ? null : entitySupplier.get();
 

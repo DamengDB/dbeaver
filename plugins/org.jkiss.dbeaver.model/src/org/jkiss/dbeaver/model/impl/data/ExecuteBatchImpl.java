@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,16 +20,12 @@ import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.model.DBUtils;
-import org.jkiss.dbeaver.model.data.DBDAttributeBinding;
-import org.jkiss.dbeaver.model.data.DBDDataReceiver;
-import org.jkiss.dbeaver.model.data.DBDDisplayFormat;
-import org.jkiss.dbeaver.model.data.DBDValueHandler;
+import org.jkiss.dbeaver.model.data.*;
 import org.jkiss.dbeaver.model.edit.DBEPersistAction;
 import org.jkiss.dbeaver.model.exec.*;
 import org.jkiss.dbeaver.model.impl.edit.SQLDatabasePersistAction;
 import org.jkiss.dbeaver.model.sql.SQLUtils;
 import org.jkiss.dbeaver.model.struct.DBSAttributeBase;
-import org.jkiss.dbeaver.model.struct.DBSDataManipulator;
 import org.jkiss.utils.ArrayUtils;
 import org.jkiss.utils.CommonUtils;
 
@@ -43,7 +39,7 @@ import java.util.Map;
  * Can be used in JDBC or any other underlying DB APIs
  *
 */
-public abstract class ExecuteBatchImpl implements DBSDataManipulator.ExecuteBatch {
+public abstract class ExecuteBatchImpl implements DBDDataManipulator.ExecuteBatch {
 
     private static final Log log = Log.getLog(ExecuteBatchImpl.class);
 
@@ -108,11 +104,12 @@ public abstract class ExecuteBatchImpl implements DBSDataManipulator.ExecuteBatc
             }
         }
 
-        boolean useBatch = session.getDataSource().getInfo().supportsBatchUpdates() && reuseStatement && !CommonUtils.toBoolean(options.get(DBSDataManipulator.OPTION_DISABLE_BATCHES));
+        boolean useBatch = session.getDataSource().getInfo().supportsBatchUpdates() && reuseStatement && !CommonUtils.toBoolean(options.get(
+            DBDDataManipulator.OPTION_DISABLE_BATCHES));
         if (values.size() <= 1) {
             useBatch = false;
         }
-        boolean skipBindValues = CommonUtils.toBoolean(options.get(DBSDataManipulator.OPTION_SKIP_BIND_VALUES));
+        boolean skipBindValues = CommonUtils.toBoolean(options.get(DBDDataManipulator.OPTION_SKIP_BIND_VALUES));
         if (skipBindValues) {
             useBatch = false;
         }

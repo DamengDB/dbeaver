@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.model.DBUtils;
 import org.jkiss.dbeaver.model.app.DBPPlatform;
 import org.jkiss.dbeaver.model.app.DBPProject;
+import org.jkiss.dbeaver.model.data.DBDDataContainer;
 import org.jkiss.dbeaver.model.navigator.*;
 import org.jkiss.dbeaver.model.preferences.DBPPreferenceStore;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
@@ -155,13 +156,13 @@ public class SearchDataPage extends AbstractSearchPage {
                         }
                         if (element instanceof DBSWrapper) {
                             DBSObject object = ((DBSWrapper) element).getObject();
-                            if (object instanceof DBSDataContainer && object instanceof DBSEntity
-                                && !((DBSDataContainer) object).isFeatureSupported(DBSDataContainer.FEATURE_DATA_SEARCH)) {
+                            if (object instanceof DBDDataContainer && object instanceof DBSEntity
+                                && !((DBDDataContainer) object).isFeatureSupported(DBDDataContainer.FEATURE_DATA_SEARCH)) {
                                 return false;
                             }
                             return object instanceof DBSInstance
                                 || object instanceof DBSObjectContainer
-                                || (object instanceof DBSDataContainer && object instanceof DBSEntity);
+                                || (object instanceof DBDDataContainer && object instanceof DBSEntity);
                         }
                     }
                     return false;
@@ -372,15 +373,15 @@ public class SearchDataPage extends AbstractSearchPage {
         return objects;
     }
 
-    private List<DBSDataContainer> getCheckedSources() {
-        List<DBSDataContainer> result = new ArrayList<>();
+    private List<DBDDataContainer> getCheckedSources() {
+        List<DBDDataContainer> result = new ArrayList<>();
         Object[] elements = getCheckedElements();
         RuntimeUtils.runTask(monitor -> {
             for (Object node : elements) {
                 if (node instanceof DBNDatabaseNode) {
                     DBSObject object = ((DBNDatabaseNode) node).getObject();
                     try {
-                        List<DBSDataContainer> containers = DBUtils.getAllDataContainersFromParentContainer(monitor, object);
+                        List<DBDDataContainer> containers = DBUtils.getAllDataContainersFromParentContainer(monitor, object);
                         if (!CommonUtils.isEmpty(containers)) {
                             result.addAll(containers);
                         }
@@ -413,7 +414,7 @@ public class SearchDataPage extends AbstractSearchPage {
         for (Object node : nodes) {
             if (node instanceof DBNDatabaseNode) {
                 DBSObject object = ((DBNDatabaseNode) node).getObject();
-                if (object instanceof DBSDataContainer || object instanceof DBSObjectContainer) {
+                if (object instanceof DBDDataContainer || object instanceof DBSObjectContainer) {
                     if (sourcesString.length() > 0) {
                         sourcesString.append("|"); //$NON-NLS-1$
                     }

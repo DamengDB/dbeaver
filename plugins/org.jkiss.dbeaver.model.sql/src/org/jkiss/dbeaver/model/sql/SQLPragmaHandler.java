@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@ package org.jkiss.dbeaver.model.sql;
 
 import org.jkiss.code.NotNull;
 import org.jkiss.dbeaver.DBException;
+import org.jkiss.dbeaver.model.data.DBDDataContainer;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
-import org.jkiss.dbeaver.model.struct.DBSDataContainer;
 
 import java.util.Map;
 
@@ -40,5 +40,5 @@ public interface SQLPragmaHandler {
      * @return a set of {@code RESULT_} constants.
      * @throws DBException on any error
      */
-    int processPragma(@NotNull DBRProgressMonitor monitor, @NotNull DBSDataContainer container, @NotNull Map<String, Object> parameters) throws DBException;
+    int processPragma(@NotNull DBRProgressMonitor monitor, @NotNull DBDDataContainer container, @NotNull Map<String, Object> parameters) throws DBException;
 }

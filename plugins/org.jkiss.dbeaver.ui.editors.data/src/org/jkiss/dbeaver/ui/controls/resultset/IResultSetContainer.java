@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,9 @@ import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.model.DBPContextProvider;
 import org.jkiss.dbeaver.model.app.DBPProject;
+import org.jkiss.dbeaver.model.data.DBDDataContainer;
 import org.jkiss.dbeaver.model.data.DBDDataFilter;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
-import org.jkiss.dbeaver.model.struct.DBSDataContainer;
 
 /**
  * Result set provider
@@ -42,7 +42,7 @@ public interface IResultSetContainer extends DBPContextProvider, IResultSetProvi
      * @return data container or null
      */
     @Nullable
-    DBSDataContainer getDataContainer();
+    DBDDataContainer getDataContainer();
 
     boolean isReadyToRun();
 
@@ -51,7 +51,7 @@ public interface IResultSetContainer extends DBPContextProvider, IResultSetProvi
      * @param dataContainer data container
      * @param newFilter     data filter
      */
-    void openNewContainer(DBRProgressMonitor monitor, @NotNull DBSDataContainer dataContainer, @NotNull DBDDataFilter newFilter);
+    void openNewContainer(DBRProgressMonitor monitor, @NotNull DBDDataContainer dataContainer, @NotNull DBDDataFilter newFilter);
 
     IResultSetDecorator createResultSetDecorator();
 

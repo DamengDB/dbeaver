@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,19 +18,19 @@ package org.jkiss.dbeaver.ui.controls.resultset;
 
 import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
+import org.jkiss.dbeaver.model.data.DBDDataContainer;
 import org.jkiss.dbeaver.model.data.DBDDataFilter;
 import org.jkiss.dbeaver.model.exec.DBCExecutionSource;
 import org.jkiss.dbeaver.model.exec.DBCScriptContext;
-import org.jkiss.dbeaver.model.struct.DBSDataContainer;
 
 public class ResultSetExecutionSource implements DBCExecutionSource {
-    private final DBSDataContainer container;
+    private final DBDDataContainer container;
     private final ResultSetViewer controller;
     private final Object descriptor;
     private final DBDDataFilter dataFilter;
 
     public  ResultSetExecutionSource(
-        @NotNull DBSDataContainer container,
+        @NotNull DBDDataContainer container,
         @NotNull ResultSetViewer controller,
         @Nullable Object descriptor,
         @Nullable DBDDataFilter dataFilter
@@ -42,7 +42,7 @@ public class ResultSetExecutionSource implements DBCExecutionSource {
     }
 
     public ResultSetExecutionSource(
-        @NotNull DBSDataContainer container,
+        @NotNull DBDDataContainer container,
         @NotNull ResultSetViewer controller,
         @Nullable Object descriptor
     ) {
@@ -51,7 +51,7 @@ public class ResultSetExecutionSource implements DBCExecutionSource {
 
     @NotNull
     @Override
-    public DBSDataContainer getDataContainer() {
+    public DBDDataContainer getDataContainer() {
         return container;
     }
 

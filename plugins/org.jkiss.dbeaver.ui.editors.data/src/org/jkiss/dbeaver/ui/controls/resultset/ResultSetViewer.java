@@ -520,8 +520,8 @@ public class ResultSetViewer extends Viewer
     }
 
     public boolean supportsDataFilter() {
-        DBSDataContainer dataContainer = getDataContainer();
-        return dataContainer != null && dataContainer.isFeatureSupported(DBSDataContainer.FEATURE_DATA_FILTER);
+        DBDDataContainer dataContainer = getDataContainer();
+        return dataContainer != null && dataContainer.isFeatureSupported(DBDDataContainer.FEATURE_DATA_FILTER);
     }
 
     public boolean supportsNavigation() {
@@ -584,7 +584,7 @@ public class ResultSetViewer extends Viewer
 
     public void saveDataFilter() {
         DBCExecutionContext context = getExecutionContext();
-        DBSDataContainer dataContainer = getDataContainer();
+        DBDDataContainer dataContainer = getDataContainer();
         if (context == null || dataContainer == null) {
             log.error("Can't save data filter with null context");
             return;
@@ -623,8 +623,8 @@ public class ResultSetViewer extends Viewer
     {
         boolean enableFilters = getExecutionContext() != null && container.isReadyToRun() && !model.isUpdateInProgress();
         if (enableFilters) {
-            DBSDataContainer dataContainer = container.getDataContainer();
-            enableFilters = dataContainer != null && dataContainer.isFeatureSupported(DBSDataContainer.FEATURE_DATA_FILTER);
+            DBDDataContainer dataContainer = container.getDataContainer();
+            enableFilters = dataContainer != null && dataContainer.isFeatureSupported(DBDDataContainer.FEATURE_DATA_FILTER);
 
         }
         getAutoRefresh().enableControls(enableFilters);
@@ -1898,7 +1898,7 @@ public class ResultSetViewer extends Viewer
                 }
             });
             resultSetSize.addModifyListener(e -> {
-                DBSDataContainer dataContainer = getDataContainer();
+                DBDDataContainer dataContainer = getDataContainer();
                 int fetchSize = CommonUtils.toInt(resultSetSize.getText());
                 if (fetchSize > 0 && fetchSize < ResultSetPreferences.MIN_SEGMENT_SIZE) {
                     fetchSize = ResultSetPreferences.MIN_SEGMENT_SIZE;
@@ -1970,12 +1970,12 @@ public class ResultSetViewer extends Viewer
     }
 
     @Nullable
-    public DBSDataContainer getDataContainer()
+    public DBDDataContainer getDataContainer()
     {
         return curState != null ? curState.dataContainer : container.getDataContainer();
     }
 
-    public void setDataContainer(DBSDataContainer targetEntity, DBDDataFilter newFilter) {
+    public void setDataContainer(DBDDataContainer targetEntity, DBDDataFilter newFilter) {
         // Workaround for script results
         // In script mode history state isn't updated so we check for it here
         if (curState == null) {
@@ -2145,7 +2145,7 @@ public class ResultSetViewer extends Viewer
         return stateHistory;
     }
 
-    private void setNewState(DBSDataContainer dataContainer, @Nullable DBDDataFilter dataFilter) {
+    private void setNewState(DBDDataContainer dataContainer, @Nullable DBDDataFilter dataFilter) {
         // Create filter copy to avoid modifications
         dataFilter = new DBDDataFilter(dataFilter == null ? model.getDataFilter() : dataFilter);
         // Search in history
@@ -2234,7 +2234,7 @@ public class ResultSetViewer extends Viewer
         }
 
         if (resultSetSize != null) {
-            DBSDataContainer dataContainer = getDataContainer();
+            DBDDataContainer dataContainer = getDataContainer();
             if (dataContainer != null && dataContainer.getDataSource() != null) {
                 resultSetSize.setText(String.valueOf(getSegmentMaxRows()));
             }
@@ -2325,7 +2325,7 @@ public class ResultSetViewer extends Viewer
             }
         }
         if (getPreferenceStore().getBoolean(ResultSetPreferences.RESULT_SET_SHOW_CONNECTION_NAME)) {
-            DBSDataContainer dataContainer = getDataContainer();
+            DBDDataContainer dataContainer = getDataContainer();
             if (dataContainer != null) {
                 DBPDataSource dataSource = dataContainer.getDataSource();
                 if (dataSource != null) {
@@ -2649,7 +2649,7 @@ public class ResultSetViewer extends Viewer
     {
         return
             getReadOnlyStatus() == null &&
-            model.getSingleSource() instanceof DBSDataManipulator &&
+            model.getSingleSource() instanceof DBDDataManipulator &&
             model.getVisibleAttributeCount() > 0;
     }
 
@@ -2962,7 +2962,7 @@ public class ResultSetViewer extends Viewer
 
         manager.add(new Separator());
 
-        final DBSDataContainer dataContainer = getDataContainer();
+        final DBDDataContainer dataContainer = getDataContainer();
 
         // Fill general menu
         if (dataContainer != null) {
@@ -3318,7 +3318,7 @@ public class ResultSetViewer extends Viewer
         navigateMenu.add(new Separator());
         navigateMenu.add(ActionUtils.makeCommandContribution(site, ResultSetHandlerMain.CMD_FETCH_PAGE));
         navigateMenu.add(ActionUtils.makeCommandContribution(site, ResultSetHandlerMain.CMD_FETCH_ALL));
-        if (isHasMoreData() && getDataContainer() != null && getDataContainer().isFeatureSupported(DBSDataContainer.FEATURE_DATA_COUNT)) {
+        if (isHasMoreData() && getDataContainer() != null && getDataContainer().isFeatureSupported(DBDDataContainer.FEATURE_DATA_COUNT)) {
             navigateMenu.add(ActionUtils.makeCommandContribution(site, ResultSetHandlerMain.CMD_COUNT));
         }
         navigateMenu.add(new Separator());
@@ -3351,7 +3351,7 @@ public class ResultSetViewer extends Viewer
 
     @NotNull
     List<DBVColorOverride> getColorOverrides(@NotNull DBDAttributeBinding binding, @Nullable Object value) {
-        final DBSDataContainer dataContainer = getDataContainer();
+        final DBDDataContainer dataContainer = getDataContainer();
         if (dataContainer == null) {
             return Collections.emptyList();
         }
@@ -3367,7 +3367,7 @@ public class ResultSetViewer extends Viewer
     }
 
     public boolean hasColorOverrides() {
-        final DBSDataContainer dataContainer = getDataContainer();
+        final DBDDataContainer dataContainer = getDataContainer();
         if (dataContainer == null) {
             return false;
         }
@@ -3379,7 +3379,7 @@ public class ResultSetViewer extends Viewer
     }
 
     public boolean hasColumnTransformers() {
-        final DBSDataContainer dataContainer = getDataContainer();
+        final DBDDataContainer dataContainer = getDataContainer();
         if (dataContainer == null) {
             return false;
         }
@@ -3413,7 +3413,7 @@ public class ResultSetViewer extends Viewer
     }
 
     private void fillAttributeTransformersMenu(IMenuManager manager, final DBDAttributeBinding attr) {
-        final DBSDataContainer dataContainer = getDataContainer();
+        final DBDDataContainer dataContainer = getDataContainer();
         if (dataContainer == null) {
             return;
         }
@@ -3630,7 +3630,7 @@ public class ResultSetViewer extends Viewer
         }
         DBSEntity targetEntity = refConstraint.getParentObject();
         targetEntity = DBVUtils.getRealEntity(monitor, targetEntity);
-        if (!(targetEntity instanceof DBSDataContainer)) {
+        if (!(targetEntity instanceof DBDDataContainer)) {
             throw new DBException("Entity [" + DBUtils.getObjectFullName(targetEntity, DBPEvaluationContext.UI) + "] is not a data container");
         }
 
@@ -3666,7 +3666,7 @@ public class ResultSetViewer extends Viewer
         }
         // Save cur data filter in state
         if (curState == null) {
-            setNewState((DBSDataContainer) targetEntity, model.getDataFilter());
+            setNewState((DBDDataContainer) targetEntity, model.getDataFilter());
         }
         curState.filter = new DBDDataFilter(bindingsModel.getDataFilter());
         navigateEntity(monitor, newWindow, targetEntity, constraints);
@@ -3691,7 +3691,7 @@ public class ResultSetViewer extends Viewer
         DBSEntity targetEntity = association.getParentObject();
         //DBSDataContainer dataContainer = DBUtils.getAdapter(DBSDataContainer.class, targetEntity);
         targetEntity = DBVUtils.getRealEntity(monitor, targetEntity);
-        if (!(targetEntity instanceof DBSDataContainer)) {
+        if (!(targetEntity instanceof DBDDataContainer)) {
             throw new DBException("Referencing entity [" + DBUtils.getObjectFullName(targetEntity, DBPEvaluationContext.UI) + "] is not a data container");
         }
 
@@ -3762,7 +3762,7 @@ public class ResultSetViewer extends Viewer
         if (newWindow) {
             openResultsInNewWindow(monitor, targetEntity, newFilter);
         } else {
-            setDataContainer((DBSDataContainer) targetEntity, newFilter);
+            setDataContainer((DBDDataContainer) targetEntity, newFilter);
         }
     }
 
@@ -3793,8 +3793,8 @@ public class ResultSetViewer extends Viewer
     }
 
     private void openResultsInNewWindow(DBRProgressMonitor monitor, DBSEntity targetEntity, final DBDDataFilter newFilter) {
-        if (targetEntity instanceof DBSDataContainer) {
-            getContainer().openNewContainer(monitor, (DBSDataContainer) targetEntity, newFilter);
+        if (targetEntity instanceof DBDDataContainer) {
+            getContainer().openNewContainer(monitor, (DBDDataContainer) targetEntity, newFilter);
         } else {
             UIUtils.showMessageBox(null, "Open link", "Target entity '" + DBUtils.getObjectFullName(targetEntity, DBPEvaluationContext.UI) + "' - is not a data container", SWT.ICON_ERROR);
         }
@@ -3975,7 +3975,7 @@ public class ResultSetViewer extends Viewer
         autoRefreshControl.enableAutoRefresh(false);
 
         // Pump data
-        DBSDataContainer dataContainer = getDataContainer();
+        DBDDataContainer dataContainer = getDataContainer();
 
         if (dataContainer != null) {
             DBDDataFilter dataFilter = restoreDataFilter(dataContainer);
@@ -3994,7 +3994,7 @@ public class ResultSetViewer extends Viewer
         }
     }
 
-    private DBDDataFilter restoreDataFilter(final DBSDataContainer dataContainer) {
+    private DBDDataFilter restoreDataFilter(final DBDDataContainer dataContainer) {
 
         // Restore data filter
         final DataFilterRegistry.SavedDataFilter savedConfig = DataFilterRegistry.getInstance().getSavedConfig(dataContainer);
@@ -4020,7 +4020,7 @@ public class ResultSetViewer extends Viewer
             return;
         }
 
-        DBSDataContainer dataContainer = getDataContainer();
+        DBDDataContainer dataContainer = getDataContainer();
         if (dataContainer != null) {
             dataReceiver.setNextSegmentRead(false);
             runDataPump(
@@ -4045,7 +4045,7 @@ public class ResultSetViewer extends Viewer
 
         DataEditorFeatures.RESULT_SET_REFRESH.use();
 
-        DBSDataContainer dataContainer = getDataContainer();
+        DBDDataContainer dataContainer = getDataContainer();
         if (dataContainer != null) {
             int segmentSize = getSegmentMaxRows();
             if (curRow != null && curRow.getVisualNumber() >= segmentSize && segmentSize > 0) {
@@ -4062,7 +4062,7 @@ public class ResultSetViewer extends Viewer
     // It is a bit hacky function because we need to bind custom attributes (usually this happens during data read)
     public boolean refreshMetaData() {
         DBPDataSource dataSource = getDataSource();
-        DBSDataContainer dataContainer = getDataContainer();
+        DBDDataContainer dataContainer = getDataContainer();
         if (dataSource == null || dataContainer == null) {
             log.error("Can't refresh metadata on disconnected data viewer");
             return false;
@@ -4117,7 +4117,7 @@ public class ResultSetViewer extends Viewer
                 nextSegmentReadingBlocked = false;
                 return;
             }
-            DBSDataContainer dataContainer = getDataContainer();
+            DBDDataContainer dataContainer = getDataContainer();
             if (dataContainer != null && !model.isUpdateInProgress()) {
                 dataReceiver.setHasMoreData(false);
                 dataReceiver.setNextSegmentRead(true);
@@ -4137,7 +4137,7 @@ public class ResultSetViewer extends Viewer
     }
 
     private boolean verifyQuerySafety() {
-        if (container.getDataContainer() == null || !container.getDataContainer().isFeatureSupported(DBSDataContainer.FEATURE_DATA_MODIFIED_ON_REFRESH) ) {
+        if (container.getDataContainer() == null || !container.getDataContainer().isFeatureSupported(DBDDataContainer.FEATURE_DATA_MODIFIED_ON_REFRESH) ) {
             return true;
         }
         return UIUtils.confirmAction(null, ResultSetMessages.confirm_modifying_query_title, ResultSetMessages.confirm_modifying_query_message, DBIcon.STATUS_WARNING);
@@ -4163,7 +4163,7 @@ public class ResultSetViewer extends Viewer
             return;
         }
 
-        DBSDataContainer dataContainer = getDataContainer();
+        DBDDataContainer dataContainer = getDataContainer();
         if (dataContainer != null && !model.isUpdateInProgress()) {
             dataReceiver.setHasMoreData(false);
             dataReceiver.setNextSegmentRead(true);
@@ -4207,7 +4207,7 @@ public class ResultSetViewer extends Viewer
      */
     private long readRowCount(DBRProgressMonitor monitor) throws DBException {
         final DBCExecutionContext executionContext = getExecutionContext();
-        DBSDataContainer dataContainer = getDataContainer();
+        DBDDataContainer dataContainer = getDataContainer();
         if (executionContext == null || dataContainer == null) {
             throw new DBException(ModelMessages.error_not_connected_to_database);
         }
@@ -4240,7 +4240,7 @@ public class ResultSetViewer extends Viewer
         DBCStatistics statistics = getModel().getStatistics();
         String queryText = statistics == null ? null : statistics.getQueryText();
         if (queryText == null || queryText.isEmpty()) {
-            DBSDataContainer dataContainer = getDataContainer();
+            DBDDataContainer dataContainer = getDataContainer();
             if (dataContainer != null) {
                 if (dataContainer instanceof SQLQueryContainer) {
                     SQLScriptElement query = ((SQLQueryContainer) dataContainer).getQuery();
@@ -4257,7 +4257,7 @@ public class ResultSetViewer extends Viewer
 
 
     private boolean runDataPump(
-        @NotNull final DBSDataContainer dataContainer,
+        @NotNull final DBDDataContainer dataContainer,
         @Nullable final DBDDataFilter dataFilter,
         final int offset,
         final int maxRows,
@@ -5002,11 +5002,11 @@ public class ResultSetViewer extends Viewer
     class HistoryStateItem {
         private static final int HISTORY_STATE_ITEM_MAXIMAL_LENGTH = 50;
 
-        DBSDataContainer dataContainer;
+        DBDDataContainer dataContainer;
         DBDDataFilter filter;
         int rowNumber;
 
-        HistoryStateItem(DBSDataContainer dataContainer, @Nullable DBDDataFilter filter, int rowNumber) {
+        HistoryStateItem(DBDDataContainer dataContainer, @Nullable DBDDataFilter filter, int rowNumber) {
             this.dataContainer = dataContainer;
             this.filter = filter;
             this.rowNumber = rowNumber;
@@ -5050,7 +5050,7 @@ public class ResultSetViewer extends Viewer
         private final Runnable finalizer;
 
         ResultSetDataPumpJob(
-            @NotNull DBSDataContainer dataContainer,
+            @NotNull DBDDataContainer dataContainer,
             @NotNull ResultSetExecutionSource executionSource,
             @NotNull DBCExecutionContext executionContext,
             @NotNull Composite progressControl,
@@ -5090,7 +5090,7 @@ public class ResultSetViewer extends Viewer
             setError(error);
             afterDataRead();
 
-            final DBSDataContainer dataContainer = executionSource.getDataContainer();
+            final DBDDataContainer dataContainer = executionSource.getDataContainer();
             if (dataContainer instanceof IQueryExecuteController) {
                 ((IQueryExecuteController) dataContainer).forceDataReadCancel(error);
             }
@@ -5121,7 +5121,7 @@ public class ResultSetViewer extends Viewer
                 model.setStatistics(getStatistics());
             }
             try {
-                final DBSDataContainer dataContainer = executionSource.getDataContainer();
+                final DBDDataContainer dataContainer = executionSource.getDataContainer();
                 final Control control1 = getControl();
                 if (control1.isDisposed()) {
                     return;

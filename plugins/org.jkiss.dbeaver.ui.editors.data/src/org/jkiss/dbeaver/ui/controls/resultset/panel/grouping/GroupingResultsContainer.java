@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,12 +24,12 @@ import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.model.DBPDataSource;
 import org.jkiss.dbeaver.model.DBUtils;
 import org.jkiss.dbeaver.model.app.DBPProject;
+import org.jkiss.dbeaver.model.data.DBDDataContainer;
 import org.jkiss.dbeaver.model.data.DBDDataFilter;
 import org.jkiss.dbeaver.model.exec.DBCExecutionContext;
 import org.jkiss.dbeaver.model.exec.DBCStatistics;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 import org.jkiss.dbeaver.model.sql.*;
-import org.jkiss.dbeaver.model.struct.DBSDataContainer;
 import org.jkiss.dbeaver.model.struct.DBSEntity;
 import org.jkiss.dbeaver.ui.DataEditorFeatures;
 import org.jkiss.dbeaver.ui.controls.resultset.*;
@@ -89,7 +89,7 @@ public class GroupingResultsContainer implements IResultSetContainer {
     @Nullable
     @Override
     public DBPProject getProject() {
-        DBSDataContainer dataContainer = getDataContainer();
+        DBDDataContainer dataContainer = getDataContainer();
         return dataContainer == null || dataContainer.getDataSource() == null ? null : dataContainer.getDataSource().getContainer().getProject();
     }
 
@@ -106,7 +106,7 @@ public class GroupingResultsContainer implements IResultSetContainer {
 
     @NotNull
     @Override
-    public DBSDataContainer getDataContainer() {
+    public DBDDataContainer getDataContainer() {
         return this.dataContainer;
     }
 
@@ -116,7 +116,7 @@ public class GroupingResultsContainer implements IResultSetContainer {
     }
 
     @Override
-    public void openNewContainer(DBRProgressMonitor monitor, @NotNull DBSDataContainer dataContainer, @NotNull DBDDataFilter newFilter) {
+    public void openNewContainer(DBRProgressMonitor monitor, @NotNull DBDDataContainer dataContainer, @NotNull DBDDataFilter newFilter) {
 
     }
 
@@ -200,8 +200,8 @@ public class GroupingResultsContainer implements IResultSetContainer {
         if (statistics == null) {
             throw new DBException("No main query - can't perform grouping");
         }
-        DBSDataContainer dbsDataContainer = presentation.getController().getDataContainer();
-        boolean isCustomQuery = !(dbsDataContainer instanceof DBSEntity);
+        DBDDataContainer DBDDataContainer = presentation.getController().getDataContainer();
+        boolean isCustomQuery = !(DBDDataContainer instanceof DBSEntity);
         DBPDataSource dataSource = dataContainer.getDataSource();
         if (dataSource == null) {
             throw new DBException("No active datasource");
@@ -212,7 +212,8 @@ public class GroupingResultsContainer implements IResultSetContainer {
         String queryText = statistics.getQueryText();
         boolean isShowDuplicatesOnly = dataSource.getContainer().getPreferenceStore().getBoolean(ResultSetPreferences.RS_GROUPING_SHOW_DUPLICATES_ONLY);
 
-        var groupingQueryGenerator = new SQLGroupingQueryGenerator(dataSource, dbsDataContainer, dialect, syntaxManager, groupAttributes, groupFunctions, isShowDuplicatesOnly);
+        var groupingQueryGenerator = new SQLGroupingQueryGenerator(dataSource,
+            DBDDataContainer, dialect, syntaxManager, groupAttributes, groupFunctions, isShowDuplicatesOnly);
         dataContainer.setGroupingQuery(groupingQueryGenerator.generateGroupingQuery(queryText));
         dataContainer.setGroupingAttributes(groupAttributes.toArray(SQLGroupingAttribute[]::new));
         DBDDataFilter dataFilter;

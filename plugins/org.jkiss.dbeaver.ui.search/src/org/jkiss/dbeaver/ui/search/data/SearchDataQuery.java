@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.model.*;
 import org.jkiss.dbeaver.model.data.DBDAttributeConstraint;
+import org.jkiss.dbeaver.model.data.DBDDataContainer;
 import org.jkiss.dbeaver.model.data.DBDDataFilter;
 import org.jkiss.dbeaver.model.data.DBDDataReceiver;
 import org.jkiss.dbeaver.model.exec.*;
@@ -39,7 +40,6 @@ import org.jkiss.dbeaver.model.navigator.DBNModel;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 import org.jkiss.dbeaver.model.runtime.DefaultProgressMonitor;
 import org.jkiss.dbeaver.model.runtime.VoidProgressMonitor;
-import org.jkiss.dbeaver.model.struct.DBSDataContainer;
 import org.jkiss.dbeaver.model.struct.DBSEntity;
 import org.jkiss.dbeaver.model.struct.DBSEntityAttribute;
 import org.jkiss.dbeaver.runtime.DBWorkbench;
@@ -99,7 +99,7 @@ public class SearchDataQuery implements ISearchQuery {
 
             //monitor.subTask("Collect tables");
             Set<DBPDataSource> dataSources = new HashSet<>();
-            for (DBSDataContainer searcher : params.sources) {
+            for (DBDDataContainer searcher : params.sources) {
                 dataSources.add(searcher.getDataSource());
             }
 
@@ -114,7 +114,7 @@ public class SearchDataQuery implements ISearchQuery {
                 "Search \"" + searchString + "\" in " + params.sources.size() + " table(s) / " + dataSources.size() + " database(s)",
                 params.sources.size());
             try {
-                for (DBSDataContainer dataContainer : params.sources) {
+                for (DBDDataContainer dataContainer : params.sources) {
                     if (monitor.isCanceled()) {
                         break;
                     }
@@ -135,7 +135,7 @@ public class SearchDataQuery implements ISearchQuery {
         }
     }
 
-    private boolean searchDataInContainer(DBRProgressMonitor monitor, DBNModel dbnModel, DBSDataContainer dataContainer) {
+    private boolean searchDataInContainer(DBRProgressMonitor monitor, DBNModel dbnModel, DBDDataContainer dataContainer) {
         if (!params.searchForeignObjects && dataContainer instanceof DBPForeignObject && ((DBPForeignObject) dataContainer).isForeignObject()) {
             return false;
         }
@@ -172,7 +172,7 @@ public class SearchDataQuery implements ISearchQuery {
 
     private DBCStatistics findRows(
         @NotNull DBCSession session,
-        @NotNull DBSDataContainer dataContainer,
+        @NotNull DBDDataContainer dataContainer,
         @NotNull TestDataReceiver dataReceiver) throws DBCException
     {
         DBSEntity entity;
@@ -306,7 +306,7 @@ public class SearchDataQuery implements ISearchQuery {
     }
 
     @Nullable
-    private DBDDataFilter searchDataFilterForContainer(@NotNull DBSDataContainer dataContainer, @NotNull DBRProgressMonitor monitor) {
+    private DBDDataFilter searchDataFilterForContainer(@NotNull DBDDataContainer dataContainer, @NotNull DBRProgressMonitor monitor) {
         DBDDataFilter dataFilter = null;
         // First let's search in open editors
         for (IEditorReference er : UIUtils.getActiveWorkbenchWindow().getActivePage().getEditorReferences()) {
@@ -316,7 +316,7 @@ public class SearchDataQuery implements ISearchQuery {
                 if (pageEditor != null) {
                     IResultSetController rsc = pageEditor.getAdapter(IResultSetController.class);
                     if (rsc != null) {
-                        DBSDataContainer rscDataContainer = rsc.getDataContainer();
+                        DBDDataContainer rscDataContainer = rsc.getDataContainer();
                         if (rscDataContainer == dataContainer) {
                             dataFilter = rsc.getDataFilter();
                         }

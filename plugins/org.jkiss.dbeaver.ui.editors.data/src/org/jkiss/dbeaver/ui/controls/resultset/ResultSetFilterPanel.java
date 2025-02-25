@@ -43,6 +43,7 @@ import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.model.*;
 import org.jkiss.dbeaver.model.data.DBDAttributeBinding;
 import org.jkiss.dbeaver.model.data.DBDAttributeConstraint;
+import org.jkiss.dbeaver.model.data.DBDDataContainer;
 import org.jkiss.dbeaver.model.data.DBDDataFilter;
 import org.jkiss.dbeaver.model.exec.DBCExecutionContext;
 import org.jkiss.dbeaver.model.navigator.DBNDatabaseNode;
@@ -52,7 +53,6 @@ import org.jkiss.dbeaver.model.sql.SQLConstants;
 import org.jkiss.dbeaver.model.sql.SQLSyntaxManager;
 import org.jkiss.dbeaver.model.sql.SQLUtils;
 import org.jkiss.dbeaver.model.sql.parser.SQLWordPartDetector;
-import org.jkiss.dbeaver.model.struct.DBSDataContainer;
 import org.jkiss.dbeaver.model.struct.DBSEntity;
 import org.jkiss.dbeaver.runtime.DBWorkbench;
 import org.jkiss.dbeaver.runtime.ui.UIServiceSQL;
@@ -398,8 +398,8 @@ class ResultSetFilterPanel extends Composite implements IContentProposalProvider
     }
 
     private boolean isFiltersAvailable() {
-        DBSDataContainer dataContainer = viewer.getDataContainer();
-        return dataContainer != null && dataContainer.isFeatureSupported(DBSDataContainer.FEATURE_DATA_FILTER);
+        DBDDataContainer dataContainer = viewer.getDataContainer();
+        return dataContainer != null && dataContainer.isFeatureSupported(DBDDataContainer.FEATURE_DATA_FILTER);
     }
 
     private void redrawPanels() {
@@ -426,7 +426,7 @@ class ResultSetFilterPanel extends Composite implements IContentProposalProvider
 
     @Nullable
     private DBPImage getActiveObjectImage() {
-        DBSDataContainer dataContainer = viewer.getDataContainer();
+        DBDDataContainer dataContainer = viewer.getDataContainer();
         if (dataContainer instanceof DBSEntity) {
             DBPDataSource dataSource = viewer.getDataContainer().getDataSource();
             if (dataSource != null) {
@@ -449,7 +449,7 @@ class ResultSetFilterPanel extends Composite implements IContentProposalProvider
     @NotNull
     private String getActiveSourceQuery() {
         String displayName;
-        DBSDataContainer dataContainer = viewer.getDataContainer();
+        DBDDataContainer dataContainer = viewer.getDataContainer();
         if (dataContainer != null) {
             displayName = dataContainer.getName();
         } else {
@@ -599,7 +599,7 @@ class ResultSetFilterPanel extends Composite implements IContentProposalProvider
     }
 
     private void openEditorForActiveQuery() {
-        DBSDataContainer dataContainer = viewer.getDataContainer();
+        DBDDataContainer dataContainer = viewer.getDataContainer();
         String editorName;
         if (dataContainer instanceof DBSEntity) {
             editorName = dataContainer.getName();

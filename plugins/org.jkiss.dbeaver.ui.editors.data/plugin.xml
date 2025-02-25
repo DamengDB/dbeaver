@@ -171,7 +171,7 @@
         <editor
                 id="org.jkiss.dbeaver.ui.editors.data.DatabaseDataEditor"
                 class="org.jkiss.dbeaver.ui.editors.data.DatabaseDataEditor"
-                objectType="org.jkiss.dbeaver.model.struct.DBSDataContainer"
+                objectType="org.jkiss.dbeaver.model.data.DBDDataContainer"
                 main="false"
                 label="%editor.dbdata.name"
                 description="%editor.dbdata.description"
@@ -847,7 +847,7 @@
                 <with variable="selection">
                     <count value="+"/>
                     <iterate operator="and">
-                        <adapt type="org.jkiss.dbeaver.model.struct.DBSDataContainer"/>
+                        <adapt type="org.jkiss.dbeaver.model.data.DBDDataContainer"/>
                     </iterate>
                 </with>
             </enabledWhen>

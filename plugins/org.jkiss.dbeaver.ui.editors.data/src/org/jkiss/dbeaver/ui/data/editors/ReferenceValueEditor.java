@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -185,7 +185,7 @@ public class ReferenceValueEditor {
             dictFilterJob.schedule(250);
         }
         
-        private List<DBDLabelValuePair> loadNonComparableKeyValues(DBSDictionaryAccessor accessor) throws DBException {
+        private List<DBDLabelValuePair> loadNonComparableKeyValues(DBDDictionaryAccessor accessor) throws DBException {
             List<DBDLabelValuePair> data;
             if (searchText == null && keyValue != null) { 
                 data = accessor.getValueEntry(keyValue);
@@ -205,7 +205,7 @@ public class ReferenceValueEditor {
             return data;
         }
         
-        private List<DBDLabelValuePair> loadComparableKeyValues(DBSDictionaryAccessor accessor) throws DBException {
+        private List<DBDLabelValuePair> loadComparableKeyValues(DBDDictionaryAccessor accessor) throws DBException {
             List<DBDLabelValuePair> data;
             DBRProgressMonitor monitor = accessor.getProgressMonitor();
             if (monitor.isCanceled()) {
@@ -305,7 +305,7 @@ public class ReferenceValueEditor {
     private DBSEntityReferrer getEnumerableConstraint()
     {
         if (valueController instanceof IAttributeController) {
-            DBSDataContainer dataContainer = valueController.getDataController().getDataContainer();
+            DBDDataContainer dataContainer = valueController.getDataController().getDataContainer();
             if (dataContainer == null || dataContainer.getDataSource() == null ||
                 !dataContainer.getDataSource().getContainer().isExtraMetadataReadEnabled()) {
                 return null;
@@ -636,9 +636,9 @@ public class ReferenceValueEditor {
     }
 
     class SelectorLoaderService extends AbstractLoadService<EnumValuesData> {
-        private final ExceptableFunction<DBSDictionaryAccessor, List<DBDLabelValuePair>, DBException> action;
+        private final ExceptableFunction<DBDDictionaryAccessor, List<DBDLabelValuePair>, DBException> action;
 
-        private SelectorLoaderService(ExceptableFunction<DBSDictionaryAccessor, List<DBDLabelValuePair>, DBException> action) {
+        private SelectorLoaderService(ExceptableFunction<DBDDictionaryAccessor, List<DBDLabelValuePair>, DBException> action) {
             super(ResultSetMessages.dialog_value_view_job_selector_name + valueController.getValueName() + " possible values");
             this.action = action;
             actionGoBackward.setEnabled(false);
@@ -725,9 +725,10 @@ public class ReferenceValueEditor {
             }
             final DBSEntityAttribute fkAttribute = fkColumn.getAttribute();
             final DBSEntityConstraint refConstraint = association.getReferencedConstraint();
-            final DBSDictionary enumConstraint = refConstraint == null ? null : (DBSDictionary) refConstraint.getParentObject();
+            final DBDDictionary enumConstraint = refConstraint == null ? null : (DBDDictionary) refConstraint.getParentObject();
             if (fkAttribute != null && enumConstraint != null) {
-                try (DBSDictionaryAccessor accessor = enumConstraint.getDictionaryAccessor(
+                try (
+                    DBDDictionaryAccessor accessor = enumConstraint.getDictionaryAccessor(
                     monitor, precedingKeys, refColumn, sortAsc, !sortByValue
                 )) {
                     List<DBDLabelValuePair> enumValues = action.apply(accessor);

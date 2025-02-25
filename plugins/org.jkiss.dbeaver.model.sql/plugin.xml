@@ -22,25 +22,25 @@
     <!-- SQL Generators -->
     <extension point="org.jkiss.dbeaver.sqlGenerator">
         <generator id="tableSelect" class="org.jkiss.dbeaver.model.sql.generator.SQLGeneratorSelect" label="SELECT" description="SELECT from table" order="1">
-            <objectType name="org.jkiss.dbeaver.model.struct.DBSDataContainer"/>
+            <objectType name="org.jkiss.dbeaver.model.data.DBDDataContainer"/>
         </generator>
         <generator id="tableInsert" class="org.jkiss.dbeaver.model.sql.generator.SQLGeneratorInsert" label="INSERT" description="INSERT into table" order="2">
-            <objectType name="org.jkiss.dbeaver.model.struct.DBSDataManipulator"/>
+            <objectType name="org.jkiss.dbeaver.model.data.DBDDataManipulator"/>
         </generator>
         <generator id="tableUpdate" class="org.jkiss.dbeaver.model.sql.generator.SQLGeneratorUpdate" label="UPDATE" description="UPDATE table" order="3">
-            <objectType name="org.jkiss.dbeaver.model.struct.DBSDataManipulator"/>
+            <objectType name="org.jkiss.dbeaver.model.data.DBDDataManipulator"/>
         </generator>
         <generator id="tableDelete" class="org.jkiss.dbeaver.model.sql.generator.SQLGeneratorDelete" label="DELETE" description="DELETE from table" order="4">
-            <objectType name="org.jkiss.dbeaver.model.struct.DBSDataManipulator"/>
+            <objectType name="org.jkiss.dbeaver.model.data.DBDDataManipulator"/>
         </generator>
         <generator id="tableMerge" class="org.jkiss.dbeaver.model.sql.generator.SQLGeneratorMerge" label="MERGE" description="MERGE table" order="5">
-            <objectType name="org.jkiss.dbeaver.model.struct.DBSDataManipulator"/>
+            <objectType name="org.jkiss.dbeaver.model.data.DBDDataManipulator"/>
         </generator>
         <generator id="tableJoin" class="org.jkiss.dbeaver.model.sql.generator.SQLGeneratorSimpleJoin" label="SIMPLE JOIN" description="JOIN tables" order="6" multiObject="true">
-            <objectType name="org.jkiss.dbeaver.model.struct.DBSDataContainer"/>
+            <objectType name="org.jkiss.dbeaver.model.data.DBDDataContainer"/>
         </generator>
         <generator id="tableInnerJoin" class="org.jkiss.dbeaver.model.sql.generator.SQLGeneratorInnerJoin" label="INNER JOIN" description="JOIN tables" order="7" multiObject="true">
-            <objectType name="org.jkiss.dbeaver.model.struct.DBSDataContainer"/>
+            <objectType name="org.jkiss.dbeaver.model.data.DBDDataContainer"/>
         </generator>
         <generator id="procedureCall" class="org.jkiss.dbeaver.model.sql.generator.SQLGeneratorProcedureCall" label="CALL" description="Execute procedure" order="1000">
             <objectType name="org.jkiss.dbeaver.model.struct.rdb.DBSProcedure"/>

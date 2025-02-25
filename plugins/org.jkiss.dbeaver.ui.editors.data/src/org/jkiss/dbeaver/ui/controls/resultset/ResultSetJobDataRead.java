@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,12 +24,12 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.progress.UIJob;
 import org.jkiss.code.NotNull;
 import org.jkiss.dbeaver.ModelPreferences;
+import org.jkiss.dbeaver.model.data.DBDDataContainer;
 import org.jkiss.dbeaver.model.data.DBDDataFilter;
 import org.jkiss.dbeaver.model.exec.*;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 import org.jkiss.dbeaver.model.runtime.LocalCacheProgressMonitor;
 import org.jkiss.dbeaver.model.runtime.load.ILoadService;
-import org.jkiss.dbeaver.model.struct.DBSDataContainer;
 import org.jkiss.dbeaver.ui.UIUtils;
 import org.jkiss.dbeaver.ui.controls.ProgressLoaderVisualizer;
 import org.jkiss.dbeaver.ui.controls.resultset.internal.ResultSetMessages;
@@ -48,7 +48,7 @@ abstract class ResultSetJobDataRead extends ResultSetJobAbstract implements ILoa
     private boolean refresh;
 
     ResultSetJobDataRead(
-        @NotNull DBSDataContainer dataContainer,
+        @NotNull DBDDataContainer dataContainer,
         @NotNull ResultSetExecutionSource executionSource,
         @NotNull DBCExecutionContext executionContext,
         @NotNull Composite progressControl
@@ -92,9 +92,9 @@ abstract class ResultSetJobDataRead extends ResultSetJobAbstract implements ILoa
 
         new PumpVisualizer(visualizer).schedule(PROGRESS_VISUALIZE_PERIOD * 2);
 
-        long fetchFlags = DBSDataContainer.FLAG_READ_PSEUDO;
+        long fetchFlags = DBDDataContainer.FLAG_READ_PSEUDO;
         if (offset > 0) {
-            fetchFlags |= DBSDataContainer.FLAG_FETCH_SEGMENT;
+            fetchFlags |= DBDDataContainer.FLAG_FETCH_SEGMENT;
         }
 
         if (offset > 0 && getExecutionContext().getDataSource().getContainer().getPreferenceStore().getBoolean(ModelPreferences.RESULT_SET_REREAD_ON_SCROLLING)) {
@@ -105,11 +105,11 @@ abstract class ResultSetJobDataRead extends ResultSetJobAbstract implements ILoa
         }
 
         if (refresh) {
-            fetchFlags |= DBSDataContainer.FLAG_REFRESH;
+            fetchFlags |= DBDDataContainer.FLAG_REFRESH;
         }
         long finalFlags = fetchFlags;
 
-        final DBSDataContainer dataContainer = executionSource.getDataContainer();
+        final DBDDataContainer dataContainer = executionSource.getDataContainer();
         final DBDDataFilter dataFilter = executionSource.getUseDataFilter();
 
         progressMonitor.beginTask("Read data", 1);

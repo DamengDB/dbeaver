@@ -26,9 +26,9 @@ import org.eclipse.ui.IWorkbenchPropertyPage;
 import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.ModelPreferences;
+import org.jkiss.dbeaver.model.data.DBDDataContainer;
 import org.jkiss.dbeaver.model.impl.AbstractDescriptor;
 import org.jkiss.dbeaver.model.preferences.DBPPreferenceStore;
-import org.jkiss.dbeaver.model.struct.DBSDataContainer;
 import org.jkiss.dbeaver.model.struct.DBSEntity;
 import org.jkiss.dbeaver.model.struct.DBSObjectContainer;
 import org.jkiss.dbeaver.model.struct.rdb.DBSTable;
@@ -414,7 +414,7 @@ public class PrefPageDatabaseNavigator extends AbstractPrefPage implements IWork
         editors.removeIf(editor -> {
             if (editor.getType() != EntityEditorDescriptor.Type.editor) return true;
             for (AbstractDescriptor.ObjectType ot : editor.getObjectTypes()) {
-                if (!DBSDataContainer.class.getName().equals(ot.getImplName()) &&
+                if (!DBDDataContainer.class.getName().equals(ot.getImplName()) &&
                     !DBSObjectContainer.class.getName().equals(ot.getImplName()) &&
                     !DBSEntity.class.getName().equals(ot.getImplName()) &&
                     !DBSTable.class.getName().equals(ot.getImplName()))

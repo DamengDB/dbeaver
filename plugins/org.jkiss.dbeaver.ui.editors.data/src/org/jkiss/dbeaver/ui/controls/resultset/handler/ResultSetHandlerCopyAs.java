@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,11 +33,11 @@ import org.eclipse.ui.menus.UIElement;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.model.data.DBDAttributeBinding;
 import org.jkiss.dbeaver.model.data.DBDDataFilter;
+import org.jkiss.dbeaver.model.data.DBDDataManipulator;
 import org.jkiss.dbeaver.model.messages.ModelMessages;
 import org.jkiss.dbeaver.model.preferences.DBPPropertyDescriptor;
 import org.jkiss.dbeaver.model.runtime.AbstractJob;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
-import org.jkiss.dbeaver.model.struct.DBSDataManipulator;
 import org.jkiss.dbeaver.runtime.DBWorkbench;
 import org.jkiss.dbeaver.runtime.ui.UIServiceSQL;
 import org.jkiss.dbeaver.tools.transfer.IDataTransferConsumer;
@@ -151,7 +151,7 @@ public class ResultSetHandlerCopyAs extends AbstractHandler implements IElementU
                             properties.put(prop.getId(), prop.getDefaultValue());
                         }
                     }
-                    properties.put(DBSDataManipulator.OPTION_USE_CURRENT_DIALECT_SETTINGS, true);
+                    properties.put(DBDDataManipulator.OPTION_USE_CURRENT_DIALECT_SETTINGS, true);
 
                     consumer.initTransfer(
                         dataContainer,

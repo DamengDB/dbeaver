@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.jkiss.dbeaver.model.app.DBPPlatform;
 import org.jkiss.dbeaver.model.app.DBPProject;
+import org.jkiss.dbeaver.model.data.DBDDataContainer;
 import org.jkiss.dbeaver.model.navigator.*;
 import org.jkiss.dbeaver.model.runtime.DBRRunnableContext;
 import org.jkiss.dbeaver.model.struct.*;
@@ -93,7 +94,7 @@ public class DatabaseObjectsSelectorPanel extends Composite {
             final CheckboxTreeViewer viewer = dataSourceTree.getCheckboxViewer();
 
             checkboxTreeManager = new DatabaseObjectsTreeManager(runnableContext, viewer,
-                new Class[]{DBSDataContainer.class});
+                new Class[]{DBDDataContainer.class});
             viewer.addCheckStateListener(event -> onSelectionChange(event.getElement()));
         } else {
             dataSourceTree.getViewer().addSelectionChangedListener(event -> onSelectionChange(
@@ -169,7 +170,7 @@ public class DatabaseObjectsSelectorPanel extends Composite {
     protected boolean isDatabaseObjectVisible(DBSObject obj) {
         return obj instanceof DBSInstance ||
             obj instanceof DBSObjectContainer ||
-            (obj instanceof DBSDataContainer && obj instanceof DBSEntity);
+            (obj instanceof DBDDataContainer && obj instanceof DBSEntity);
     }
 
     protected boolean isDataSourceVisible(DBNDataSource dataSource) {

@@ -69,6 +69,7 @@ import org.jkiss.dbeaver.model.app.DBPPlatformDesktop;
 import org.jkiss.dbeaver.model.app.DBPProject;
 import org.jkiss.dbeaver.model.app.DBPWorkspaceDesktop;
 import org.jkiss.dbeaver.model.data.DBDAttributeBinding;
+import org.jkiss.dbeaver.model.data.DBDDataContainer;
 import org.jkiss.dbeaver.model.data.DBDDataFilter;
 import org.jkiss.dbeaver.model.data.DBDDataReceiver;
 import org.jkiss.dbeaver.model.exec.*;
@@ -91,7 +92,6 @@ import org.jkiss.dbeaver.model.runtime.*;
 import org.jkiss.dbeaver.model.sql.*;
 import org.jkiss.dbeaver.model.sql.data.SQLQueryDataContainer;
 import org.jkiss.dbeaver.model.sql.transformers.SQLQueryTransformerCount;
-import org.jkiss.dbeaver.model.struct.DBSDataContainer;
 import org.jkiss.dbeaver.model.struct.DBSInstance;
 import org.jkiss.dbeaver.model.struct.DBSObject;
 import org.jkiss.dbeaver.model.struct.DBSObjectState;
@@ -3712,7 +3712,7 @@ public class SQLEditor extends SQLEditorBase implements
             return resultsProvider;
         }
 
-        private QueryResultsContainer createResultsProvider(DBSDataContainer dataContainer) {
+        private QueryResultsContainer createResultsProvider(DBDDataContainer dataContainer) {
             QueryResultsContainer resultsProvider = createQueryResultsContainer(
                 resultContainers.size(),
                 getMaxResultsTabIndex(),
@@ -3727,7 +3727,7 @@ public class SQLEditor extends SQLEditorBase implements
         protected abstract QueryResultsContainer createQueryResultsContainer(
             int resultSetNumber,
             int resultSetIndex,
-            DBSDataContainer dataContainer
+            DBDDataContainer dataContainer
         );
 
         public boolean hasPinnedTabs() {
@@ -4009,7 +4009,7 @@ public class SQLEditor extends SQLEditorBase implements
         protected QueryResultsContainer createQueryResultsContainer(
             int resultSetNumber,
             int resultSetIndex,
-            @NotNull DBSDataContainer dataContainer
+            @NotNull DBDDataContainer dataContainer
         ) {
             return new MultiTabsQueryResultsContainer(this, resultSetNumber, resultSetIndex, dataContainer);
         }
@@ -4036,7 +4036,7 @@ public class SQLEditor extends SQLEditorBase implements
         protected QueryResultsContainer createQueryResultsContainer(
             int resultSetNumber,
             int resultSetIndex,
-            @NotNull DBSDataContainer dataContainer
+            @NotNull DBDDataContainer dataContainer
         ) {
             return new SingleTabQueryResultsContainer(createSection(false), this, resultSetNumber, resultSetIndex, dataContainer);
         }
@@ -4114,7 +4114,7 @@ public class SQLEditor extends SQLEditorBase implements
     }
     
     public abstract class QueryResultsContainer implements
-        DBSDataContainer,
+        DBDDataContainer,
         IResultSetContainer,
         IResultSetValueReflector,
         IResultSetListener,
@@ -4131,7 +4131,7 @@ public class SQLEditor extends SQLEditorBase implements
         private SQLScriptElement query = null;
         private SQLScriptElement lastGoodQuery = null;
         // Data container and filter are non-null only in case of associations navigation
-        private DBSDataContainer dataContainer;
+        private DBDDataContainer dataContainer;
         private String tabName;
         protected boolean detached;
 
@@ -4164,7 +4164,7 @@ public class SQLEditor extends SQLEditorBase implements
             @NotNull QueryProcessor queryProcessor,
             int resultSetNumber,
             int resultSetIndex,
-            @NotNull DBSDataContainer dataContainer
+            @NotNull DBDDataContainer dataContainer
         ) {
             this(resultSetViewerContainer, queryProcessor, resultSetNumber, resultSetIndex, false);
             this.dataContainer = dataContainer;
@@ -4219,7 +4219,7 @@ public class SQLEditor extends SQLEditorBase implements
 
         @Nullable
         @Override
-        public DBSDataContainer getDataContainer() {
+        public DBDDataContainer getDataContainer() {
             return this;
         }
 
@@ -4229,7 +4229,7 @@ public class SQLEditor extends SQLEditorBase implements
         }
 
         @Override
-        public void openNewContainer(DBRProgressMonitor monitor, @NotNull DBSDataContainer dataContainer, @NotNull DBDDataFilter newFilter) {
+        public void openNewContainer(DBRProgressMonitor monitor, @NotNull DBDDataContainer dataContainer, @NotNull DBDDataFilter newFilter) {
             UIUtils.syncExec(() -> {
                 QueryResultsContainer resultsProvider = queryProcessor.createResultsProvider(dataContainer);
                 CTabItem tabItem = resultsProvider.getResultsTab();
@@ -4337,7 +4337,7 @@ public class SQLEditor extends SQLEditorBase implements
             throws DBCException
         {
             if (dataContainer != null) {
-                return dataContainer.countData(source, session, dataFilter, DBSDataContainer.FLAG_NONE);
+                return dataContainer.countData(source, session, dataFilter, DBDDataContainer.FLAG_NONE);
             }
             DBPDataSource dataSource = getDataSource();
             if (dataSource == null) {
@@ -4551,7 +4551,7 @@ public class SQLEditor extends SQLEditorBase implements
             @NotNull QueryProcessor queryProcessor,
             int resultSetNumber,
             int resultSetIndex,
-            @NotNull DBSDataContainer dataContainer
+            @NotNull DBDDataContainer dataContainer
         ) {
             super(resultTabs, queryProcessor, resultSetNumber, resultSetIndex, dataContainer);
             resultsTab = createResultTab(false);
@@ -4651,7 +4651,7 @@ public class SQLEditor extends SQLEditorBase implements
             @NotNull SingleTabQueryProcessor queryProcessor,
             int resultSetNumber,
             int resultSetIndex,
-            @NotNull DBSDataContainer dataContainer
+            @NotNull DBDDataContainer dataContainer
         ) {
             super(sectionAndContents.getSecond(), queryProcessor, resultSetNumber, resultSetIndex, dataContainer);
             this.queryProcessor = queryProcessor;

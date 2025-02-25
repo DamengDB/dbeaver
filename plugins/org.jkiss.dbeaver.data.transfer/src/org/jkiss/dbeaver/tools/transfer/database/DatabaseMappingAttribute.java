@@ -22,6 +22,8 @@ import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.model.*;
 import org.jkiss.dbeaver.model.data.DBDAttributeBinding;
+import org.jkiss.dbeaver.model.data.DBDDataContainer;
+import org.jkiss.dbeaver.model.data.DBDDataManipulator;
 import org.jkiss.dbeaver.model.impl.DBObjectNameCaseTransformer;
 import org.jkiss.dbeaver.model.preferences.DBPPreferenceStore;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
@@ -95,7 +97,7 @@ public class DatabaseMappingAttribute implements DatabaseMappingObject {
             return null;
         }
         String typeName = source.getTypeName();
-        DBSDataContainer container = parent.getSource();
+        DBDDataContainer container = parent.getSource();
         if (container != null && container.getDataSource() != null) {
             String typeModifiers = container.getDataSource().getSQLDialect().getColumnTypeModifiers(
                 container.getDataSource(),
@@ -385,7 +387,7 @@ public class DatabaseMappingAttribute implements DatabaseMappingObject {
                 DatabaseMappingType newMappingType = DatabaseMappingType.valueOf((String) settings.get("mappingType"));
 
                 if (!CommonUtils.isEmpty(targetName)) {
-                    DBSDataManipulator targetEntity = parent.getTarget();
+                    DBDDataManipulator targetEntity = parent.getTarget();
                     if (targetEntity instanceof DBSEntity dbsEntity) {
                         if (dbsEntity.getDataSource() != null) {
                             this.target = CommonUtils.findBestCaseAwareMatch(

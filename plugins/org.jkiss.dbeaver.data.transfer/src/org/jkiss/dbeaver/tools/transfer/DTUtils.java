@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,10 @@ import org.jkiss.dbeaver.model.sql.SQLDialect;
 import org.jkiss.dbeaver.model.sql.SQLQuery;
 import org.jkiss.dbeaver.model.sql.SQLQueryContainer;
 import org.jkiss.dbeaver.model.sql.SQLScriptElement;
-import org.jkiss.dbeaver.model.struct.*;
+import org.jkiss.dbeaver.model.struct.DBSAttributeBase;
+import org.jkiss.dbeaver.model.struct.DBSEntity;
+import org.jkiss.dbeaver.model.struct.DBSEntityAttribute;
+import org.jkiss.dbeaver.model.struct.DBSObject;
 import org.jkiss.dbeaver.model.task.DBTTask;
 import org.jkiss.dbeaver.model.task.DBTTaskInfoCollector;
 import org.jkiss.dbeaver.tools.transfer.internal.DTMessages;
@@ -130,7 +133,7 @@ public class DTUtils {
                 }
             }
             if (tableName == null && source instanceof IAdaptable adaptable) {
-                DBSDataContainer dataContainer = adaptable.getAdapter(DBSDataContainer.class);
+                DBDDataContainer dataContainer = adaptable.getAdapter(DBDDataContainer.class);
                 if (dataContainer instanceof DBSEntity) {
                     tableName = useShortName ?
                         DBUtils.getQuotedIdentifier(dataContainer) :
@@ -235,7 +238,7 @@ public class DTUtils {
     @SuppressWarnings("unchecked")
     public static <T extends DBSAttributeBase & DBSObject> List<T> getAttributes(
         @NotNull DBRProgressMonitor monitor,
-        @NotNull DBSDataContainer container,
+        @NotNull DBDDataContainer container,
         @NotNull Object controller
     ) throws DBException {
         final List<T> attributes = new ArrayList<>();
@@ -262,7 +265,7 @@ public class DTUtils {
                         session.getExecutionContext(),
                         controller
                     );
-                    container.readData(executionSource, session, receiver, null, 0, 1, DBSDataContainer.FLAG_NONE, 1);
+                    container.readData(executionSource, session, receiver, null, 0, 1, DBDDataContainer.FLAG_NONE, 1);
                 } catch (DBException e) {
                     throw new InvocationTargetException(e);
                 }
@@ -332,7 +335,7 @@ public class DTUtils {
      * For regular resultsets it is the same as getAttributeBindings, for complex types it returns only leaf attributes.
      */
     @NotNull
-    public static DBDAttributeBinding[] makeLeafAttributeBindings(@NotNull DBCSession session, @NotNull DBSDataContainer dataContainer, @NotNull DBCResultSet resultSet) throws DBCException {
+    public static DBDAttributeBinding[] makeLeafAttributeBindings(@NotNull DBCSession session, @NotNull DBDDataContainer dataContainer, @NotNull DBCResultSet resultSet) throws DBCException {
         List<DBDAttributeBinding> metaColumns = new ArrayList<>();
         List<? extends DBCAttributeMetaData> attributes = resultSet.getMeta().getAttributes();
         boolean isDocumentAttribute = attributes.size() == 1 && attributes.get(0).getDataKind() == DBPDataKind.DOCUMENT;
@@ -373,7 +376,7 @@ public class DTUtils {
 
     private static void bindDocumentAttribute(
         @NotNull DBCSession session,
-        @NotNull DBSDataContainer dataContainer,
+        @NotNull DBDDataContainer dataContainer,
         @NotNull DBCResultSet resultSet,
         List<? extends DBCAttributeMetaData> attributes,
         List<DBDAttributeBinding> metaColumns
@@ -432,10 +435,10 @@ public class DTUtils {
     }
 
     private static class MetadataReceiver implements DBDDataReceiver {
-        private final DBSDataContainer container;
+        private final DBDDataContainer container;
         private DBDAttributeBinding[] attributes;
 
-        public MetadataReceiver(DBSDataContainer container) {
+        public MetadataReceiver(DBDDataContainer container) {
             this.container = container;
         }
 

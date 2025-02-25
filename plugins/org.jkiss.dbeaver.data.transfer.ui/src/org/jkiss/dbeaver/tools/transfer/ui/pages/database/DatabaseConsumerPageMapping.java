@@ -34,6 +34,8 @@ import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.model.*;
 import org.jkiss.dbeaver.model.app.DBPProject;
+import org.jkiss.dbeaver.model.data.DBDDataContainer;
+import org.jkiss.dbeaver.model.data.DBDDataManipulator;
 import org.jkiss.dbeaver.model.impl.DBObjectNameCaseTransformer;
 import org.jkiss.dbeaver.model.impl.struct.RelationalObjectType;
 import org.jkiss.dbeaver.model.navigator.DBNDatabaseNode;
@@ -128,7 +130,7 @@ public class DatabaseConsumerPageMapping extends DataTransferPageNodeSettings {
                     DBNNode selectedNode = navigatorModel.getNodeByObject(container);
                     if (selectedNode == null && !settings.getDataMappings().isEmpty()) {
                         // Use first source object as cur selection (it's better than nothing)
-                        DBSDataContainer firstSource = settings.getDataMappings().keySet().iterator().next();
+                        DBDDataContainer firstSource = settings.getDataMappings().keySet().iterator().next();
                         selectedNode = navigatorModel.getNodeByObject(firstSource);
                         while (selectedNode != null) {
                             if (selectedNode instanceof DBSWrapper && ((DBSWrapper) selectedNode).getObject() instanceof DBSObjectContainer) {
@@ -533,7 +535,7 @@ public class DatabaseConsumerPageMapping extends DataTransferPageNodeSettings {
                         return transformTargetName(DBUtils.getQuotedIdentifier(mapping.getSource()), DatabaseMappingType.unspecified);
                     }
                     if (mapping instanceof DatabaseMappingContainer) {
-                        DBSDataManipulator target = ((DatabaseMappingContainer) mapping).getTarget();
+                        DBDDataManipulator target = ((DatabaseMappingContainer) mapping).getTarget();
                         return target != null ? target : mapping.getTargetName();
                     } else {
                         if (mapping.getMappingType() == DatabaseMappingType.existing) {
@@ -787,7 +789,7 @@ public class DatabaseConsumerPageMapping extends DataTransferPageNodeSettings {
                 // container's tables
                 DBSObjectContainer container = settings.getContainer();
                 for (DBSObject child : container.getChildren(new LoggingProgressMonitor(log))) {
-                    if (child instanceof DBSDataManipulator) {
+                    if (child instanceof DBDDataManipulator) {
                         items.add(transformTargetName(
                             DBUtils.getQuotedIdentifier(child),
                             ((DatabaseMappingContainer) element).getMappingType()));
@@ -804,7 +806,7 @@ public class DatabaseConsumerPageMapping extends DataTransferPageNodeSettings {
                     allowsCreate = false;
                     break;
             }
-            DBSDataManipulator target = mapping.getParent().getTarget();
+            DBDDataManipulator target = mapping.getParent().getTarget();
             if (target instanceof DBSEntity parentEntity) {
                 for (DBSEntityAttribute attr : parentEntity.getAttributes(new LoggingProgressMonitor(log))) {
                     items.add(transformTargetName(DBUtils.getQuotedIdentifier(attr), mapping.getMappingType()));
@@ -847,7 +849,7 @@ public class DatabaseConsumerPageMapping extends DataTransferPageNodeSettings {
                         DBSObjectContainer container = settings.getContainer();
                         String unQuotedNameForSearch = DBUtils.getUnQuotedIdentifier(container.getDataSource(), name);
 
-                        DBSDataManipulator targetDataContainer = null;
+                        DBDDataManipulator targetDataContainer = null;
 
                         // Check name conflict in namespace
                         DBSNamespaceContainer namespaceContainer = DBUtils.getAdapter(DBSNamespaceContainer.class, container);
@@ -856,8 +858,8 @@ public class DatabaseConsumerPageMapping extends DataTransferPageNodeSettings {
                             if (ns != null) {
                                 DBSObject existingObject = ns.getObjectByName(monitor, unQuotedNameForSearch);
                                 if (existingObject != null) {
-                                    if (existingObject instanceof DBSDataManipulator) {
-                                        targetDataContainer = (DBSDataManipulator) existingObject;
+                                    if (existingObject instanceof DBDDataManipulator) {
+                                        targetDataContainer = (DBDDataManipulator) existingObject;
                                     } else {
                                         containerMapping.setTargetName(name);
                                         containerMapping.refreshMappingType(
@@ -878,8 +880,8 @@ public class DatabaseConsumerPageMapping extends DataTransferPageNodeSettings {
                         if (targetDataContainer == null) {
                             // Search for existing data manipulator (writable table)
                             for (DBSObject child : container.getChildren(monitor)) {
-                                if (child instanceof DBSDataManipulator && unQuotedNameForSearch.equalsIgnoreCase(child.getName())) {
-                                    targetDataContainer = (DBSDataManipulator) child;
+                                if (child instanceof DBDDataManipulator && unQuotedNameForSearch.equalsIgnoreCase(child.getName())) {
+                                    targetDataContainer = (DBDDataManipulator) child;
                                     break;
                                 }
                             }
@@ -893,7 +895,7 @@ public class DatabaseConsumerPageMapping extends DataTransferPageNodeSettings {
                                 containerMapping.refreshMappingType(monitor, DatabaseMappingType.existing, false, false);
                             }
 
-                            DBSDataManipulator finalTargetDataContainer = targetDataContainer;
+                            DBDDataManipulator finalTargetDataContainer = targetDataContainer;
                             UIUtils.asyncExec(() -> {
                                 DataTransferPipe pipeFromCurrentSelection = getPipeFromCurrentSelection();
                                 if (pipeFromCurrentSelection != null) {
@@ -1020,16 +1022,16 @@ public class DatabaseConsumerPageMapping extends DataTransferPageNodeSettings {
                 DTUIMessages.database_consumer_page_mapping_node_title,
                 rootNode,
                 selectedNode,
-                new Class[] {DBSObjectContainer.class, DBSDataManipulator.class},
-                new Class[] {DBSDataManipulator.class},
+                new Class[] {DBSObjectContainer.class, DBDDataManipulator.class},
+                new Class[] {DBDDataManipulator.class},
                 null);
             if (node != null && node instanceof DBSWrapper) {
                 DBSObject object = ((DBSWrapper) node).getObject();
                 try {
                     boolean needsUpdate = false;
                     for (final DatabaseMappingContainer mapping : mappings) {
-                        if (object instanceof DBSDataManipulator) {
-                            mapping.setTarget((DBSDataManipulator) object);
+                        if (object instanceof DBDDataManipulator) {
+                            mapping.setTarget((DBDDataManipulator) object);
                             mapping.refreshMappingType(getWizard().getRunnableContext(), DatabaseMappingType.existing, false);
                             if (mappings.length == 1) {
                                 // Call to this method also shows up a dialog.
@@ -1124,7 +1126,7 @@ public class DatabaseConsumerPageMapping extends DataTransferPageNodeSettings {
             if (pipe.getProducer() == null) {
                 continue;
             }
-            DBSDataContainer sourceObject = (DBSDataContainer)pipe.getProducer().getDatabaseObject();
+            DBDDataContainer sourceObject = (DBDDataContainer)pipe.getProducer().getDatabaseObject();
             DatabaseMappingContainer mapping = settings.getDataMapping(sourceObject);
             if (mapping == mappingContainer) {
                 return pipe;
@@ -1177,7 +1179,7 @@ public class DatabaseConsumerPageMapping extends DataTransferPageNodeSettings {
         for (DataTransferPipe pipe : getWizard().getSettings().getDataPipes()) {
             if (pipe.getProducer() != null) {
                 DBSObject producerObject = pipe.getProducer().getDatabaseObject();
-                if (producerObject instanceof DBSDataContainer) {
+                if (producerObject instanceof DBDDataContainer) {
                     DBSObject container = producerObject.getParentObject();
                     if (container instanceof DBSObjectContainer) {
                         producerContainer = (DBSObjectContainer) container;
@@ -1238,7 +1240,7 @@ public class DatabaseConsumerPageMapping extends DataTransferPageNodeSettings {
         try {
             getWizard().getRunnableContext().run(true, true, monitor -> {
                 for (DataTransferPipe pipe : getWizard().getSettings().getDataPipes()) {
-                    if (pipe.getProducer() == null || !(pipe.getProducer().getDatabaseObject() instanceof DBSDataContainer sourceDataContainer)) {
+                    if (pipe.getProducer() == null || !(pipe.getProducer().getDatabaseObject() instanceof DBDDataContainer sourceDataContainer)) {
                         continue;
                     }
                     DatabaseMappingContainer mapping = settings.getDataMapping(sourceDataContainer);

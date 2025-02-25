@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,10 +37,10 @@ import org.jkiss.dbeaver.model.DBPNamedObject;
 import org.jkiss.dbeaver.model.DBValueFormatting;
 import org.jkiss.dbeaver.model.app.DBPDataFormatterRegistry;
 import org.jkiss.dbeaver.model.app.DBPPlatformDesktop;
+import org.jkiss.dbeaver.model.data.DBDDataContainer;
 import org.jkiss.dbeaver.model.data.DBDDataFormatterProfile;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 import org.jkiss.dbeaver.model.runtime.VoidProgressMonitor;
-import org.jkiss.dbeaver.model.struct.DBSDataContainer;
 import org.jkiss.dbeaver.runtime.DBWorkbench;
 import org.jkiss.dbeaver.runtime.properties.PropertySourceCustom;
 import org.jkiss.dbeaver.tools.transfer.DataTransferPipe;
@@ -489,7 +489,7 @@ public class StreamConsumerPageSettings extends DataTransferPageNodeSettings {
         try {
             monitor.beginTask("Load mappings", pipes.size());
             for (DataTransferPipe pipe : pipes) {
-                DBSDataContainer source = (DBSDataContainer) pipe.getProducer().getDatabaseObject();
+                DBDDataContainer source = (DBDDataContainer) pipe.getProducer().getDatabaseObject();
                 StreamMappingContainer mapping = settings.getDataMapping(source);
 
                 if (mapping == null) {

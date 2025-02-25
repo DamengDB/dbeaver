@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@ import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.ext.mssql.SQLServerUtils;
 import org.jkiss.dbeaver.model.*;
+import org.jkiss.dbeaver.model.data.DBDDataContainer;
+import org.jkiss.dbeaver.model.data.DBDDataManipulatorExt;
 import org.jkiss.dbeaver.model.exec.DBCException;
 import org.jkiss.dbeaver.model.exec.DBCExecutionSource;
 import org.jkiss.dbeaver.model.exec.DBCSession;
@@ -35,7 +37,9 @@ import org.jkiss.dbeaver.model.meta.Association;
 import org.jkiss.dbeaver.model.meta.Property;
 import org.jkiss.dbeaver.model.meta.PropertyLength;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
-import org.jkiss.dbeaver.model.struct.*;
+import org.jkiss.dbeaver.model.struct.DBSAttributeBase;
+import org.jkiss.dbeaver.model.struct.DBSObject;
+import org.jkiss.dbeaver.model.struct.DBSObjectWithScript;
 import org.jkiss.dbeaver.model.struct.rdb.DBSIndexType;
 import org.jkiss.dbeaver.model.struct.rdb.DBSManipulationType;
 import org.jkiss.utils.CommonUtils;
@@ -49,7 +53,8 @@ import java.util.*;
  * MySQLTable base
  */
 public abstract class SQLServerTableBase extends JDBCTable<SQLServerDataSource, SQLServerSchema>
-    implements SQLServerObject, SQLServerExtendedPropertyOwner, DBPNamedObject2, DBPRefreshableObject, DBSObjectWithScript, DBPScriptObjectExt2, DBPSystemObject, DBSDataManipulatorExt
+    implements SQLServerObject, SQLServerExtendedPropertyOwner, DBPNamedObject2, DBPRefreshableObject, DBSObjectWithScript, DBPScriptObjectExt2, DBPSystemObject,
+    DBDDataManipulatorExt
 {
     private static final Log log = Log.getLog(SQLServerTableBase.class);
 
@@ -212,7 +217,7 @@ public abstract class SQLServerTableBase extends JDBCTable<SQLServerDataSource, 
         }
         // Query row count
         try (DBCSession session = DBUtils.openMetaSession(monitor, this, "Read row count")) {
-            rowCount = countData(new AbstractExecutionSource(this, session.getExecutionContext(), this), session, null, DBSDataContainer.FLAG_NONE);
+            rowCount = countData(new AbstractExecutionSource(this, session.getExecutionContext(), this), session, null, DBDDataContainer.FLAG_NONE);
         } catch (DBException e) {
             log.debug("Can't fetch row count", e);
         }

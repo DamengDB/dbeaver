@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,9 @@ import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.model.DBUtils;
 import org.jkiss.dbeaver.model.data.DBDAttributeBinding;
+import org.jkiss.dbeaver.model.data.DBDDataContainer;
 import org.jkiss.dbeaver.model.data.DBDDataFilter;
+import org.jkiss.dbeaver.model.data.DBDDictionary;
 import org.jkiss.dbeaver.model.exec.DBCException;
 import org.jkiss.dbeaver.model.exec.DBCSession;
 import org.jkiss.dbeaver.model.exec.DBExecUtils;
@@ -138,8 +140,8 @@ public class ResultSetUtils
 
                 DBSEntity associatedEntity = getAssociatedEntity(constraint);
 
-                if (associatedEntity instanceof DBSDictionary) {
-                    final DBSDictionary dictionary = (DBSDictionary)associatedEntity;
+                if (associatedEntity instanceof DBDDictionary) {
+                    final DBDDictionary dictionary = (DBDDictionary)associatedEntity;
                     if (dictionary.supportsDictionaryEnumeration()) {
                         return constraint;
                     }
@@ -193,7 +195,7 @@ public class ResultSetUtils
         }
     }
 
-    public static DBDDataFilter restoreDataFilter(final DBSDataContainer dataContainer, @NotNull DBRProgressMonitor monitor) {
+    public static DBDDataFilter restoreDataFilter(final DBDDataContainer dataContainer, @NotNull DBRProgressMonitor monitor) {
         // Restore data filter
         final DataFilterRegistry.SavedDataFilter savedConfig = DataFilterRegistry.getInstance().getSavedConfig(dataContainer);
         if (savedConfig != null) {

@@ -1,0 +1,21 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Vendor: DBeaver Corp
+Bundle-Name: DBeaver API
+Bundle-SymbolicName: org.jkiss.dbeaver.model.data;singleton:=true
+Bundle-Version: 1.0.0.qualifier
+Bundle-Release-Date: 20250325
+Bundle-RequiredExecutionEnvironment: JavaSE-17
+Bundle-ActivationPolicy: lazy
+Export-Package: org.jkiss.dbeaver.model.data,
+ org.jkiss.dbeaver.model.data.aggregate,
+ org.jkiss.dbeaver.model.data.hints,
+ org.jkiss.dbeaver.model.data.json,
+ org.jkiss.dbeaver.model.data.storage,
+ org.jkiss.dbeaver.model.impl.data,
+ org.jkiss.dbeaver.model.impl.data.formatters,
+ org.jkiss.dbeaver.model.impl.data.transformers
+Bundle-ClassPath: .
+Require-Bundle: org.jkiss.dbeaver.model;visibility:=reexport
+Bundle-Localization: OSGI-INF/l10n/bundle
+Automatic-Module-Name: org.jkiss.dbeaver.model.data

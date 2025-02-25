@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.model.*;
+import org.jkiss.dbeaver.model.data.DBDDataContainer;
 import org.jkiss.dbeaver.model.data.DBDDataFilter;
 import org.jkiss.dbeaver.model.data.DBDDataReceiver;
 import org.jkiss.dbeaver.model.exec.*;
@@ -30,7 +31,6 @@ import org.jkiss.dbeaver.model.sql.*;
 import org.jkiss.dbeaver.model.sql.parser.SQLParserContext;
 import org.jkiss.dbeaver.model.sql.parser.SQLRuleManager;
 import org.jkiss.dbeaver.model.sql.parser.SQLScriptParser;
-import org.jkiss.dbeaver.model.struct.DBSDataContainer;
 import org.jkiss.dbeaver.model.struct.DBSObject;
 import org.jkiss.utils.CommonUtils;
 
@@ -41,7 +41,7 @@ import java.util.Map;
  * Data container for single SQL query.
  * Doesn't support multiple resulsets.
  */
-public class SQLQueryDataContainer implements DBSDataContainer, SQLQueryContainer, DBPContextProvider, DBPImageProvider {
+public class SQLQueryDataContainer implements DBDDataContainer, SQLQueryContainer, DBPContextProvider, DBPImageProvider {
 
     private final DBPContextProvider contextProvider;
     private final SQLScriptContext scriptContext;
@@ -112,7 +112,7 @@ public class SQLQueryDataContainer implements DBSDataContainer, SQLQueryContaine
             ruleManager.loadRules(dataSource, false);
             SQLParserContext parserContext = new SQLParserContext(getDataSource(), syntaxManager, ruleManager, new Document(query.getText()));
             sqlQuery.setParameters(SQLScriptParser.parseParametersAndVariables(parserContext, 0, sqlQuery.getLength()));
-            if (!scriptContext.fillQueryParameters(sqlQuery, () -> dataReceiver, CommonUtils.isBitSet(flags, DBSDataContainer.FLAG_REFRESH))) {
+            if (!scriptContext.fillQueryParameters(sqlQuery, () -> dataReceiver, CommonUtils.isBitSet(flags, DBDDataContainer.FLAG_REFRESH))) {
                 // User canceled
                 return statistics;
             }

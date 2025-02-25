@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,11 @@ import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.model.DBUtils;
+import org.jkiss.dbeaver.model.data.DBDDataContainer;
 import org.jkiss.dbeaver.model.data.DBDDataFormatterProfile;
 import org.jkiss.dbeaver.model.data.DBDDisplayFormat;
 import org.jkiss.dbeaver.model.data.json.JSONUtils;
 import org.jkiss.dbeaver.model.runtime.DBRRunnableContext;
-import org.jkiss.dbeaver.model.struct.DBSDataContainer;
 import org.jkiss.dbeaver.model.struct.DBSObject;
 import org.jkiss.dbeaver.runtime.DBWorkbench;
 import org.jkiss.dbeaver.tools.transfer.*;
@@ -137,7 +137,7 @@ public class StreamConsumerSettings implements IDataTransferConsumerSettings {
     private boolean compressResults = false;
     private boolean splitOutFiles = false;
     private long maxOutFileSize = 10 * 1000 * 1000;
-    private final Map<DBSDataContainer, StreamMappingContainer> dataMappings = new LinkedHashMap<>();
+    private final Map<DBDDataContainer, StreamMappingContainer> dataMappings = new LinkedHashMap<>();
     private final Map<String, Map<String, Object>> eventProcessors = new HashMap<>();
 
 
@@ -261,12 +261,12 @@ public class StreamConsumerSettings implements IDataTransferConsumerSettings {
     }
 
     @NotNull
-    public Map<DBSDataContainer, StreamMappingContainer> getDataMappings() {
+    public Map<DBDDataContainer, StreamMappingContainer> getDataMappings() {
         return dataMappings;
     }
 
     @Nullable
-    public StreamMappingContainer getDataMapping(@NotNull DBSDataContainer container) {
+    public StreamMappingContainer getDataMapping(@NotNull DBDDataContainer container) {
         return dataMappings.get(container);
     }
 
@@ -352,8 +352,8 @@ public class StreamConsumerSettings implements IDataTransferConsumerSettings {
                         final IDataTransferProducer<?> producer = pipe.getProducer();
                         if (producer != null) {
                             final DBSObject object = producer.getDatabaseObject();
-                            if (object instanceof DBSDataContainer) {
-                                final DBSDataContainer container = (DBSDataContainer) object;
+                            if (object instanceof DBDDataContainer) {
+                                final DBDDataContainer container = (DBDDataContainer) object;
                                 final Map<String, Object> containerSettings = JSONUtils.getObjectOrNull(mappings, DBUtils.getObjectFullId(container));
                                 if (containerSettings != null) {
                                     final StreamMappingContainer mappingContainer = new StreamMappingContainer(container);

@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,8 @@ import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.ui.handlers.HandlerUtil;
+import org.jkiss.dbeaver.model.data.DBDDataContainer;
 import org.jkiss.dbeaver.model.navigator.DBNDatabaseNode;
-import org.jkiss.dbeaver.model.struct.DBSDataContainer;
 
 public class OpenDataEditorHandler extends AbstractHandler {
 
@@ -36,7 +36,7 @@ public class OpenDataEditorHandler extends AbstractHandler {
         if (selection instanceof IStructuredSelection) {
             for (Object item : ((IStructuredSelection) selection).toList()) {
                 if (item instanceof DBNDatabaseNode) {
-                    if (((DBNDatabaseNode) item).getObject() instanceof DBSDataContainer) {
+                    if (((DBNDatabaseNode) item).getObject() instanceof DBDDataContainer) {
                         DatabaseDataEditor.openNewDataEditor((DBNDatabaseNode) item, null);
                     }
                 }

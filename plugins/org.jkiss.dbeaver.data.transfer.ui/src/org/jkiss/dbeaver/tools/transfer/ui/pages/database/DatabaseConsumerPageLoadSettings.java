@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,10 +28,10 @@ import org.jkiss.dbeaver.model.DBIcon;
 import org.jkiss.dbeaver.model.DBPDataSource;
 import org.jkiss.dbeaver.model.DBPReferentialIntegrityController;
 import org.jkiss.dbeaver.model.DBUtils;
+import org.jkiss.dbeaver.model.data.DBDDataBulkLoader;
+import org.jkiss.dbeaver.model.data.DBDDataManipulator;
 import org.jkiss.dbeaver.model.sql.SQLDialectInsertReplaceMethod;
 import org.jkiss.dbeaver.model.sql.SQLDialectMetadata;
-import org.jkiss.dbeaver.model.struct.DBSDataBulkLoader;
-import org.jkiss.dbeaver.model.struct.DBSDataManipulator;
 import org.jkiss.dbeaver.model.struct.DBSObjectContainer;
 import org.jkiss.dbeaver.registry.configurator.UIPropertyConfiguratorDescriptor;
 import org.jkiss.dbeaver.registry.configurator.UIPropertyConfiguratorRegistry;
@@ -433,7 +433,7 @@ public class DatabaseConsumerPageLoadSettings extends DataTransferPageNodeSettin
 
         if (buttonIsAvailable(useBulkLoadCheck)) {
             final DBPDataSource dataSource = settings.getContainer() == null ? null : settings.getContainer().getDataSource();
-            if (DBUtils.getAdapter(DBSDataBulkLoader.class, dataSource) == null) {
+            if (DBUtils.getAdapter(DBDDataBulkLoader.class, dataSource) == null) {
                 disableButton(useBulkLoadCheck);
                 settings.setUseBulkLoad(false);
             }
@@ -481,7 +481,7 @@ public class DatabaseConsumerPageLoadSettings extends DataTransferPageNodeSettin
         }
 
         onDuplicateKeyInsertMethods.removeAll();
-        onDuplicateKeyInsertMethods.add(DBSDataManipulator.INSERT_NONE_METHOD);
+        onDuplicateKeyInsertMethods.add(DBDDataManipulator.INSERT_NONE_METHOD);
         if (!CommonUtils.isEmpty(insertMethodsDescriptors)) {
             boolean emptyButton = true;
             for (SQLDialectInsertReplaceMethod insertMethod : insertMethodsDescriptors) {
@@ -492,14 +492,14 @@ public class DatabaseConsumerPageLoadSettings extends DataTransferPageNodeSettin
                 }
             }
             if (emptyButton) {
-                onDuplicateKeyInsertMethods.setText(DBSDataManipulator.INSERT_NONE_METHOD);
+                onDuplicateKeyInsertMethods.setText(DBDDataManipulator.INSERT_NONE_METHOD);
                 if (!CommonUtils.isEmpty(settings.getOnDuplicateKeyInsertMethodId())) {
                     // May be this setting was used for another database
                     settings.setOnDuplicateKeyInsertMethodId(null);
                 }
             }
         } else {
-            onDuplicateKeyInsertMethods.setText(DBSDataManipulator.INSERT_NONE_METHOD);
+            onDuplicateKeyInsertMethods.setText(DBDDataManipulator.INSERT_NONE_METHOD);
             onDuplicateKeyInsertMethods.setEnabled(false);
             settings.setOnDuplicateKeyInsertMethodId(null);
         }

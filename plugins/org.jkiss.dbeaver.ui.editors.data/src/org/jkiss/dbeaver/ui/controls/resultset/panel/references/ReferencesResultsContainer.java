@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import org.jkiss.dbeaver.model.DBPEvaluationContext;
 import org.jkiss.dbeaver.model.DBUtils;
 import org.jkiss.dbeaver.model.app.DBPProject;
 import org.jkiss.dbeaver.model.data.DBDAttributeBinding;
+import org.jkiss.dbeaver.model.data.DBDDataContainer;
 import org.jkiss.dbeaver.model.data.DBDDataFilter;
 import org.jkiss.dbeaver.model.exec.DBCExecutionContext;
 import org.jkiss.dbeaver.model.navigator.DBNDatabaseNode;
@@ -68,7 +69,7 @@ class ReferencesResultsContainer implements IResultSetContainer {
     private final CSmartCombo<ReferenceKey> fkCombo;
     private ResultSetViewer dataViewer;
 
-    private DBSDataContainer parentDataContainer;
+    private DBDDataContainer parentDataContainer;
 
     /**
      * Full name of the latest parentDataContainer. It is used for detection if the underlying data container has changed.
@@ -78,7 +79,7 @@ class ReferencesResultsContainer implements IResultSetContainer {
     @Nullable
     private String parentContainerFullName;
 
-    private DBSDataContainer dataContainer;
+    private DBDDataContainer dataContainer;
 
     private final List<ReferenceKey> referenceKeys = new ArrayList<>();
     private ReferenceKey activeReferenceKey;
@@ -165,7 +166,7 @@ class ReferencesResultsContainer implements IResultSetContainer {
     @Nullable
     @Override
     public DBPProject getProject() {
-        DBSDataContainer dataContainer = getDataContainer();
+        DBDDataContainer dataContainer = getDataContainer();
         return dataContainer == null || dataContainer.getDataSource() == null ? null : dataContainer.getDataSource().getContainer().getProject();
     }
 
@@ -180,7 +181,7 @@ class ReferencesResultsContainer implements IResultSetContainer {
     }
 
     @Override
-    public DBSDataContainer getDataContainer() {
+    public DBDDataContainer getDataContainer() {
         return this.dataContainer;
     }
 
@@ -190,7 +191,7 @@ class ReferencesResultsContainer implements IResultSetContainer {
     }
 
     @Override
-    public void openNewContainer(DBRProgressMonitor monitor, @NotNull DBSDataContainer dataContainer, @NotNull DBDDataFilter newFilter) {
+    public void openNewContainer(DBRProgressMonitor monitor, @NotNull DBDDataContainer dataContainer, @NotNull DBDDataFilter newFilter) {
 
     }
 
@@ -205,7 +206,7 @@ class ReferencesResultsContainer implements IResultSetContainer {
 
     void refreshReferences(boolean force) {
         dataViewer.resetHistory();
-        DBSDataContainer newParentContainer = parentController.getDataContainer();
+        DBDDataContainer newParentContainer = parentController.getDataContainer();
         if (newParentContainer != parentDataContainer || !Objects.equals(getDataContainerFullName(newParentContainer), parentContainerFullName)) {
             refreshReferenceKeyList();
         } else if (dataContainer != null) {
@@ -214,7 +215,7 @@ class ReferencesResultsContainer implements IResultSetContainer {
     }
 
     @Nullable
-    private static String getDataContainerFullName(@Nullable DBSDataContainer dataContainer) {
+    private static String getDataContainerFullName(@Nullable DBDDataContainer dataContainer) {
         if (dataContainer == null) {
             return null;
         }
@@ -401,11 +402,11 @@ class ReferencesResultsContainer implements IResultSetContainer {
             protected IStatus run(DBRProgressMonitor monitor) {
                 try {
                     DBSEntity realEntity = DBVUtils.getRealEntity(monitor, activeReferenceKey.refEntity);
-                    if (!(realEntity instanceof DBSDataContainer)) {
+                    if (!(realEntity instanceof DBDDataContainer)) {
                         log.error("Referencing entity is not a data container");
                         return Status.OK_STATUS;
                     }
-                    dataContainer = (DBSDataContainer) realEntity;
+                    dataContainer = (DBDDataContainer) realEntity;
 
                     List<ResultSetRow> selectedRows = parentController.getSelection().getSelectedRows();
                     if (!force && CommonUtils.equalObjects(lastSelectedRows, selectedRows)) {

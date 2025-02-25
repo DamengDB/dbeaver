@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,12 @@ import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.model.DBPObject;
 import org.jkiss.dbeaver.model.DBUtils;
+import org.jkiss.dbeaver.model.data.DBDDataContainer;
+import org.jkiss.dbeaver.model.data.DBDDataManipulator;
 import org.jkiss.dbeaver.model.preferences.DBPPropertyDescriptor;
-import org.jkiss.dbeaver.model.struct.*;
+import org.jkiss.dbeaver.model.struct.DBSObject;
+import org.jkiss.dbeaver.model.struct.DBSObjectContainer;
+import org.jkiss.dbeaver.model.struct.DBSWrapper;
 import org.jkiss.dbeaver.runtime.DBWorkbench;
 import org.jkiss.dbeaver.tools.transfer.IDataTransferNode;
 import org.jkiss.dbeaver.tools.transfer.database.DatabaseTransferConsumer;
@@ -44,7 +48,7 @@ public class DataImportHandler extends DataTransferHandler {
     @Override
     protected IDataTransferNode<?> adaptTransferNode(Object object)
     {
-        final DBSDataManipulator adapted = RuntimeUtils.getObjectAdapter(object, DBSDataManipulator.class);
+        final DBDDataManipulator adapted = RuntimeUtils.getObjectAdapter(object, DBDDataManipulator.class);
         if (adapted != null) {
             return new DatabaseTransferConsumer(adapted);
         } else {
@@ -111,7 +115,7 @@ public class DataImportHandler extends DataTransferHandler {
     public static boolean isObjectContainerSupportsImport(DBSObjectContainer object) {
         try {
             Class<? extends DBSObject> childType = object.getPrimaryChildType(null);
-            return DBSDataContainer.class.isAssignableFrom(childType);
+            return DBDDataContainer.class.isAssignableFrom(childType);
         } catch (DBException e) {
             log.error(e);
         }

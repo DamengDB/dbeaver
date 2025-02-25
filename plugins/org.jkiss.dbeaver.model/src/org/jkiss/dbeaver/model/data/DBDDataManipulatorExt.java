@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,38 +15,33 @@
  * limitations under the License.
  */
 
-package org.jkiss.dbeaver.model.struct;
+package org.jkiss.dbeaver.model.data;
 
 import org.jkiss.code.NotNull;
 import org.jkiss.dbeaver.model.exec.DBCException;
 import org.jkiss.dbeaver.model.exec.DBCExecutionSource;
 import org.jkiss.dbeaver.model.exec.DBCSession;
-
-import java.util.Map;
+import org.jkiss.dbeaver.model.struct.DBSAttributeBase;
+import org.jkiss.dbeaver.model.struct.rdb.DBSManipulationType;
 
 /**
- * Data bulk loader
+ * Data manipulator extensions.
+ * Extends data manipulator and provides away to execute some actions before and after data manipulations.
  */
-public interface DBSDataBulkLoader {
+public interface DBDDataManipulatorExt extends DBDDataManipulator {
 
-    interface BulkLoadManager extends AutoCloseable {
-        void addRow(@NotNull DBCSession session, @NotNull Object[] attributeValues) throws DBCException;
-
-        void flushRows(@NotNull DBCSession session) throws DBCException;
-
-        void finishBulkLoad(@NotNull DBCSession session) throws DBCException;
-
-        void close();
-    }
-
-    @NotNull
-    BulkLoadManager createBulkLoad(
+    void beforeDataChange(
         @NotNull DBCSession session,
-        @NotNull DBSDataContainer dataContainer,
+        @NotNull DBSManipulationType type,
         @NotNull DBSAttributeBase[] attributes,
-        @NotNull DBCExecutionSource source,
-        int batchSize,
-        Map<String, Object> options)
+        @NotNull DBCExecutionSource source)
+        throws DBCException;
+
+    void afterDataChange(
+        @NotNull DBCSession session,
+        @NotNull DBSManipulationType type,
+        @NotNull DBSAttributeBase[] attributes,
+        @NotNull DBCExecutionSource source)
         throws DBCException;
 
 }

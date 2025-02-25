@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,16 +25,16 @@ import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.model.*;
-import org.jkiss.dbeaver.model.data.DBDAttributeBinding;
-import org.jkiss.dbeaver.model.data.DBDAttributeConstraint;
-import org.jkiss.dbeaver.model.data.DBDAttributeConstraintBase;
-import org.jkiss.dbeaver.model.data.DBDDataFilter;
+import org.jkiss.dbeaver.model.data.*;
 import org.jkiss.dbeaver.model.exec.DBCLogicalOperator;
 import org.jkiss.dbeaver.model.impl.struct.AbstractAttribute;
 import org.jkiss.dbeaver.model.runtime.AbstractJob;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 import org.jkiss.dbeaver.model.sql.SQLUtils;
-import org.jkiss.dbeaver.model.struct.*;
+import org.jkiss.dbeaver.model.struct.DBSAttributeBase;
+import org.jkiss.dbeaver.model.struct.DBSEntity;
+import org.jkiss.dbeaver.model.struct.DBSEntityAttribute;
+import org.jkiss.dbeaver.model.struct.DBSObject;
 import org.jkiss.dbeaver.runtime.DBWorkbench;
 import org.jkiss.dbeaver.utils.GeneralUtils;
 import org.jkiss.utils.ArrayUtils;
@@ -205,7 +205,7 @@ class DataFilterRegistry {
 
         void restoreDataFilter(
             @NotNull DBRProgressMonitor monitor,
-            @NotNull DBSDataContainer dataContainer,
+            @NotNull DBDDataContainer dataContainer,
             @NotNull DBDDataFilter dataFilter
         ) throws DBException {
             dataFilter.setAnyConstraint(anyConstraint);
@@ -264,14 +264,14 @@ class DataFilterRegistry {
     }
 
     @Nullable
-    public SavedDataFilter getSavedConfig(@NotNull DBSDataContainer object) {
+    public SavedDataFilter getSavedConfig(@NotNull DBDDataContainer object) {
         String objectId = makeObjectId(object);
         synchronized (savedFilters) {
             return savedFilters.get(objectId);
         }
     }
 
-    void saveDataFilter(@NotNull DBSDataContainer object, @NotNull DBDDataFilter dataFilter) {
+    void saveDataFilter(@NotNull DBDDataContainer object, @NotNull DBDDataFilter dataFilter) {
         String objectId = makeObjectId(object);
         synchronized (savedFilters) {
             if (dataFilter.isDirty()) {

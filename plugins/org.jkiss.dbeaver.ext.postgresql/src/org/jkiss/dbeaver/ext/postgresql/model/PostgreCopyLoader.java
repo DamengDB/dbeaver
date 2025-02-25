@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@ import org.jkiss.code.NotNull;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.model.DBPEvaluationContext;
 import org.jkiss.dbeaver.model.DBUtils;
+import org.jkiss.dbeaver.model.data.DBDDataBulkLoader;
+import org.jkiss.dbeaver.model.data.DBDDataContainer;
 import org.jkiss.dbeaver.model.data.DBDDisplayFormat;
 import org.jkiss.dbeaver.model.data.DBDValueHandler;
 import org.jkiss.dbeaver.model.exec.DBCException;
@@ -28,8 +30,6 @@ import org.jkiss.dbeaver.model.exec.DBCSession;
 import org.jkiss.dbeaver.model.exec.DBCTransactionManager;
 import org.jkiss.dbeaver.model.exec.jdbc.JDBCSession;
 import org.jkiss.dbeaver.model.struct.DBSAttributeBase;
-import org.jkiss.dbeaver.model.struct.DBSDataBulkLoader;
-import org.jkiss.dbeaver.model.struct.DBSDataContainer;
 import org.jkiss.dbeaver.runtime.DBWorkbench;
 import org.jkiss.utils.ArrayUtils;
 import org.jkiss.utils.CommonUtils;
@@ -56,7 +56,7 @@ import java.util.Map;
  * //                new BufferedReader(new FileReader("data.csv"))
  * //            );
  */
-public class PostgreCopyLoader implements DBSDataBulkLoader, DBSDataBulkLoader.BulkLoadManager {
+public class PostgreCopyLoader implements DBDDataBulkLoader, DBDDataBulkLoader.BulkLoadManager {
 
     private static final Log log = Log.getLog(PostgreCopyLoader.class);
 
@@ -91,7 +91,7 @@ public class PostgreCopyLoader implements DBSDataBulkLoader, DBSDataBulkLoader.B
     @Override
     public BulkLoadManager createBulkLoad(
         @NotNull DBCSession session,
-        @NotNull DBSDataContainer dataContainer,
+        @NotNull DBDDataContainer dataContainer,
         @NotNull DBSAttributeBase[] attributes,
         @NotNull DBCExecutionSource source,
         int batchSize,

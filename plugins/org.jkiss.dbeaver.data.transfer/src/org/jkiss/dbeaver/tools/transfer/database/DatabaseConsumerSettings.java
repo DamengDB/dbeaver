@@ -23,12 +23,12 @@ import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.model.DBPDataSource;
 import org.jkiss.dbeaver.model.DBPDataSourceContainer;
 import org.jkiss.dbeaver.model.DBUtils;
+import org.jkiss.dbeaver.model.data.DBDDataContainer;
+import org.jkiss.dbeaver.model.data.DBDDataManipulator;
 import org.jkiss.dbeaver.model.data.json.JSONUtils;
 import org.jkiss.dbeaver.model.navigator.DBNDatabaseNode;
 import org.jkiss.dbeaver.model.navigator.DBNNode;
 import org.jkiss.dbeaver.model.runtime.DBRRunnableContext;
-import org.jkiss.dbeaver.model.struct.DBSDataContainer;
-import org.jkiss.dbeaver.model.struct.DBSDataManipulator;
 import org.jkiss.dbeaver.model.struct.DBSObject;
 import org.jkiss.dbeaver.model.struct.DBSObjectContainer;
 import org.jkiss.dbeaver.runtime.DBWorkbench;
@@ -52,7 +52,7 @@ public class DatabaseConsumerSettings implements IDataTransferConsumerSettings {
     private String containerNodePath;
     private String entityId;
     private DBSObjectContainer container;
-    private final Map<DBSDataContainer, DatabaseMappingContainer> dataMappings = new LinkedHashMap<>();
+    private final Map<DBDDataContainer, DatabaseMappingContainer> dataMappings = new LinkedHashMap<>();
     private boolean openNewConnections = true;
     private boolean useTransactions = true;
     private int commitAfterRows = 10000;
@@ -83,18 +83,18 @@ public class DatabaseConsumerSettings implements IDataTransferConsumerSettings {
         this.container = container;
     }
 
-    public Map<DBSDataContainer, DatabaseMappingContainer> getDataMappings() {
+    public Map<DBDDataContainer, DatabaseMappingContainer> getDataMappings() {
         return dataMappings;
     }
 
-    public DatabaseMappingContainer getDataMapping(DBSDataContainer dataContainer) {
+    public DatabaseMappingContainer getDataMapping(DBDDataContainer dataContainer) {
         return dataMappings.get(dataContainer);
     }
 
     public boolean isCompleted(Collection<DataTransferPipe> pipes) {
         for (DataTransferPipe pipe : pipes) {
             if (pipe.getProducer() != null) {
-                DBSDataContainer sourceObject = (DBSDataContainer) pipe.getProducer().getDatabaseObject();
+                DBDDataContainer sourceObject = (DBDDataContainer) pipe.getProducer().getDatabaseObject();
                 DatabaseMappingContainer containerMapping = dataMappings.get(sourceObject);
                 if (containerMapping == null ||
                     containerMapping.getMappingType() == DatabaseMappingType.unspecified ||
@@ -248,7 +248,7 @@ public class DatabaseConsumerSettings implements IDataTransferConsumerSettings {
             if (!dataPipes.isEmpty()) {
                 IDataTransferConsumer<?, ?> consumer = dataPipes.get(0).getConsumer();
                 if (consumer instanceof DatabaseTransferConsumer) {
-                    final DBSDataManipulator targetObject = ((DatabaseTransferConsumer) consumer).getTargetObject();
+                    final DBDDataManipulator targetObject = ((DatabaseTransferConsumer) consumer).getTargetObject();
                     if (targetObject != null && targetObject.getParentObject() instanceof DBSObjectContainer) {
                         this.container = (DBSObjectContainer) targetObject.getParentObject();
                     } else if (consumer.getTargetObjectContainer() instanceof DBSObjectContainer) {
@@ -266,7 +266,7 @@ public class DatabaseConsumerSettings implements IDataTransferConsumerSettings {
         if (mappings != null) {
             if (!dataMappings.isEmpty()) {
                 for (DatabaseMappingContainer dmc : dataMappings.values()) {
-                    DBSDataContainer sourceDatacontainer = dmc.getSource();
+                    DBDDataContainer sourceDatacontainer = dmc.getSource();
                     if (sourceDatacontainer != null) {
                         Map<String, Object> dmcSettings = (Map<String, Object>) mappings.get(DBUtils.getObjectFullId(sourceDatacontainer));
                         if (dmcSettings != null) {
@@ -279,7 +279,7 @@ public class DatabaseConsumerSettings implements IDataTransferConsumerSettings {
                     IDataTransferProducer producer = pipe.getProducer();
                     if (producer != null) {
                         DBSObject dbObject = producer.getDatabaseObject();
-                        if (dbObject instanceof DBSDataContainer sourceDC) {
+                        if (dbObject instanceof DBDDataContainer sourceDC) {
                             Map<String, Object> dmcSettings = (Map<String, Object>) mappings.get(DBUtils.getObjectFullId(dbObject));
                             if (dmcSettings != null) {
                                 DatabaseMappingContainer dmc = new DatabaseMappingContainer(this, sourceDC);
@@ -321,7 +321,7 @@ public class DatabaseConsumerSettings implements IDataTransferConsumerSettings {
         settings.put("mappings", mappings);
 
         for (DatabaseMappingContainer dmc : dataMappings.values()) {
-            DBSDataContainer sourceDatacontainer = dmc.getSource();
+            DBDDataContainer sourceDatacontainer = dmc.getSource();
             if (sourceDatacontainer != null) {
                 Map<String, Object> dmcSettings = new LinkedHashMap<>();
                 mappings.put(DBUtils.getObjectFullId(sourceDatacontainer), dmcSettings);
@@ -454,7 +454,7 @@ public class DatabaseConsumerSettings implements IDataTransferConsumerSettings {
         }
     }
 
-    public void addDataMappings(DBRRunnableContext context, DBSDataContainer dataContainer, DatabaseMappingContainer mappingContainer) {
+    public void addDataMappings(DBRRunnableContext context, DBDDataContainer dataContainer, DatabaseMappingContainer mappingContainer) {
         dataMappings.put(dataContainer, mappingContainer);
 
         if (mappingContainer.getTarget() == null && dialogSettings != null) {

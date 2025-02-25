@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
  */
 package org.jkiss.dbeaver.ui.search.data;
 
+import org.jkiss.dbeaver.model.data.DBDDataContainer;
 import org.jkiss.dbeaver.model.navigator.DBNNode;
-import org.jkiss.dbeaver.model.struct.DBSDataContainer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +27,7 @@ import java.util.List;
  */
 public class SearchDataParams {
 
-    List<DBSDataContainer> sources = new ArrayList<>();
+    List<DBDDataContainer> sources = new ArrayList<>();
     String searchString;
     boolean caseSensitive;
     boolean fastSearch; // Indexed
@@ -41,11 +41,11 @@ public class SearchDataParams {
     {
     }
 
-    public List<DBSDataContainer> getSources() {
+    public List<DBDDataContainer> getSources() {
         return sources;
     }
 
-    public void setSources(List<DBSDataContainer> sources) {
+    public void setSources(List<DBDDataContainer> sources) {
         this.sources = sources;
     }
 

@@ -24,10 +24,7 @@ import org.jkiss.dbeaver.DBDatabaseException;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.ModelPreferences;
-import org.jkiss.dbeaver.model.DBPDataSource;
-import org.jkiss.dbeaver.model.DBPDataSourceContainer;
-import org.jkiss.dbeaver.model.DBPErrorAssistant;
-import org.jkiss.dbeaver.model.DBUtils;
+import org.jkiss.dbeaver.model.*;
 import org.jkiss.dbeaver.model.connection.DBPConnectionConfiguration;
 import org.jkiss.dbeaver.model.connection.DBPConnectionType;
 import org.jkiss.dbeaver.model.data.*;
@@ -694,7 +691,7 @@ public class DBExecUtils {
                     DBCExecutionSource executionSource = sourceStatement.getStatementSource();
 
                     monitor.subTask("Discover owner entity");
-                    DBSDataContainer dataContainer = executionSource.getDataContainer();
+                    DBDDataContainer dataContainer = executionSource.getDataContainer();
                     if (dataContainer instanceof DBSEntity) {
                         entity = (DBSEntity) dataContainer;
                     }
@@ -945,13 +942,13 @@ public class DBExecUtils {
             return true;
         }
         DBDRowIdentifier rowIdentifier = attribute.getRowIdentifier();
-        if (rowIdentifier == null || !(rowIdentifier.getEntity() instanceof DBSDataManipulator dataContainer)) {
+        if (rowIdentifier == null || !(rowIdentifier.getEntity() instanceof DBDDataManipulator dataContainer)) {
             return true;
         }
         if (checkValidKey && rowIdentifier.isIncomplete()) {
             return true;
         }
-        return !dataContainer.isFeatureSupported(DBSDataManipulator.FEATURE_DATA_UPDATE);
+        return !dataContainer.isFeatureSupported(DBDDataManipulator.FEATURE_DATA_UPDATE);
     }
 
     public static String getAttributeReadOnlyStatus(@NotNull DBDAttributeBinding attribute) {
@@ -976,10 +973,10 @@ public class DBExecUtils {
             }
         }
         DBSEntity dataContainer = rowIdentifier.getEntity();
-        if (!(dataContainer instanceof DBSDataManipulator)) {
+        if (!(dataContainer instanceof DBDDataManipulator)) {
             return "Underlying entity doesn't support data modification";
         }
-        if (!((DBSDataManipulator) dataContainer).isFeatureSupported(DBSDataManipulator.FEATURE_DATA_UPDATE)) {
+        if (!((DBDDataManipulator) dataContainer).isFeatureSupported(DBDDataManipulator.FEATURE_DATA_UPDATE)) {
             return "Underlying entity doesn't support data update";
         }
         return null;

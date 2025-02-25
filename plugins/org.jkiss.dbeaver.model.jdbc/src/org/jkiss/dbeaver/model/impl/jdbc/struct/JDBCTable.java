@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ import java.util.stream.Collectors;
  */
 public abstract class JDBCTable<DATASOURCE extends DBPDataSource, CONTAINER extends DBSObject>
     extends AbstractTable<DATASOURCE, CONTAINER>
-    implements DBSDictionary, DBSDataManipulator, DBPSaveableObject, SQLQueryGeneratorUpdate
+    implements DBDDictionary, DBDDataManipulator, DBPSaveableObject, SQLQueryGeneratorUpdate
 {
     private static final Log log = Log.getLog(JDBCTable.class);
 
@@ -358,7 +358,7 @@ public abstract class JDBCTable<DATASOURCE extends DBPDataSource, CONTAINER exte
         readRequiredMeta(session.getProgressMonitor());
 
         boolean multiRowInsertSupported = getDataSource().getSQLDialect().getDefaultMultiValueInsertMode() == SQLDialect.MultiValueInsertMode.GROUP_ROWS;
-        if (CommonUtils.toBoolean(options.get(DBSDataManipulator.OPTION_USE_MULTI_INSERT)) && multiRowInsertSupported) {
+        if (CommonUtils.toBoolean(options.get(DBDDataManipulator.OPTION_USE_MULTI_INSERT)) && multiRowInsertSupported) {
             return new ExecuteBatchWithMultipleInsert(attributes, keysReceiver, true, session, source, JDBCTable.this);
         }
 
@@ -915,7 +915,7 @@ public abstract class JDBCTable<DATASOURCE extends DBPDataSource, CONTAINER exte
     
     @NotNull
     @Override
-    public DBSDictionaryAccessor getDictionaryAccessor(
+    public DBDDictionaryAccessor getDictionaryAccessor(
         @NotNull DBRProgressMonitor monitor,
         List<DBDAttributeValue> preceedingKeys,
         @NotNull DBSEntityAttribute keyColumn,
@@ -1039,7 +1039,7 @@ public abstract class JDBCTable<DATASOURCE extends DBPDataSource, CONTAINER exte
         }
     }
     
-    protected class DictionaryAccessor implements DBSDictionaryAccessor {
+    protected class DictionaryAccessor implements DBDDictionaryAccessor {
         private final List<AttrInfo<DBDAttributeValue>> preceedingKeysInfo;
         private final DBSEntityAttribute keyColumn;
         private final boolean sortAsc;

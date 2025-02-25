@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,11 +29,16 @@ import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.model.DBPEvaluationContext;
 import org.jkiss.dbeaver.model.DBUtils;
+import org.jkiss.dbeaver.model.data.DBDDataContainer;
+import org.jkiss.dbeaver.model.data.DBDDataManipulator;
 import org.jkiss.dbeaver.model.navigator.DBNDatabaseNode;
 import org.jkiss.dbeaver.model.navigator.DBNModel;
 import org.jkiss.dbeaver.model.navigator.DBNNode;
 import org.jkiss.dbeaver.model.runtime.DefaultProgressMonitor;
-import org.jkiss.dbeaver.model.struct.*;
+import org.jkiss.dbeaver.model.struct.DBSInstance;
+import org.jkiss.dbeaver.model.struct.DBSObject;
+import org.jkiss.dbeaver.model.struct.DBSObjectContainer;
+import org.jkiss.dbeaver.model.struct.DBSWrapper;
 import org.jkiss.dbeaver.runtime.DBWorkbench;
 import org.jkiss.dbeaver.tools.transfer.DataTransferPipe;
 import org.jkiss.dbeaver.tools.transfer.DataTransferSettings;
@@ -175,13 +180,13 @@ public class DatabaseProducerPageInputObjects extends DataTransferPageNodeSettin
                 if (object != null) {
                     success = true;
                     if (chooseConsumer) {
-                        if (object instanceof DBSDataManipulator) {
-                            pipe.setConsumer(new DatabaseTransferConsumer((DBSDataManipulator) object));
+                        if (object instanceof DBDDataManipulator) {
+                            pipe.setConsumer(new DatabaseTransferConsumer((DBDDataManipulator) object));
                             updateConsumerContainer(pipe);
                         }
                     } else {
-                        if (object instanceof DBSDataContainer) {
-                            pipe.setProducer(new DatabaseTransferProducer((DBSDataContainer) object));
+                        if (object instanceof DBDDataContainer) {
+                            pipe.setProducer(new DatabaseTransferProducer((DBDDataContainer) object));
                         }
                     }
                     updateItemData(item, pipe);
@@ -284,20 +289,20 @@ public class DatabaseProducerPageInputObjects extends DataTransferPageNodeSettin
                 NLS.bind(DTUIMessages.database_producer_page_input_objects_node_select_source, pipe.getConsumer().getObjectName()),
             rootNode,
             lastSelection,
-            new Class[] {DBSInstance.class, DBSObjectContainer.class, DBSDataContainer.class},
-            new Class[] {chooseConsumer ? DBSDataManipulator.class : DBSDataContainer.class}, null);
+            new Class[] {DBSInstance.class, DBSObjectContainer.class, DBDDataContainer.class},
+            new Class[] {chooseConsumer ? DBDDataManipulator.class : DBDDataContainer.class}, null);
         if (node instanceof DBNDatabaseNode) {
             lastSelection = (DBNDatabaseNode) node;
             DBSObject object = ((DBNDatabaseNode) node).getObject();
 
             if (chooseConsumer) {
-                if (object instanceof DBSDataManipulator) {
-                    pipe.setConsumer(new DatabaseTransferConsumer((DBSDataManipulator) object));
+                if (object instanceof DBDDataManipulator) {
+                    pipe.setConsumer(new DatabaseTransferConsumer((DBDDataManipulator) object));
                     updateConsumerContainer(pipe);
                 }
             } else {
-                if (object instanceof DBSDataContainer) {
-                    pipe.setProducer(new DatabaseTransferProducer((DBSDataContainer) object));
+                if (object instanceof DBDDataContainer) {
+                    pipe.setProducer(new DatabaseTransferProducer((DBDDataContainer) object));
                 }
             }
             return true;
@@ -308,7 +313,7 @@ public class DatabaseProducerPageInputObjects extends DataTransferPageNodeSettin
     private void updateConsumerContainer(DataTransferPipe pipe) {
         IDataTransferSettings consumerSettings = getWizard().getSettings().getNodeSettings(getWizard().getSettings().getConsumer());
         if (consumerSettings instanceof DatabaseConsumerSettings databaseConsumerSettings) {
-            if (pipe.getConsumer() != null && pipe.getConsumer().getDatabaseObject() instanceof DBSDataManipulator databaseObject) {
+            if (pipe.getConsumer() != null && pipe.getConsumer().getDatabaseObject() instanceof DBDDataManipulator databaseObject) {
                 DBSObject container = databaseObject.getParentObject();
                 if (container instanceof DBSObjectContainer) {
                     databaseConsumerSettings.setContainer((DBSObjectContainer) container);

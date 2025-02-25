@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -641,12 +641,12 @@ public final class DBUtils {
     }
 
     @NotNull
-    public static DBDAttributeBindingMeta getAttributeBinding(@NotNull DBSDataContainer dataContainer, @NotNull DBCSession session, @NotNull DBCAttributeMetaData attributeMeta) {
+    public static DBDAttributeBindingMeta getAttributeBinding(@NotNull DBDDataContainer dataContainer, @NotNull DBCSession session, @NotNull DBCAttributeMetaData attributeMeta) {
         return new DBDAttributeBindingMeta(dataContainer, session, attributeMeta);
     }
 
     @NotNull
-    public static DBDAttributeBinding[] getAttributeBindings(@NotNull DBCSession session, @NotNull DBSDataContainer dataContainer, @NotNull DBCResultSetMetaData metaData) {
+    public static DBDAttributeBinding[] getAttributeBindings(@NotNull DBCSession session, @NotNull DBDDataContainer dataContainer, @NotNull DBCResultSetMetaData metaData) {
         List<? extends DBCAttributeMetaData> metaAttributes = metaData.getAttributes();
         int columnsCount = metaAttributes.size();
         DBDAttributeBinding[] bindings = new DBDAttributeBinding[columnsCount];
@@ -656,7 +656,8 @@ public final class DBUtils {
         return injectAndFilterAttributeBindings(session.getDataSource(), dataContainer, bindings, false);
     }
 
-    public static DBDAttributeBinding[] injectAndFilterAttributeBindings(@NotNull DBPDataSource dataSource, @NotNull DBSDataContainer dataContainer, DBDAttributeBinding[] bindings, boolean filterAttributes) {
+    public static DBDAttributeBinding[] injectAndFilterAttributeBindings(@NotNull DBPDataSource dataSource, @NotNull
+    DBDDataContainer dataContainer, DBDAttributeBinding[] bindings, boolean filterAttributes) {
         // Add custom attributes
         DBVEntity vEntity = DBVUtils.getVirtualEntity(dataContainer, false);
         if (vEntity != null) {
@@ -2400,21 +2401,21 @@ public final class DBUtils {
      * @return List of data containers (tables, views etc.) from the parent container (schema, catalog, datasource etc.)
      * @throws DBException if connection is lost or something is going wrong during children loading
      */
-    public static List<DBSDataContainer> getAllDataContainersFromParentContainer(
+    public static List<DBDDataContainer> getAllDataContainersFromParentContainer(
         @NotNull DBRProgressMonitor monitor,
         @NotNull DBSObject parent) throws DBException {
-        List<DBSDataContainer> result = new ArrayList<>();
-        if (parent instanceof DBSDataContainer) {
-            result.add((DBSDataContainer) parent);
+        List<DBDDataContainer> result = new ArrayList<>();
+        if (parent instanceof DBDDataContainer) {
+            result.add((DBDDataContainer) parent);
         } else if (parent instanceof DBSObjectContainer container) {
             Class<? extends DBSObject> primaryChildType = container.getPrimaryChildType(monitor);
-            if (DBSDataContainer.class.isAssignableFrom(primaryChildType)) {
+            if (DBDDataContainer.class.isAssignableFrom(primaryChildType)) {
                 // This is schema or catalog with tables
                 Collection<? extends DBSObject> children = container.getChildren(monitor);
                 if (!CommonUtils.isEmpty(children)) {
                     for (DBSObject child : children) {
-                        if (child instanceof DBSDataContainer) {
-                            result.add((DBSDataContainer) child);
+                        if (child instanceof DBDDataContainer) {
+                            result.add((DBDDataContainer) child);
                         }
                     }
                 }
@@ -2424,8 +2425,8 @@ public final class DBUtils {
                 for (DBSObject child : children) {
                     Collection<? extends DBSObject> dbsObjects = ((DBSObjectContainer) child).getChildren(monitor);
                     for (DBSObject dbsObject : dbsObjects) {
-                        if (dbsObject instanceof DBSDataContainer) {
-                            result.add((DBSDataContainer) dbsObject);
+                        if (dbsObject instanceof DBDDataContainer) {
+                            result.add((DBDDataContainer) dbsObject);
                         }
                     }
                 }
@@ -2433,7 +2434,7 @@ public final class DBUtils {
         } else if (parent instanceof DBNDatabaseFolder) {
             Collection<DBSObject> dbsObjects = ((DBNDatabaseFolder) parent).getChildrenObjects(monitor);
             for (DBSObject dbsObject : dbsObjects) {
-                List<DBSDataContainer> containers = getAllDataContainersFromParentContainer(monitor, dbsObject);
+                List<DBDDataContainer> containers = getAllDataContainersFromParentContainer(monitor, dbsObject);
                 if (!CommonUtils.isEmpty(containers)) {
                     result.addAll(containers);
                 }
@@ -2441,7 +2442,7 @@ public final class DBUtils {
         } else if (parent instanceof DBPDataSourceContainer) {
             DBPDataSource dataSource = parent.getDataSource();
             if (dataSource instanceof DBSObjectContainer) {
-                List<DBSDataContainer> containers = getAllDataContainersFromParentContainer(monitor, dataSource);
+                List<DBDDataContainer> containers = getAllDataContainersFromParentContainer(monitor, dataSource);
                 if (!CommonUtils.isEmpty(containers)) {
                     result.addAll(containers);
                 }
@@ -2471,7 +2472,7 @@ public final class DBUtils {
     public static long readRowCount(
         @NotNull DBRProgressMonitor monitor,
         @Nullable DBCExecutionContext executionContext,
-        @Nullable DBSDataContainer dataContainer,
+        @Nullable DBDDataContainer dataContainer,
         @Nullable DBDDataFilter dataFilter,
         @NotNull Object controller
     ) throws DBException {
@@ -2488,7 +2489,7 @@ public final class DBUtils {
                     new AbstractExecutionSource(dataContainer, executionContext, controller),
                     session,
                     dataFilter,
-                    DBSDataContainer.FLAG_NONE);
+                    DBDDataContainer.FLAG_NONE);
                 result[0] = rowCount;
             } catch (DBCException e) {
                 throw new InvocationTargetException(e);

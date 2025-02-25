@@ -30,7 +30,10 @@ import org.jkiss.dbeaver.model.exec.trace.DBCTrace;
 import org.jkiss.dbeaver.model.preferences.DBPPreferenceStore;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 import org.jkiss.dbeaver.model.runtime.VoidProgressMonitor;
-import org.jkiss.dbeaver.model.struct.*;
+import org.jkiss.dbeaver.model.struct.DBSAttributeBase;
+import org.jkiss.dbeaver.model.struct.DBSEntity;
+import org.jkiss.dbeaver.model.struct.DBSEntityAttribute;
+import org.jkiss.dbeaver.model.struct.DBSObjectFilter;
 import org.jkiss.dbeaver.model.virtual.DBVColorOverride;
 import org.jkiss.dbeaver.model.virtual.DBVEntity;
 import org.jkiss.dbeaver.model.virtual.DBVUtils;
@@ -369,7 +372,7 @@ public class ResultSetModel implements DBDResultSetModel {
         if (entity != null) {
             return DBVUtils.getVirtualEntity(entity, true);
         }
-        DBSDataContainer dataContainer = getDataContainer();
+        DBDDataContainer dataContainer = getDataContainer();
         if (dataContainer != null) {
             return DBVUtils.getVirtualEntity(dataContainer, create);
         }
@@ -377,7 +380,7 @@ public class ResultSetModel implements DBDResultSetModel {
     }
 
     @Nullable
-    private DBSDataContainer getDataContainer() {
+    private DBDDataContainer getDataContainer() {
         return executionSource == null ? null : executionSource.getDataContainer();
     }
 
@@ -730,7 +733,7 @@ public class ResultSetModel implements DBDResultSetModel {
             }
 
             if (isDocumentBased) {
-                DBSDataContainer dataContainer = getDataContainer();
+                DBDDataContainer dataContainer = getDataContainer();
                 if (dataContainer instanceof DBSEntity) {
                     singleSourceEntity = (DBSEntity) dataContainer;
                 }
@@ -781,7 +784,7 @@ public class ResultSetModel implements DBDResultSetModel {
     public void updateColorMapping(boolean reset) {
         colorMapping.clear();
 
-        DBSDataContainer dataContainer = getDataContainer();
+        DBDDataContainer dataContainer = getDataContainer();
         if (dataContainer == null) {
             return;
         }

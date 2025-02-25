@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.model.DBPDataKind;
+import org.jkiss.dbeaver.model.DBSDocumentAttributeEnumerable;
 import org.jkiss.dbeaver.model.DBUtils;
 import org.jkiss.dbeaver.model.DBValueFormatting;
 import org.jkiss.dbeaver.model.data.*;
@@ -317,7 +318,7 @@ class GenericFilterValueEdit {
                 }
                 final DBSEntityAttribute fkAttribute = fkColumn.getAttribute();
                 final DBSEntityConstraint refConstraint = association.getReferencedConstraint();
-                final DBSDictionary enumConstraint = refConstraint == null ? null : (DBSDictionary) refConstraint.getParentObject();
+                final DBDDictionary enumConstraint = refConstraint == null ? null : (DBDDictionary) refConstraint.getParentObject();
                 if (fkAttribute != null && enumConstraint != null) {
                     return enumConstraint.getDictionaryEnumeration(
                         monitor,

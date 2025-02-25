@@ -30,12 +30,12 @@ import org.jkiss.code.NotNull;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.model.app.DBPProject;
+import org.jkiss.dbeaver.model.data.DBDDataManipulator;
 import org.jkiss.dbeaver.model.fs.DBFUtils;
 import org.jkiss.dbeaver.model.navigator.fs.DBNPathBase;
 import org.jkiss.dbeaver.model.preferences.DBPPropertyDescriptor;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 import org.jkiss.dbeaver.model.runtime.DBRRunnableWithProgress;
-import org.jkiss.dbeaver.model.struct.DBSDataManipulator;
 import org.jkiss.dbeaver.model.struct.DBSObject;
 import org.jkiss.dbeaver.model.struct.DBSObjectContainer;
 import org.jkiss.dbeaver.runtime.DBWorkbench;
@@ -160,7 +160,7 @@ public class StreamProducerPageSettings extends DataTransferPageNodeSettings {
             } else {
                 boolean allSourceObjectsNotTables = true;
                 for (DBSObject sourceObject : sourceObjects) {
-                    if (sourceObject instanceof DBSDataManipulator) {
+                    if (sourceObject instanceof DBDDataManipulator) {
                         allSourceObjectsNotTables = false;
                         break;
                     }
@@ -271,7 +271,7 @@ public class StreamProducerPageSettings extends DataTransferPageNodeSettings {
         IDataTransferSettings consumerSettings = getWizard().getSettings().getNodeSettings(getWizard().getSettings().getConsumer());
         if (consumerSettings instanceof DatabaseConsumerSettings settings) {
             DatabaseMappingContainer mapping = new DatabaseMappingContainer(settings, newProducer.getDatabaseObject());
-            if (pipe.getConsumer() != null && pipe.getConsumer().getDatabaseObject() instanceof DBSDataManipulator databaseObject) {
+            if (pipe.getConsumer() != null && pipe.getConsumer().getDatabaseObject() instanceof DBDDataManipulator databaseObject) {
                 DBSObject container = databaseObject.getParentObject();
                 if (container instanceof DBSObjectContainer) {
                     settings.setContainer((DBSObjectContainer) container);

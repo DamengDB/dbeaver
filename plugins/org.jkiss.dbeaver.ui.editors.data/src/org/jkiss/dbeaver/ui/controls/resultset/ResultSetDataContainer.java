@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import org.jkiss.dbeaver.model.data.*;
 import org.jkiss.dbeaver.model.exec.*;
 import org.jkiss.dbeaver.model.impl.data.AttributeMetaDataProxy;
 import org.jkiss.dbeaver.model.impl.local.LocalResultSetMeta;
-import org.jkiss.dbeaver.model.struct.DBSDataContainer;
 import org.jkiss.dbeaver.model.struct.DBSObject;
 import org.jkiss.dbeaver.utils.GeneralUtils;
 import org.jkiss.utils.CommonUtils;
@@ -39,12 +38,12 @@ import java.util.List;
  * Client-side data container.
  * Wraps RSV model and original data container.
  */
-public class ResultSetDataContainer implements DBSDataContainer, DBPContextProvider, DBPAdaptable, DBDAttributeFilter {
+public class ResultSetDataContainer implements DBDDataContainer, DBPContextProvider, DBPAdaptable, DBDAttributeFilter {
 
     private static final Log log = Log.getLog(ResultSetDataContainer.class);
 
     private final IResultSetController controller;
-    private final DBSDataContainer dataContainer;
+    private final DBDDataContainer dataContainer;
     private final ResultSetModel model;
     private ResultSetDataContainerOptions options;
     private boolean filterAttributes;
@@ -128,11 +127,11 @@ public class ResultSetDataContainer implements DBSDataContainer, DBPContextProvi
     }
 
     private boolean proceedSelectedColumnsOnly(long flags) {
-        return (flags & DBSDataContainer.FLAG_USE_SELECTED_COLUMNS) != 0 && !CommonUtils.isEmpty(options.getSelectedColumns());
+        return (flags & DBDDataContainer.FLAG_USE_SELECTED_COLUMNS) != 0 && !CommonUtils.isEmpty(options.getSelectedColumns());
     }
 
     private boolean proceedSelectedRowsOnly(long flags) {
-        return (flags & DBSDataContainer.FLAG_USE_SELECTED_ROWS) != 0 && !CommonUtils.isEmpty(options.getSelectedRows());
+        return (flags & DBDDataContainer.FLAG_USE_SELECTED_ROWS) != 0 && !CommonUtils.isEmpty(options.getSelectedRows());
     }
 
     @Override

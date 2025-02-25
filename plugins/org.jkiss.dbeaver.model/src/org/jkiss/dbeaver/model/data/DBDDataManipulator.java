@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,16 @@
  * limitations under the License.
  */
 
-package org.jkiss.dbeaver.model.struct;
+package org.jkiss.dbeaver.model.data;
 
 import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
-import org.jkiss.dbeaver.model.data.DBDDataReceiver;
 import org.jkiss.dbeaver.model.edit.DBEPersistAction;
 import org.jkiss.dbeaver.model.exec.DBCException;
 import org.jkiss.dbeaver.model.exec.DBCExecutionSource;
 import org.jkiss.dbeaver.model.exec.DBCSession;
 import org.jkiss.dbeaver.model.exec.DBCStatistics;
+import org.jkiss.dbeaver.model.struct.DBSAttributeBase;
 
 import java.util.List;
 import java.util.Map;
@@ -33,7 +33,7 @@ import java.util.Map;
  * Data manipulator.
  * Extends data container and provides additional methods to manipulate underlying data.
  */
-public interface DBSDataManipulator extends DBSDataContainer {
+public interface DBDDataManipulator extends DBDDataContainer {
 
     String FEATURE_DATA_INSERT = "data.insert";
     String FEATURE_DATA_UPDATE = "data.update";

@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,7 @@ import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.model.*;
 import org.jkiss.dbeaver.model.app.DBPProject;
-import org.jkiss.dbeaver.model.data.DBDAttributeBinding;
-import org.jkiss.dbeaver.model.data.DBDAttributeBindingCustom;
-import org.jkiss.dbeaver.model.data.DBDInsertReplaceMethod;
-import org.jkiss.dbeaver.model.data.DBDValueHandler;
+import org.jkiss.dbeaver.model.data.*;
 import org.jkiss.dbeaver.model.edit.DBEPersistAction;
 import org.jkiss.dbeaver.model.exec.*;
 import org.jkiss.dbeaver.model.impl.AbstractExecutionSource;
@@ -76,8 +73,8 @@ public class DatabaseTransferConsumer implements IDataTransferConsumer<DatabaseC
     private DBDAttributeBinding[] sourceBindings;
     private DBCExecutionContext targetContext;
     private DBCSession targetSession;
-    private DBSDataManipulator.ExecuteBatch executeBatch;
-    private DBSDataBulkLoader.BulkLoadManager bulkLoadManager;
+    private DBDDataManipulator.ExecuteBatch executeBatch;
+    private DBDDataBulkLoader.BulkLoadManager bulkLoadManager;
     private long rowsExported = 0;
     private boolean ignoreErrors = false;
 
@@ -89,7 +86,7 @@ public class DatabaseTransferConsumer implements IDataTransferConsumer<DatabaseC
     // In this case consumer will be replaced with explicit consumers during configuration
     private DBSObjectContainer targetObjectContainer;
     // Used in deserialized or directly instantiated consumers
-    private DBSDataManipulator localTargetObject;
+    private DBDDataManipulator localTargetObject;
 
     private boolean isPreview;
     private List<Object[]> previewRows;
@@ -122,7 +119,7 @@ public class DatabaseTransferConsumer implements IDataTransferConsumer<DatabaseC
     public DatabaseTransferConsumer() {
     }
 
-    public DatabaseTransferConsumer(DBSDataManipulator targetObject) {
+    public DatabaseTransferConsumer(DBDDataManipulator targetObject) {
         this.localTargetObject = targetObject;
     }
 
@@ -185,7 +182,7 @@ public class DatabaseTransferConsumer implements IDataTransferConsumer<DatabaseC
 
         AbstractExecutionSource executionSource = new AbstractExecutionSource(containerMapping.getSource(), targetContext, this);
 
-        DBSDataManipulator targetObject = getTargetObject();
+        DBDDataManipulator targetObject = getTargetObject();
         if (targetObject != null && !isPreview && offset <= 0 && settings.isTruncateBeforeLoad() && (containerMapping == null || containerMapping.getMappingType() == DatabaseMappingType.existing)) {
             // Truncate target tables
             // Note: all implementations support truncate in some way (e.g. DELETE FROM)
@@ -198,7 +195,7 @@ public class DatabaseTransferConsumer implements IDataTransferConsumer<DatabaseC
         }
 
         boolean dynamicTarget = targetContext.getDataSource().getInfo().isDynamicMetadata();
-        DBSDataContainer sourceObject = getSourceObject();
+        DBDDataContainer sourceObject = getSourceObject();
         if (dynamicTarget) {
             // Document-based datasource
             rsAttributes = DBUtils.getAttributeBindings(session, sourceObject, resultSet.getMeta());
@@ -282,12 +279,12 @@ public class DatabaseTransferConsumer implements IDataTransferConsumer<DatabaseC
         DBSAttributeBase[] attributes = targetAttributes.toArray(new DBSAttributeBase[0]);
 
         Map<String, Object> options = new HashMap<>();
-        options.put(DBSDataManipulator.OPTION_USE_MULTI_INSERT, settings.isUseMultiRowInsert());
-        options.put(DBSDataManipulator.OPTION_SKIP_BIND_VALUES, settings.isSkipBindValues());
+        options.put(DBDDataManipulator.OPTION_USE_MULTI_INSERT, settings.isUseMultiRowInsert());
+        options.put(DBDDataManipulator.OPTION_SKIP_BIND_VALUES, settings.isSkipBindValues());
 
         if (!isPreview && targetObject != null) {
             if (settings.isUseBulkLoad()) {
-                DBSDataBulkLoader bulkLoader = DBUtils.getAdapter(DBSDataBulkLoader.class, targetContext.getDataSource());
+                DBDDataBulkLoader bulkLoader = DBUtils.getAdapter(DBDDataBulkLoader.class, targetContext.getDataSource());
                 if (bulkLoader != null) {
                     try {
                         bulkLoadManager = bulkLoader.createBulkLoad(
@@ -298,8 +295,8 @@ public class DatabaseTransferConsumer implements IDataTransferConsumer<DatabaseC
                 }
             }
             if (bulkLoadManager == null) {
-                if (targetObject instanceof DBSDataManipulatorExt) {
-                    ((DBSDataManipulatorExt) targetObject).beforeDataChange(targetSession, DBSManipulationType.INSERT, attributes, executionSource);
+                if (targetObject instanceof DBDDataManipulatorExt) {
+                    ((DBDDataManipulatorExt) targetObject).beforeDataChange(targetSession, DBSManipulationType.INSERT, attributes, executionSource);
                 }
                 executeBatch = targetObject.insertData(
                     targetSession,
@@ -425,12 +422,12 @@ public class DatabaseTransferConsumer implements IDataTransferConsumer<DatabaseC
                 }
 
                 Map<String, Object> options = new HashMap<>();
-                options.put(DBSDataManipulator.OPTION_DISABLE_BATCHES, disableUsingBatches);
-                options.put(DBSDataManipulator.OPTION_MULTI_INSERT_BATCH_SIZE, settings.getMultiRowInsertBatch());
-                options.put(DBSDataManipulator.OPTION_SKIP_BIND_VALUES, settings.isSkipBindValues());
+                options.put(DBDDataManipulator.OPTION_DISABLE_BATCHES, disableUsingBatches);
+                options.put(DBDDataManipulator.OPTION_MULTI_INSERT_BATCH_SIZE, settings.getMultiRowInsertBatch());
+                options.put(DBDDataManipulator.OPTION_SKIP_BIND_VALUES, settings.isSkipBindValues());
 
                 boolean onDuplicateKeyCaseOn = settings.getOnDuplicateKeyInsertMethodId() != null &&
-                    !settings.getOnDuplicateKeyInsertMethodId().equals(DBSDataManipulator.INSERT_NONE_METHOD);
+                    !settings.getOnDuplicateKeyInsertMethodId().equals(DBDDataManipulator.INSERT_NONE_METHOD);
                 if (onDuplicateKeyCaseOn) {
                     String insertMethodId = settings.getOnDuplicateKeyInsertMethodId();
                     if (!CommonUtils.isEmpty(insertMethodId)) {
@@ -439,7 +436,7 @@ public class DatabaseTransferConsumer implements IDataTransferConsumer<DatabaseC
                         if (insertReplaceMethod != null) {
                             try {
                                 DBDInsertReplaceMethod insertMethod = insertReplaceMethod.createInsertMethod();
-                                options.put(DBSDataManipulator.OPTION_INSERT_REPLACE_METHOD, insertMethod);
+                                options.put(DBDDataManipulator.OPTION_INSERT_REPLACE_METHOD, insertMethod);
                             } catch (DBException e) {
                                 log.debug("Can't get insert replace method", e);
                             }
@@ -522,9 +519,9 @@ public class DatabaseTransferConsumer implements IDataTransferConsumer<DatabaseC
                 executeBatch = null;
             }
         } finally {
-            DBSDataManipulator targetObject = getTargetObject();
-            if (!isPreview && targetObject instanceof DBSDataManipulatorExt) {
-                ((DBSDataManipulatorExt) targetObject).afterDataChange(
+            DBDDataManipulator targetObject = getTargetObject();
+            if (!isPreview && targetObject instanceof DBDDataManipulatorExt) {
+                ((DBDDataManipulatorExt) targetObject).afterDataChange(
                     targetSession,
                     DBSManipulationType.INSERT,
                     targetAttributes.toArray(new DBSAttributeBase[0]),
@@ -574,7 +571,7 @@ public class DatabaseTransferConsumer implements IDataTransferConsumer<DatabaseC
     }
 
     private DBSObject checkTargetContainer(DBRProgressMonitor monitor) throws DBException {
-        DBSDataManipulator targetObject = getTargetObject();
+        DBDDataManipulator targetObject = getTargetObject();
         if (targetObject == null) {
             DBSObjectContainer container = settings.getContainer();
             if (container instanceof DBPDataSourceContainer && container.getDataSource() == null) {
@@ -627,7 +624,7 @@ public class DatabaseTransferConsumer implements IDataTransferConsumer<DatabaseC
     @Override
     public void initTransfer(@NotNull DBSObject sourceObject, @Nullable DatabaseConsumerSettings settings, @NotNull TransferParameters parameters, @Nullable IDataTransferProcessor processor, @Nullable Map<String, Object> processorProperties, @Nullable DBPProject project) {
         this.settings = settings;
-        this.containerMapping = settings.getDataMapping((DBSDataContainer) sourceObject);
+        this.containerMapping = settings.getDataMapping((DBDDataContainer) sourceObject);
     }
 
     @Override
@@ -758,7 +755,7 @@ public class DatabaseTransferConsumer implements IDataTransferConsumer<DatabaseC
             } catch (Exception e) {
                 log.error("Error refreshing database model", e);
             }
-            DBSDataManipulator targetObject = getTargetObject();
+            DBDDataManipulator targetObject = getTargetObject();
             if (targetObject != null) {
                 // Refresh node first (this will refresh table data as well)
                 try {
@@ -803,15 +800,15 @@ public class DatabaseTransferConsumer implements IDataTransferConsumer<DatabaseC
         }
     }
 
-    public DBSDataContainer getSourceObject() {
+    public DBDDataContainer getSourceObject() {
         return containerMapping == null ? null : containerMapping.getSource();
     }
 
-    public DBSDataManipulator getTargetObject() {
+    public DBDDataManipulator getTargetObject() {
         return containerMapping == null ? localTargetObject : containerMapping.getTarget();
     }
 
-    public void setTargetObject(DBSDataManipulator targetObject) {
+    public void setTargetObject(DBDDataManipulator targetObject) {
         this.localTargetObject = targetObject;
     }
 
@@ -825,7 +822,7 @@ public class DatabaseTransferConsumer implements IDataTransferConsumer<DatabaseC
             return targetObjectContainer.getName();
         }
 
-        DBSDataManipulator targetObject = getTargetObject();
+        DBDDataManipulator targetObject = getTargetObject();
 
         String targetName = null;
         if (targetObject != null) {
@@ -866,7 +863,7 @@ public class DatabaseTransferConsumer implements IDataTransferConsumer<DatabaseC
         if (targetObjectContainer != null) {
             return DBIcon.TREE_FOLDER_TABLE;
         }
-        DBSDataManipulator targetObject = getTargetObject();
+        DBDDataManipulator targetObject = getTargetObject();
         if (targetObject instanceof DBPImageProvider) {
             return DBValueFormatting.getObjectImage(targetObject);
         }
@@ -905,7 +902,7 @@ public class DatabaseTransferConsumer implements IDataTransferConsumer<DatabaseC
         if (targetObjectContainer != null) {
             return targetObjectContainer.getDataSource().getContainer();
         }
-        DBSDataManipulator targetObject = getTargetObject();
+        DBDDataManipulator targetObject = getTargetObject();
         if (targetObject != null) {
             return targetObject.getDataSource().getContainer();
         }
@@ -957,7 +954,7 @@ public class DatabaseTransferConsumer implements IDataTransferConsumer<DatabaseC
         return statistics;
     }
 
-    private class PreviewBatch implements DBSDataManipulator.ExecuteBatch {
+    private class PreviewBatch implements DBDDataManipulator.ExecuteBatch {
 
         @Override
         public void add(@NotNull Object[] attributeValues) throws DBCException {

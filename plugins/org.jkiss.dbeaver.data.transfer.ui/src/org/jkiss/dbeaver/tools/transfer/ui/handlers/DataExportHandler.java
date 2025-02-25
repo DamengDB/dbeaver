@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.swt.SWT;
 import org.eclipse.ui.handlers.HandlerUtil;
-import org.jkiss.dbeaver.model.struct.DBSDataContainer;
+import org.jkiss.dbeaver.model.data.DBDDataContainer;
 import org.jkiss.dbeaver.registry.BasePolicyDataProvider;
 import org.jkiss.dbeaver.tools.transfer.DTConstants;
 import org.jkiss.dbeaver.tools.transfer.IDataTransferNode;
@@ -33,7 +33,7 @@ public class DataExportHandler extends DataTransferHandler {
 
     @Override
     protected IDataTransferNode<?> adaptTransferNode(Object object) {
-        final DBSDataContainer adapted = RuntimeUtils.getObjectAdapter(object, DBSDataContainer.class);
+        final DBDDataContainer adapted = RuntimeUtils.getObjectAdapter(object, DBDDataContainer.class);
         if (adapted != null) {
             return new DatabaseTransferProducer(adapted);
         } else {

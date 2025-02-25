@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import org.jkiss.dbeaver.model.DBPObject;
 import org.jkiss.dbeaver.model.DBPScriptObject;
 import org.jkiss.dbeaver.model.DBUtils;
 import org.jkiss.dbeaver.model.data.DBDAttributeBinding;
+import org.jkiss.dbeaver.model.data.DBDDataContainer;
 import org.jkiss.dbeaver.model.exec.DBCExecutionContext;
 import org.jkiss.dbeaver.model.navigator.DBNDatabaseFolder;
 import org.jkiss.dbeaver.model.sql.generator.SQLGenerator;
@@ -38,7 +39,6 @@ import org.jkiss.dbeaver.model.sql.generator.SQLGeneratorProcedureCall;
 import org.jkiss.dbeaver.model.sql.generator.SQLGeneratorSelect;
 import org.jkiss.dbeaver.model.sql.registry.SQLGeneratorConfigurationRegistry;
 import org.jkiss.dbeaver.model.sql.registry.SQLGeneratorDescriptor;
-import org.jkiss.dbeaver.model.struct.DBSDataContainer;
 import org.jkiss.dbeaver.model.struct.DBSEntity;
 import org.jkiss.dbeaver.model.struct.DBSObject;
 import org.jkiss.dbeaver.model.struct.DBSWrapper;
@@ -117,7 +117,7 @@ public class SQLGeneratorContributor extends CompoundContributionItem {
 
     private void makeResultSetContributions(List<IContributionItem> menu, IResultSetSelection rss) {
         final IResultSetController rsv = rss.getController();
-        DBSDataContainer dataContainer = rsv.getDataContainer();
+        DBDDataContainer dataContainer = rsv.getDataContainer();
         final List<DBDAttributeBinding> visibleAttributes = rsv.getModel().getVisibleAttributes();
         final DBSEntity entity = rsv.getModel().getSingleSource();
         if (dataContainer != null && !visibleAttributes.isEmpty() && entity != null) {

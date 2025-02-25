@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ import org.eclipse.core.expressions.PropertyTester;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.model.DBUtils;
+import org.jkiss.dbeaver.model.data.DBDDataContainer;
 import org.jkiss.dbeaver.model.navigator.DBNContainer;
-import org.jkiss.dbeaver.model.struct.DBSDataContainer;
 import org.jkiss.dbeaver.model.struct.DBSObject;
 import org.jkiss.dbeaver.model.struct.DBSObjectContainer;
 import org.jkiss.dbeaver.model.struct.rdb.DBSSchema;
@@ -70,7 +70,7 @@ public class ModelPropertyTester extends PropertyTester
                 DBSObject object = DBUtils.getPublicObject((DBSObject) receiver);
                 if (object instanceof DBNContainer) {
                     final Class<?> childrenClass = ((DBNContainer) object).getChildrenClass();
-                    return childrenClass != null && DBSDataContainer.class.isAssignableFrom(childrenClass);
+                    return childrenClass != null && DBDDataContainer.class.isAssignableFrom(childrenClass);
                 }
                 if (object instanceof DBSSchema) {
                     return true;
@@ -78,7 +78,7 @@ public class ModelPropertyTester extends PropertyTester
                 if (object instanceof DBSObjectContainer) {
                     try {
                         Class<? extends DBSObject> primaryChildType = ((DBSObjectContainer)object).getPrimaryChildType(null);
-                        if (DBSDataContainer.class.isAssignableFrom(primaryChildType)) {
+                        if (DBDDataContainer.class.isAssignableFrom(primaryChildType)) {
                             return true;
                         }
                     } catch (DBException e) {
