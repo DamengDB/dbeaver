@@ -22,7 +22,6 @@ import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
-import org.jkiss.dbeaver.ModelPreferences;
 import org.jkiss.dbeaver.model.*;
 import org.jkiss.dbeaver.model.data.*;
 import org.jkiss.dbeaver.model.exec.*;
@@ -720,7 +719,7 @@ public class ResultSetModel implements DBDResultSetModel {
             boolean isDocumentBased = false;
 
             // Extract nested attributes from single top-level attribute
-            if (attributes.length == 1 && attributes[0].getDataSource().getContainer().getPreferenceStore().getBoolean(ModelPreferences.RESULT_TRANSFORM_COMPLEX_TYPES)) {
+            if (attributes.length == 1 && attributes[0].getDataSource().getContainer().getPreferenceStore().getBoolean(DBDConstants.RESULT_TRANSFORM_COMPLEX_TYPES)) {
                 DBDAttributeBinding topAttr = attributes[0];
                 if (topAttr.getDataKind() == DBPDataKind.DOCUMENT) {
                     isDocumentBased = true;

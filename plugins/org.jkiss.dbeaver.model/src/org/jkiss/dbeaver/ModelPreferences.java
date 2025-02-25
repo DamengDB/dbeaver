@@ -20,7 +20,6 @@ package org.jkiss.dbeaver;
 import org.jkiss.code.NotNull;
 import org.jkiss.dbeaver.model.DBConstants;
 import org.jkiss.dbeaver.model.connection.DBPConnectionConfiguration;
-import org.jkiss.dbeaver.model.data.DBDValueFormatting;
 import org.jkiss.dbeaver.model.exec.DBCExecutionPurpose;
 import org.jkiss.dbeaver.model.impl.preferences.BundlePreferenceStore;
 import org.jkiss.dbeaver.model.preferences.DBPPreferenceStore;
@@ -43,6 +42,12 @@ import java.util.Locale;
  */
 public final class ModelPreferences
 {
+    public static final String RESULT_REFERENCE_DESCRIPTION_COLUMN_PATTERNS = "resultset.reference.value.description.column.patterns"; //$NON-NLS-1$
+    public static final String DICTIONARY_COLUMN_DIVIDER = "resultset.dictionary.columnDivider"; //$NON-NLS-1$
+    public static final String RESULT_SET_MAX_ROWS_USE_SQL = "resultset.maxrows.sql"; //$NON-NLS-1$
+    // ResultSet
+    public static final String RESULT_SET_USE_FETCH_SIZE = "resultset.fetch.size"; //$NON-NLS-1$
+
     public enum SeparateConnectionBehavior {
         DEFAULT("Default"),
         ALWAYS("Always"),
@@ -209,27 +214,9 @@ public final class ModelPreferences
 
     public static final String CONNECT_USE_ENV_VARS = "database.connect.processEnvVars"; //$NON-NLS-1$
 
-    public static final String RESULT_NATIVE_DATETIME_FORMAT = "resultset.format.datetime.native"; //$NON-NLS-1$
-    public static final String RESULT_NATIVE_NUMERIC_FORMAT = "resultset.format.numeric.native"; //$NON-NLS-1$
-    public static final String RESULT_SCIENTIFIC_NUMERIC_FORMAT = "resultset.format.numeric.scientific"; //$NON-NLS-1$
-    public static final String RESULT_TRANSFORM_COMPLEX_TYPES = "resultset.transform.complex.type"; //$NON-NLS-1$
-
-    public static final String RESULT_REFERENCE_DESCRIPTION_COLUMN_PATTERNS = "resultset.reference.value.description.column.patterns"; //$NON-NLS-1$
-
     // Network
     public static final String NET_TUNNEL_PORT_MIN = "net.tunnel.port.min"; //$NON-NLS-1$
     public static final String NET_TUNNEL_PORT_MAX = "net.tunnel.port.max"; //$NON-NLS-1$
-
-    // ResultSet
-    public static final String RESULT_SET_USE_FETCH_SIZE = "resultset.fetch.size"; //$NON-NLS-1$
-    public static final String RESULT_SET_MAX_ROWS_USE_SQL = "resultset.maxrows.sql"; //$NON-NLS-1$
-    public static final String RESULT_SET_BINARY_PRESENTATION = "resultset.binary.representation"; //$NON-NLS-1$
-    public static final String RESULT_SET_BINARY_STRING_MAX_LEN = "resultset.binary.stringMaxLength"; //$NON-NLS-1$
-    // This will ignore label in result set metadata and will use names always (some buggy drivers return description or other crap in labels - #1952)
-    public static final String RESULT_SET_IGNORE_COLUMN_LABEL = "resultset.column.label.ignore"; //$NON-NLS-1$
-
-    public static final String RESULT_SET_REREAD_ON_SCROLLING = "resultset.reread.on.scroll"; //$NON-NLS-1$
-    public static final String RESULT_SET_MAX_ROWS = "resultset.maxrows"; //$NON-NLS-1$
 
 
     public static final String SQL_PARAMETERS_ENABLED = "sql.parameter.enabled"; //$NON-NLS-1$
@@ -275,9 +262,6 @@ public final class ModelPreferences
     public static final String TRANSACTIONS_SHOW_NOTIFICATIONS = "transaction.show.notifications"; //$NON-NLS-1$
     public static final String TRANSACTIONS_AUTO_CLOSE_ENABLED = "transaction.auto.close.enabled"; //$NON-NLS-1$
     public static final String TRANSACTIONS_AUTO_CLOSE_TTL = "transaction.auto.close.ttl"; //$NON-NLS-1$
-
-    public static final String DICTIONARY_COLUMN_DIVIDER = "resultset.dictionary.columnDivider"; //$NON-NLS-1$
-    public static final String RESULT_SET_USE_DATETIME_EDITOR = "resultset.datetime.editor";
 
     private static Bundle mainBundle;
     private static DBPPreferenceStore preferences;
@@ -335,15 +319,7 @@ public final class ModelPreferences
 
         PrefUtils.setDefaultPreferenceValue(store, CONNECT_USE_ENV_VARS, true);
 
-        PrefUtils.setDefaultPreferenceValue(store, RESULT_NATIVE_DATETIME_FORMAT, false);
-        PrefUtils.setDefaultPreferenceValue(store, RESULT_NATIVE_NUMERIC_FORMAT, false);
-        PrefUtils.setDefaultPreferenceValue(store, RESULT_SCIENTIFIC_NUMERIC_FORMAT, false);
-        PrefUtils.setDefaultPreferenceValue(store, RESULT_TRANSFORM_COMPLEX_TYPES, true);
-
         PrefUtils.setDefaultPreferenceValue(store, RESULT_REFERENCE_DESCRIPTION_COLUMN_PATTERNS, String.join("|", DBVEntity.DEFAULT_DESCRIPTION_COLUMN_PATTERNS));
-
-        PrefUtils.setDefaultPreferenceValue(store, RESULT_SET_REREAD_ON_SCROLLING, true);
-        PrefUtils.setDefaultPreferenceValue(store, RESULT_SET_MAX_ROWS, 200);
 
         PrefUtils.setDefaultPreferenceValue(store, CONTENT_HEX_ENCODING, GeneralUtils.getDefaultFileEncoding());
         PrefUtils.setDefaultPreferenceValue(store, CONTENT_CACHE_CLOB, true);
@@ -356,10 +332,7 @@ public final class ModelPreferences
 
         // ResultSet
         PrefUtils.setDefaultPreferenceValue(store, RESULT_SET_MAX_ROWS_USE_SQL, false);
-        PrefUtils.setDefaultPreferenceValue(store, RESULT_SET_BINARY_PRESENTATION, DBDValueFormatting.BINARY_FORMATS[0].getId());
-        PrefUtils.setDefaultPreferenceValue(store, RESULT_SET_BINARY_STRING_MAX_LEN, 32);
         PrefUtils.setDefaultPreferenceValue(store, RESULT_SET_USE_FETCH_SIZE, false);
-        PrefUtils.setDefaultPreferenceValue(store, RESULT_SET_IGNORE_COLUMN_LABEL, false);
 
         // QM
         PrefUtils.setDefaultPreferenceValue(store, QMConstants.PROP_HISTORY_DAYS, 90);
@@ -410,7 +383,7 @@ public final class ModelPreferences
         PrefUtils.setDefaultPreferenceValue(store, ModelPreferences.TRANSACTIONS_AUTO_CLOSE_TTL, 30 * 60);
         PrefUtils.setDefaultPreferenceValue(store, ModelPreferences.TRANSACTIONS_SHOW_NOTIFICATIONS, true);
 
-        PrefUtils.setDefaultPreferenceValue(store, ModelPreferences.DICTIONARY_COLUMN_DIVIDER, " ");
+        PrefUtils.setDefaultPreferenceValue(store, DICTIONARY_COLUMN_DIVIDER, " ");
         // Data formats
         DataFormatterProfile.initDefaultPreferences(store, Locale.getDefault());
 

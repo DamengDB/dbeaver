@@ -21,7 +21,6 @@ import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
-import org.jkiss.dbeaver.ModelPreferences;
 import org.jkiss.dbeaver.model.*;
 import org.jkiss.dbeaver.model.app.DBPDataSourceRegistry;
 import org.jkiss.dbeaver.model.app.DBPProject;
@@ -29,6 +28,7 @@ import org.jkiss.dbeaver.model.connection.DBPConnectionConfiguration;
 import org.jkiss.dbeaver.model.connection.DBPDriver;
 import org.jkiss.dbeaver.model.connection.DBPDriverSubstitutionDescriptor;
 import org.jkiss.dbeaver.model.connection.DBPNativeClientLocation;
+import org.jkiss.dbeaver.model.data.DBDConstants;
 import org.jkiss.dbeaver.model.data.DBDDataFormatterProfile;
 import org.jkiss.dbeaver.model.data.DBDValueHandler;
 import org.jkiss.dbeaver.model.exec.DBCFeatureNotSupportedException;
@@ -445,17 +445,17 @@ class StreamDataSourceContainer implements DBPDataSourceContainer {
 
     @Override
     public boolean isUseNativeDateTimeFormat() {
-        return DBWorkbench.getPlatform().getPreferenceStore().getBoolean(ModelPreferences.RESULT_NATIVE_DATETIME_FORMAT);
+        return DBWorkbench.getPlatform().getPreferenceStore().getBoolean(DBDConstants.RESULT_NATIVE_DATETIME_FORMAT);
     }
 
     @Override
     public boolean isUseNativeNumericFormat() {
-        return DBWorkbench.getPlatform().getPreferenceStore().getBoolean(ModelPreferences.RESULT_NATIVE_NUMERIC_FORMAT);
+        return DBWorkbench.getPlatform().getPreferenceStore().getBoolean(DBDConstants.RESULT_NATIVE_NUMERIC_FORMAT);
     }
 
     @Override
     public boolean isUseScientificNumericFormat() {
-        return DBWorkbench.getPlatform().getPreferenceStore().getBoolean(ModelPreferences.RESULT_SCIENTIFIC_NUMERIC_FORMAT);
+        return DBWorkbench.getPlatform().getPreferenceStore().getBoolean(DBDConstants.RESULT_SCIENTIFIC_NUMERIC_FORMAT);
     }
 
     @NotNull

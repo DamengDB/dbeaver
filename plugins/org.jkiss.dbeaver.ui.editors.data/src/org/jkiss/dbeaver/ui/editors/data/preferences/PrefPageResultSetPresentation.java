@@ -24,8 +24,8 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Group;
 import org.jkiss.code.NotNull;
 import org.jkiss.dbeaver.Log;
-import org.jkiss.dbeaver.ModelPreferences;
 import org.jkiss.dbeaver.model.DBPDataSourceContainer;
+import org.jkiss.dbeaver.model.data.DBDConstants;
 import org.jkiss.dbeaver.model.preferences.DBPPreferenceStore;
 import org.jkiss.dbeaver.runtime.DBWorkbench;
 import org.jkiss.dbeaver.ui.UIUtils;
@@ -65,7 +65,7 @@ public class PrefPageResultSetPresentation extends TargetPrefPage {
             store.contains(ResultSetPreferences.RESULT_SET_SHOW_DESCRIPTION) ||
             store.contains(ResultSetPreferences.RESULT_SET_CALC_COLUMN_WIDTH_BY_VALUES) ||
             store.contains(ResultSetPreferences.RESULT_SET_SHOW_CONNECTION_NAME) ||
-            store.contains(ModelPreferences.RESULT_TRANSFORM_COMPLEX_TYPES) ||
+            store.contains(DBDConstants.RESULT_TRANSFORM_COMPLEX_TYPES) ||
             store.contains(ResultSetPreferences.RESULT_SET_RIGHT_JUSTIFY_NUMBERS) ||
             store.contains(ResultSetPreferences.RESULT_SET_RIGHT_JUSTIFY_DATETIME) ||
             store.contains(ResultSetPreferences.RESULT_SET_FILTER_AUTO_COMPLETE_PROPOSIAL);
@@ -108,7 +108,7 @@ public class PrefPageResultSetPresentation extends TargetPrefPage {
             showConnectionName.setSelection(store.getBoolean(ResultSetPreferences.RESULT_SET_SHOW_CONNECTION_NAME));
             rightJustifyNumbers.setSelection(store.getBoolean(ResultSetPreferences.RESULT_SET_RIGHT_JUSTIFY_NUMBERS));
             rightJustifyDateTime.setSelection(store.getBoolean(ResultSetPreferences.RESULT_SET_RIGHT_JUSTIFY_DATETIME));
-            transformComplexTypes.setSelection(store.getBoolean(ModelPreferences.RESULT_TRANSFORM_COMPLEX_TYPES));
+            transformComplexTypes.setSelection(store.getBoolean(DBDConstants.RESULT_TRANSFORM_COMPLEX_TYPES));
             autoCompleteProposal.setSelection(store.getBoolean(ResultSetPreferences.RESULT_SET_FILTER_AUTO_COMPLETE_PROPOSIAL));
         } catch (Exception e) {
             log.warn(e);
@@ -125,7 +125,7 @@ public class PrefPageResultSetPresentation extends TargetPrefPage {
             store.setValue(ResultSetPreferences.RESULT_SET_SHOW_CONNECTION_NAME, showConnectionName.getSelection());
             store.setValue(ResultSetPreferences.RESULT_SET_RIGHT_JUSTIFY_NUMBERS, rightJustifyNumbers.getSelection());
             store.setValue(ResultSetPreferences.RESULT_SET_RIGHT_JUSTIFY_DATETIME, rightJustifyDateTime.getSelection());
-            store.setValue(ModelPreferences.RESULT_TRANSFORM_COMPLEX_TYPES, transformComplexTypes.getSelection());
+            store.setValue(DBDConstants.RESULT_TRANSFORM_COMPLEX_TYPES, transformComplexTypes.getSelection());
             store.setValue(ResultSetPreferences.RESULT_SET_FILTER_AUTO_COMPLETE_PROPOSIAL, autoCompleteProposal.getSelection());
         } catch (Exception e) {
             log.warn(e);
@@ -142,7 +142,7 @@ public class PrefPageResultSetPresentation extends TargetPrefPage {
         store.setToDefault(ResultSetPreferences.RESULT_SET_SHOW_CONNECTION_NAME);
         store.setToDefault(ResultSetPreferences.RESULT_SET_RIGHT_JUSTIFY_NUMBERS);
         store.setToDefault(ResultSetPreferences.RESULT_SET_RIGHT_JUSTIFY_DATETIME);
-        store.setToDefault(ModelPreferences.RESULT_TRANSFORM_COMPLEX_TYPES);  
+        store.setToDefault(DBDConstants.RESULT_TRANSFORM_COMPLEX_TYPES);
         store.setToDefault(ResultSetPreferences.RESULT_SET_FILTER_AUTO_COMPLETE_PROPOSIAL);
     }
 
@@ -154,7 +154,7 @@ public class PrefPageResultSetPresentation extends TargetPrefPage {
         showDescription.setSelection(store.getDefaultBoolean(ResultSetPreferences.RESULT_SET_SHOW_DESCRIPTION));
         columnWidthByValue.setSelection(store.getDefaultBoolean(ResultSetPreferences.RESULT_SET_CALC_COLUMN_WIDTH_BY_VALUES));
         showConnectionName.setSelection(store.getDefaultBoolean(ResultSetPreferences.RESULT_SET_SHOW_CONNECTION_NAME));
-        transformComplexTypes.setSelection(store.getDefaultBoolean(ModelPreferences.RESULT_TRANSFORM_COMPLEX_TYPES));
+        transformComplexTypes.setSelection(store.getDefaultBoolean(DBDConstants.RESULT_TRANSFORM_COMPLEX_TYPES));
         rightJustifyNumbers.setSelection(store.getDefaultBoolean(ResultSetPreferences.RESULT_SET_RIGHT_JUSTIFY_NUMBERS));
         rightJustifyDateTime.setSelection(store.getDefaultBoolean(ResultSetPreferences.RESULT_SET_RIGHT_JUSTIFY_DATETIME));
         autoCompleteProposal.setSelection(store.getDefaultBoolean(ResultSetPreferences.RESULT_SET_FILTER_AUTO_COMPLETE_PROPOSIAL));

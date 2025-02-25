@@ -49,7 +49,6 @@ import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
-import org.jkiss.dbeaver.ModelPreferences;
 import org.jkiss.dbeaver.model.*;
 import org.jkiss.dbeaver.model.app.DBPProject;
 import org.jkiss.dbeaver.model.data.*;
@@ -1905,9 +1904,9 @@ public class ResultSetViewer extends Viewer
                 }
                 if (dataContainer != null && dataContainer.getDataSource() != null) {
                     DBPPreferenceStore store = dataContainer.getDataSource().getContainer().getPreferenceStore();
-                    int oldFetchSize = store.getInt(ModelPreferences.RESULT_SET_MAX_ROWS);
+                    int oldFetchSize = store.getInt(DBDConstants.RESULT_SET_MAX_ROWS);
                     if (oldFetchSize != fetchSize) {
-                        store.setValue(ModelPreferences.RESULT_SET_MAX_ROWS, fetchSize);
+                        store.setValue(DBDConstants.RESULT_SET_MAX_ROWS, fetchSize);
                         PrefUtils.savePreferenceStore(store);
                     }
                 }
@@ -4227,7 +4226,7 @@ public class ResultSetViewer extends Viewer
         if (segmentFetchSize != null && segmentFetchSize > 0) {
             size = segmentFetchSize;
         } else {
-            size = getPreferenceStore().getInt(ModelPreferences.RESULT_SET_MAX_ROWS);
+            size = getPreferenceStore().getInt(DBDConstants.RESULT_SET_MAX_ROWS);
         }
         if (size > 0 && size < ResultSetPreferences.MIN_SEGMENT_SIZE) {
             size = ResultSetPreferences.MIN_SEGMENT_SIZE;

@@ -18,12 +18,8 @@ package org.jkiss.dbeaver.ui.controls.resultset;
 
 import org.jkiss.code.NotNull;
 import org.jkiss.dbeaver.Log;
-import org.jkiss.dbeaver.ModelPreferences;
 import org.jkiss.dbeaver.model.DBUtils;
-import org.jkiss.dbeaver.model.data.DBDAttributeBinding;
-import org.jkiss.dbeaver.model.data.DBDDataContainer;
-import org.jkiss.dbeaver.model.data.DBDDataReceiver;
-import org.jkiss.dbeaver.model.data.DBDDataReceiverInteractive;
+import org.jkiss.dbeaver.model.data.*;
 import org.jkiss.dbeaver.model.exec.*;
 import org.jkiss.dbeaver.model.impl.data.DBDValueError;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
@@ -184,7 +180,7 @@ class ResultSetDataReceiver implements DBDDataReceiver, DBDDataReceiverInteracti
             resultSetViewer.setData(monitor, tmpRows, focusRow);
         } else {
             monitor.subTask("Append data");
-            boolean resetOldRows = getDataContainer().getDataSource().getContainer().getPreferenceStore().getBoolean(ModelPreferences.RESULT_SET_REREAD_ON_SCROLLING);
+            boolean resetOldRows = getDataContainer().getDataSource().getContainer().getPreferenceStore().getBoolean(DBDConstants.RESULT_SET_REREAD_ON_SCROLLING);
             resultSetViewer.appendData(monitor, tmpRows, resetOldRows);
         }
         // Check for more data

@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,11 @@ package org.jkiss.dbeaver.ui.controls.resultset.actions;
 
 import org.eclipse.jface.action.IAction;
 import org.jkiss.code.NotNull;
-import org.jkiss.dbeaver.ModelPreferences;
 import org.jkiss.dbeaver.model.DBPDataSource;
 import org.jkiss.dbeaver.model.DBPEvaluationContext;
 import org.jkiss.dbeaver.model.data.DBDAttributeBinding;
 import org.jkiss.dbeaver.model.data.DBDBinaryFormatter;
+import org.jkiss.dbeaver.model.data.DBDConstants;
 import org.jkiss.dbeaver.model.preferences.DBPPreferenceStore;
 import org.jkiss.dbeaver.model.virtual.DBVTransformSettings;
 import org.jkiss.dbeaver.model.virtual.DBVUtils;
@@ -40,7 +40,7 @@ public class BinaryFormatAction extends AbstractResultSetViewerAction {
 
     @Override
     public boolean isChecked() {
-        return getResultSetViewer().getPreferenceStore().getString(ModelPreferences.RESULT_SET_BINARY_PRESENTATION).equalsIgnoreCase(prefValue);
+        return getResultSetViewer().getPreferenceStore().getString(DBDConstants.RESULT_SET_BINARY_PRESENTATION).equalsIgnoreCase(prefValue);
     }
 
     @Override
@@ -50,7 +50,7 @@ public class BinaryFormatAction extends AbstractResultSetViewerAction {
             return;
         }
         DBPPreferenceStore preferenceStore = getActionPreferenceStore();
-        String prefId = ModelPreferences.RESULT_SET_BINARY_PRESENTATION;
+        String prefId = DBDConstants.RESULT_SET_BINARY_PRESENTATION;
         preferenceStore.setValue(
             prefId,
             prefValue.toLowerCase());

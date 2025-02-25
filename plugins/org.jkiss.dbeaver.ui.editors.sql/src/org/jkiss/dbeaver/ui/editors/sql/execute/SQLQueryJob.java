@@ -37,9 +37,9 @@ import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
-import org.jkiss.dbeaver.ModelPreferences;
 import org.jkiss.dbeaver.model.*;
 import org.jkiss.dbeaver.model.connection.DBPConnectionType;
+import org.jkiss.dbeaver.model.data.DBDConstants;
 import org.jkiss.dbeaver.model.data.DBDDataContainer;
 import org.jkiss.dbeaver.model.data.DBDDataFilter;
 import org.jkiss.dbeaver.model.data.DBDDataReceiver;
@@ -152,7 +152,7 @@ public class SQLQueryJob extends DataSourceJob
             this.fetchResultSets = queries.size() == 1 || (
                 preferenceStore.getBoolean(SQLPreferenceConstants.SCRIPT_FETCH_RESULT_SETS) && !isDisableFetchResultSet
             );
-            this.rsMaxRows = preferenceStore.getInt(ModelPreferences.RESULT_SET_MAX_ROWS);
+            this.rsMaxRows = preferenceStore.getInt(DBDConstants.RESULT_SET_MAX_ROWS);
         }
     }
 

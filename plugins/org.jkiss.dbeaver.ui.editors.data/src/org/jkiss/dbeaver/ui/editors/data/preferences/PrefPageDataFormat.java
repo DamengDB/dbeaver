@@ -27,8 +27,8 @@ import org.eclipse.swt.widgets.*;
 import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.Log;
-import org.jkiss.dbeaver.ModelPreferences;
 import org.jkiss.dbeaver.model.DBPDataSourceContainer;
+import org.jkiss.dbeaver.model.data.DBDConstants;
 import org.jkiss.dbeaver.model.data.DBDDataFormatter;
 import org.jkiss.dbeaver.model.data.DBDDataFormatterProfile;
 import org.jkiss.dbeaver.model.preferences.DBPPreferenceStore;
@@ -93,9 +93,9 @@ public class PrefPageDataFormat extends TargetPrefPage
     {
         DBPPreferenceStore store = dataSourceDescriptor.getPreferenceStore();
         return
-            store.contains(ModelPreferences.RESULT_NATIVE_DATETIME_FORMAT) ||
-            store.contains(ModelPreferences.RESULT_NATIVE_NUMERIC_FORMAT) ||
-            store.contains(ModelPreferences.RESULT_SCIENTIFIC_NUMERIC_FORMAT) ||
+            store.contains(DBDConstants.RESULT_NATIVE_DATETIME_FORMAT) ||
+            store.contains(DBDConstants.RESULT_NATIVE_NUMERIC_FORMAT) ||
+            store.contains(DBDConstants.RESULT_SCIENTIFIC_NUMERIC_FORMAT) ||
             dataSourceDescriptor.getDataFormatterProfile().isOverridesParent();
     }
 
@@ -409,9 +409,9 @@ public class PrefPageDataFormat extends TargetPrefPage
         refreshProfileList();
         setCurrentProfile(getDefaultProfile());
         DBPPreferenceStore store = DBWorkbench.getPlatform().getPreferenceStore();
-        datetimeNativeFormatCheck.setSelection(store.getDefaultBoolean(ModelPreferences.RESULT_NATIVE_DATETIME_FORMAT));
-        numericNativeFormatCheck.setSelection(store.getDefaultBoolean(ModelPreferences.RESULT_NATIVE_NUMERIC_FORMAT));
-        boolean isNumericSc = store.getDefaultBoolean(ModelPreferences.RESULT_SCIENTIFIC_NUMERIC_FORMAT);
+        datetimeNativeFormatCheck.setSelection(store.getDefaultBoolean(DBDConstants.RESULT_NATIVE_DATETIME_FORMAT));
+        numericNativeFormatCheck.setSelection(store.getDefaultBoolean(DBDConstants.RESULT_NATIVE_NUMERIC_FORMAT));
+        boolean isNumericSc = store.getDefaultBoolean(DBDConstants.RESULT_SCIENTIFIC_NUMERIC_FORMAT);
         numericScientificFormatCheck.setSelection(isNumericSc);
         numericScientificFormatCheck.setEnabled(isNumericSc);
         reloadSample();
@@ -425,9 +425,9 @@ public class PrefPageDataFormat extends TargetPrefPage
 
         setCurrentProfile(getDefaultProfile());
 
-        datetimeNativeFormatCheck.setSelection(store.getBoolean(ModelPreferences.RESULT_NATIVE_DATETIME_FORMAT));
-        numericNativeFormatCheck.setSelection(store.getBoolean(ModelPreferences.RESULT_NATIVE_NUMERIC_FORMAT));
-        numericScientificFormatCheck.setSelection(store.getBoolean(ModelPreferences.RESULT_SCIENTIFIC_NUMERIC_FORMAT));
+        datetimeNativeFormatCheck.setSelection(store.getBoolean(DBDConstants.RESULT_NATIVE_DATETIME_FORMAT));
+        numericNativeFormatCheck.setSelection(store.getBoolean(DBDConstants.RESULT_NATIVE_NUMERIC_FORMAT));
+        numericScientificFormatCheck.setSelection(store.getBoolean(DBDConstants.RESULT_SCIENTIFIC_NUMERIC_FORMAT));
         numericScientificFormatCheck.setEnabled(numericNativeFormatCheck.getSelection());
     }
 
@@ -442,9 +442,9 @@ public class PrefPageDataFormat extends TargetPrefPage
             }
             formatterProfile.saveProfile(store);
 
-            store.setValue(ModelPreferences.RESULT_NATIVE_DATETIME_FORMAT, datetimeNativeFormatCheck.getSelection());
-            store.setValue(ModelPreferences.RESULT_NATIVE_NUMERIC_FORMAT, numericNativeFormatCheck.getSelection());
-            store.setValue(ModelPreferences.RESULT_SCIENTIFIC_NUMERIC_FORMAT, numericScientificFormatCheck.getSelection());
+            store.setValue(DBDConstants.RESULT_NATIVE_DATETIME_FORMAT, datetimeNativeFormatCheck.getSelection());
+            store.setValue(DBDConstants.RESULT_NATIVE_NUMERIC_FORMAT, numericNativeFormatCheck.getSelection());
+            store.setValue(DBDConstants.RESULT_SCIENTIFIC_NUMERIC_FORMAT, numericScientificFormatCheck.getSelection());
         } catch (Exception e) {
             log.warn(e);
         }
@@ -456,9 +456,9 @@ public class PrefPageDataFormat extends TargetPrefPage
         if (formatterProfile != null) {
             formatterProfile.reset(store);
         }
-        store.setToDefault(ModelPreferences.RESULT_NATIVE_DATETIME_FORMAT);
-        store.setToDefault(ModelPreferences.RESULT_NATIVE_NUMERIC_FORMAT);
-        store.setToDefault(ModelPreferences.RESULT_SCIENTIFIC_NUMERIC_FORMAT);
+        store.setToDefault(DBDConstants.RESULT_NATIVE_DATETIME_FORMAT);
+        store.setToDefault(DBDConstants.RESULT_NATIVE_NUMERIC_FORMAT);
+        store.setToDefault(DBDConstants.RESULT_SCIENTIFIC_NUMERIC_FORMAT);
     }
 
     @Override

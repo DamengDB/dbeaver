@@ -29,6 +29,7 @@ import org.jkiss.code.NotNull;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.ModelPreferences;
 import org.jkiss.dbeaver.model.DBPDataSourceContainer;
+import org.jkiss.dbeaver.model.data.DBDConstants;
 import org.jkiss.dbeaver.model.preferences.DBPPreferenceStore;
 import org.jkiss.dbeaver.runtime.DBWorkbench;
 import org.jkiss.dbeaver.ui.UIUtils;
@@ -90,8 +91,8 @@ public class PrefPageResultSetMain extends TargetPrefPage
         DBPPreferenceStore store = dataSourceDescriptor.getPreferenceStore();
         return
             store.contains(ResultSetPreferences.RESULT_SET_AUTO_FETCH_NEXT_SEGMENT) ||
-            store.contains(ModelPreferences.RESULT_SET_REREAD_ON_SCROLLING) ||
-            store.contains(ModelPreferences.RESULT_SET_MAX_ROWS) ||
+            store.contains(DBDConstants.RESULT_SET_REREAD_ON_SCROLLING) ||
+            store.contains(DBDConstants.RESULT_SET_MAX_ROWS) ||
             store.contains(ModelPreferences.RESULT_SET_MAX_ROWS_USE_SQL) ||
             store.contains(ResultSetPreferences.RESULT_SET_AUTOMATIC_ROW_COUNT) ||
             store.contains(ResultSetPreferences.RESULT_SET_CANCEL_TIMEOUT) ||
@@ -107,7 +108,7 @@ public class PrefPageResultSetMain extends TargetPrefPage
             store.contains(ResultSetPreferences.RESULT_SET_CONFIRM_BEFORE_SAVE) ||
             store.contains(ResultSetPreferences.RESULT_SET_SHOW_ERRORS_IN_DIALOG) ||
             store.contains(ResultSetPreferences.RESULT_SET_MARK_CELL_VALUE_OCCURRENCES) ||
-            store.contains(ModelPreferences.RESULT_SET_IGNORE_COLUMN_LABEL) ||
+            store.contains(DBDConstants.RESULT_SET_IGNORE_COLUMN_LABEL) ||
             store.contains(ResultSetPreferences.RESULT_IMAGE_USE_BROWSER_BASED_RENDERER);
     }
 
@@ -248,9 +249,9 @@ public class PrefPageResultSetMain extends TargetPrefPage
     {
         try {
             autoFetchNextSegmentCheck.setSelection(store.getBoolean(ResultSetPreferences.RESULT_SET_AUTO_FETCH_NEXT_SEGMENT));
-            rereadOnScrollingCheck.setSelection(store.getBoolean(ModelPreferences.RESULT_SET_REREAD_ON_SCROLLING));
-            useDateTimeEditor.setSelection(store.getBoolean(ModelPreferences.RESULT_SET_USE_DATETIME_EDITOR));
-            int rsSegmentSize = store.getInt(ModelPreferences.RESULT_SET_MAX_ROWS);
+            rereadOnScrollingCheck.setSelection(store.getBoolean(DBDConstants.RESULT_SET_REREAD_ON_SCROLLING));
+            useDateTimeEditor.setSelection(store.getBoolean(DBDConstants.RESULT_SET_USE_DATETIME_EDITOR));
+            int rsSegmentSize = store.getInt(DBDConstants.RESULT_SET_MAX_ROWS);
             if (rsSegmentSize > 0 && rsSegmentSize < ResultSetPreferences.MIN_SEGMENT_SIZE) {
                 rsSegmentSize = ResultSetPreferences.MIN_SEGMENT_SIZE;
             }
@@ -270,7 +271,7 @@ public class PrefPageResultSetMain extends TargetPrefPage
             useNavigatorFilters.setSelection(store.getBoolean(ResultSetPreferences.RESULT_SET_USE_NAVIGATOR_FILTERS));
 
             advUseFetchSize.setSelection(store.getBoolean(ModelPreferences.RESULT_SET_USE_FETCH_SIZE));
-            ignoreColumnLabelCheck.setSelection(store.getBoolean(ModelPreferences.RESULT_SET_IGNORE_COLUMN_LABEL));
+            ignoreColumnLabelCheck.setSelection(store.getBoolean(DBDConstants.RESULT_SET_IGNORE_COLUMN_LABEL));
 
             if (confirmDataSave != null) {
                 confirmDataSave.setSelection(store.getBoolean(ResultSetPreferences.RESULT_SET_CONFIRM_BEFORE_SAVE));
@@ -287,10 +288,10 @@ public class PrefPageResultSetMain extends TargetPrefPage
     protected void savePreferences(DBPPreferenceStore store)
     {
         try {
-            store.setValue(ModelPreferences.RESULT_SET_USE_DATETIME_EDITOR, useDateTimeEditor.getSelection());
+            store.setValue(DBDConstants.RESULT_SET_USE_DATETIME_EDITOR, useDateTimeEditor.getSelection());
             store.setValue(ResultSetPreferences.RESULT_SET_AUTO_FETCH_NEXT_SEGMENT, autoFetchNextSegmentCheck.getSelection());
-            store.setValue(ModelPreferences.RESULT_SET_REREAD_ON_SCROLLING, rereadOnScrollingCheck.getSelection());
-            store.setValue(ModelPreferences.RESULT_SET_MAX_ROWS, resultSetSize.getText());
+            store.setValue(DBDConstants.RESULT_SET_REREAD_ON_SCROLLING, rereadOnScrollingCheck.getSelection());
+            store.setValue(DBDConstants.RESULT_SET_MAX_ROWS, resultSetSize.getText());
             store.setValue(ModelPreferences.RESULT_SET_MAX_ROWS_USE_SQL, resultSetUseSQLCheck.getSelection());
             store.setValue(ResultSetPreferences.RESULT_SET_AUTOMATIC_ROW_COUNT, automaticRowCountCheck.getSelection());
             store.setValue(ResultSetPreferences.RESULT_SET_ORDERING_MODE, ResultSetUtils.OrderingMode.values()[orderingModeCombo.getSelectionIndex()].toString());
@@ -306,7 +307,7 @@ public class PrefPageResultSetMain extends TargetPrefPage
             store.setValue(ResultSetPreferences.RESULT_SET_USE_NAVIGATOR_FILTERS, useNavigatorFilters.getSelection());
 
             store.setValue(ModelPreferences.RESULT_SET_USE_FETCH_SIZE, advUseFetchSize.getSelection());
-            store.setValue(ModelPreferences.RESULT_SET_IGNORE_COLUMN_LABEL, ignoreColumnLabelCheck.getSelection());
+            store.setValue(DBDConstants.RESULT_SET_IGNORE_COLUMN_LABEL, ignoreColumnLabelCheck.getSelection());
 
             if (confirmDataSave != null) {
                 store.setValue(ResultSetPreferences.RESULT_SET_CONFIRM_BEFORE_SAVE, confirmDataSave.getSelection());
@@ -322,10 +323,10 @@ public class PrefPageResultSetMain extends TargetPrefPage
     @Override
     protected void clearPreferences(DBPPreferenceStore store) {
         store.setToDefault(ResultSetPreferences.RESULT_IMAGE_USE_BROWSER_BASED_RENDERER);
-        store.setToDefault(ModelPreferences.RESULT_SET_USE_DATETIME_EDITOR);
+        store.setToDefault(DBDConstants.RESULT_SET_USE_DATETIME_EDITOR);
         store.setToDefault(ResultSetPreferences.RESULT_SET_AUTO_FETCH_NEXT_SEGMENT);
-        store.setToDefault(ModelPreferences.RESULT_SET_REREAD_ON_SCROLLING);
-        store.setToDefault(ModelPreferences.RESULT_SET_MAX_ROWS);
+        store.setToDefault(DBDConstants.RESULT_SET_REREAD_ON_SCROLLING);
+        store.setToDefault(DBDConstants.RESULT_SET_MAX_ROWS);
         store.setToDefault(ModelPreferences.RESULT_SET_MAX_ROWS_USE_SQL);
         store.setToDefault(ResultSetPreferences.RESULT_SET_AUTOMATIC_ROW_COUNT);
         store.setToDefault(ResultSetPreferences.RESULT_SET_ORDERING_MODE);
@@ -340,7 +341,7 @@ public class PrefPageResultSetMain extends TargetPrefPage
         store.setToDefault(ResultSetPreferences.RESULT_SET_USE_NAVIGATOR_FILTERS);
 
         store.setToDefault(ModelPreferences.RESULT_SET_USE_FETCH_SIZE);
-        store.setToDefault(ModelPreferences.RESULT_SET_IGNORE_COLUMN_LABEL);
+        store.setToDefault(DBDConstants.RESULT_SET_IGNORE_COLUMN_LABEL);
 
         store.setToDefault(ResultSetPreferences.RESULT_SET_CONFIRM_BEFORE_SAVE);
         store.setToDefault(ResultSetPreferences.RESULT_SET_SHOW_ERRORS_IN_DIALOG);
@@ -353,8 +354,8 @@ public class PrefPageResultSetMain extends TargetPrefPage
     protected void performDefaults() {
         DBPPreferenceStore store = DBWorkbench.getPlatform().getPreferenceStore();
         autoFetchNextSegmentCheck.setSelection(store.getDefaultBoolean(ResultSetPreferences.RESULT_SET_AUTO_FETCH_NEXT_SEGMENT));
-        rereadOnScrollingCheck.setSelection(store.getDefaultBoolean(ModelPreferences.RESULT_SET_REREAD_ON_SCROLLING));
-        resultSetSize.setText(String.valueOf(store.getDefaultInt(ModelPreferences.RESULT_SET_MAX_ROWS)));
+        rereadOnScrollingCheck.setSelection(store.getDefaultBoolean(DBDConstants.RESULT_SET_REREAD_ON_SCROLLING));
+        resultSetSize.setText(String.valueOf(store.getDefaultInt(DBDConstants.RESULT_SET_MAX_ROWS)));
         resultSetUseSQLCheck.setSelection(store.getDefaultBoolean(ModelPreferences.RESULT_SET_MAX_ROWS_USE_SQL));
         automaticRowCountCheck.setSelection(store.getDefaultBoolean(ResultSetPreferences.RESULT_SET_AUTOMATIC_ROW_COUNT));
         orderingModeCombo.select(ResultSetUtils.OrderingMode.SMART.ordinal());
@@ -372,8 +373,8 @@ public class PrefPageResultSetMain extends TargetPrefPage
         showErrorsInDialog.setSelection(store.getDefaultBoolean(ResultSetPreferences.RESULT_SET_SHOW_ERRORS_IN_DIALOG));
         markCellValueOccurrences.setSelection(store.getDefaultBoolean(ResultSetPreferences.RESULT_SET_MARK_CELL_VALUE_OCCURRENCES));
         advUseFetchSize.setSelection(store.getDefaultBoolean(ModelPreferences.RESULT_SET_USE_FETCH_SIZE));
-        ignoreColumnLabelCheck.setSelection(store.getDefaultBoolean(ModelPreferences.RESULT_SET_IGNORE_COLUMN_LABEL));
-        useDateTimeEditor.setSelection(store.getDefaultBoolean(ModelPreferences.RESULT_SET_USE_DATETIME_EDITOR));
+        ignoreColumnLabelCheck.setSelection(store.getDefaultBoolean(DBDConstants.RESULT_SET_IGNORE_COLUMN_LABEL));
+        useDateTimeEditor.setSelection(store.getDefaultBoolean(DBDConstants.RESULT_SET_USE_DATETIME_EDITOR));
         useBrowserCheckbox.setSelection(store.getDefaultBoolean(ResultSetPreferences.RESULT_IMAGE_USE_BROWSER_BASED_RENDERER));
         super.performDefaults();
     }

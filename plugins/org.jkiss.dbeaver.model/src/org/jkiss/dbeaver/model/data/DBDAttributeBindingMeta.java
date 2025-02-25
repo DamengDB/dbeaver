@@ -19,7 +19,6 @@ package org.jkiss.dbeaver.model.data;
 import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
-import org.jkiss.dbeaver.ModelPreferences;
 import org.jkiss.dbeaver.model.DBPDataKind;
 import org.jkiss.dbeaver.model.DBPDataSource;
 import org.jkiss.dbeaver.model.DBUtils;
@@ -63,7 +62,7 @@ public class DBDAttributeBindingMeta extends DBDAttributeBinding {
         this.metaAttribute = metaAttribute;
 
         DBPDataSource dataSource = dataContainer == null ? null : dataContainer.getDataSource();
-        showLabel = dataSource == null || !dataSource.getContainer().getPreferenceStore().getBoolean(ModelPreferences.RESULT_SET_IGNORE_COLUMN_LABEL);
+        showLabel = dataSource == null || !dataSource.getContainer().getPreferenceStore().getBoolean(DBDConstants.RESULT_SET_IGNORE_COLUMN_LABEL);
     }
 
     @Override

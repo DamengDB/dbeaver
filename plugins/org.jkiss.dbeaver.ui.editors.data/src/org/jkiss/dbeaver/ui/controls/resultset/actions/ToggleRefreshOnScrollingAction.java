@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,12 @@
  */
 package org.jkiss.dbeaver.ui.controls.resultset.actions;
 
-import org.jkiss.dbeaver.ModelPreferences;
+import org.jkiss.dbeaver.model.data.DBDConstants;
 import org.jkiss.dbeaver.ui.controls.resultset.ResultSetViewer;
 import org.jkiss.dbeaver.ui.controls.resultset.internal.ResultSetMessages;
 
 public class ToggleRefreshOnScrollingAction extends ToggleConnectionPreferenceAction {
     public ToggleRefreshOnScrollingAction(ResultSetViewer resultSetViewer) {
-        super(resultSetViewer, ModelPreferences.RESULT_SET_REREAD_ON_SCROLLING, ResultSetMessages.pref_page_database_resultsets_label_reread_on_scrolling);
+        super(resultSetViewer, DBDConstants.RESULT_SET_REREAD_ON_SCROLLING, ResultSetMessages.pref_page_database_resultsets_label_reread_on_scrolling);
     }
 }

@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
  */
 package org.jkiss.dbeaver.ui.controls.resultset.actions;
 
-import org.jkiss.dbeaver.ModelPreferences;
 import org.jkiss.dbeaver.model.DBPDataSource;
+import org.jkiss.dbeaver.model.data.DBDConstants;
 import org.jkiss.dbeaver.model.preferences.DBPPreferenceStore;
 import org.jkiss.dbeaver.ui.controls.resultset.ResultSetViewer;
 import org.jkiss.dbeaver.ui.controls.resultset.internal.ResultSetMessages;
@@ -32,7 +32,7 @@ public class TransformComplexTypesToggleAction extends AbstractResultSetViewerAc
     public boolean isChecked() {
         DBPDataSource dataSource = getResultSetViewer().getDataContainer().getDataSource();
         return dataSource != null &&
-               dataSource.getContainer().getPreferenceStore().getBoolean(ModelPreferences.RESULT_TRANSFORM_COMPLEX_TYPES);
+               dataSource.getContainer().getPreferenceStore().getBoolean(DBDConstants.RESULT_TRANSFORM_COMPLEX_TYPES);
     }
 
     @Override
@@ -42,8 +42,8 @@ public class TransformComplexTypesToggleAction extends AbstractResultSetViewerAc
             return;
         }
         DBPPreferenceStore preferenceStore = dataSource.getContainer().getPreferenceStore();
-        boolean curValue = preferenceStore.getBoolean(ModelPreferences.RESULT_TRANSFORM_COMPLEX_TYPES);
-        preferenceStore.setValue(ModelPreferences.RESULT_TRANSFORM_COMPLEX_TYPES, !curValue);
+        boolean curValue = preferenceStore.getBoolean(DBDConstants.RESULT_TRANSFORM_COMPLEX_TYPES);
+        preferenceStore.setValue(DBDConstants.RESULT_TRANSFORM_COMPLEX_TYPES, !curValue);
         dataSource.getContainer().persistConfiguration();
         getResultSetViewer().refreshData(null);
     }

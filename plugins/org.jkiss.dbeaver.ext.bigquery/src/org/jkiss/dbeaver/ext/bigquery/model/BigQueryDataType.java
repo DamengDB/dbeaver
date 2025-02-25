@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,10 @@
 package org.jkiss.dbeaver.ext.bigquery.model;
 
 import org.jkiss.code.NotNull;
-import org.jkiss.dbeaver.ModelPreferences;
 import org.jkiss.dbeaver.ext.generic.model.GenericDataType;
 import org.jkiss.dbeaver.ext.generic.model.GenericStructContainer;
 import org.jkiss.dbeaver.model.DBPDataKind;
+import org.jkiss.dbeaver.model.data.DBDConstants;
 
 public class BigQueryDataType extends GenericDataType {
     public BigQueryDataType(GenericStructContainer owner, int valueType, String name, String remarks, boolean unsigned, boolean searchable, int precision, int minScale, int maxScale) {
@@ -31,7 +31,7 @@ public class BigQueryDataType extends GenericDataType {
     @NotNull
     @Override
     public DBPDataKind getDataKind() {
-        if (getDataSource().getContainer().getPreferenceStore().getBoolean(ModelPreferences.RESULT_TRANSFORM_COMPLEX_TYPES)) {
+        if (getDataSource().getContainer().getPreferenceStore().getBoolean(DBDConstants.RESULT_TRANSFORM_COMPLEX_TYPES)) {
             if (getName().equals(BigQueryConstants.DATA_TYPE_STRUCT)) {
                 return DBPDataKind.STRUCT;
             } else if (getName().equals(BigQueryConstants.DATA_TYPE_ARRAY)) {

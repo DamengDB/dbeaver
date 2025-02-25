@@ -33,6 +33,7 @@ import org.jkiss.dbeaver.model.access.DBACredentialsProvider;
 import org.jkiss.dbeaver.model.app.DBPDataSourceRegistry;
 import org.jkiss.dbeaver.model.app.DBPProject;
 import org.jkiss.dbeaver.model.connection.*;
+import org.jkiss.dbeaver.model.data.DBDConstants;
 import org.jkiss.dbeaver.model.data.DBDDataFormatterProfile;
 import org.jkiss.dbeaver.model.data.DBDFormatSettings;
 import org.jkiss.dbeaver.model.data.DBDValueHandler;
@@ -1743,17 +1744,17 @@ public class DataSourceDescriptor
 
     @Override
     public boolean isUseNativeDateTimeFormat() {
-        return getPreferenceStore().getBoolean(ModelPreferences.RESULT_NATIVE_DATETIME_FORMAT);
+        return getPreferenceStore().getBoolean(DBDConstants.RESULT_NATIVE_DATETIME_FORMAT);
     }
 
     @Override
     public boolean isUseNativeNumericFormat() {
-        return getPreferenceStore().getBoolean(ModelPreferences.RESULT_NATIVE_NUMERIC_FORMAT);
+        return getPreferenceStore().getBoolean(DBDConstants.RESULT_NATIVE_NUMERIC_FORMAT);
     }
 
     @Override
     public boolean isUseScientificNumericFormat() {
-        return getPreferenceStore().getBoolean(ModelPreferences.RESULT_SCIENTIFIC_NUMERIC_FORMAT);
+        return getPreferenceStore().getBoolean(DBDConstants.RESULT_SCIENTIFIC_NUMERIC_FORMAT);
     }
 
     @NotNull

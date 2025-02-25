@@ -260,7 +260,8 @@ public class DBExecUtils {
     }
 
     public static void setStatementFetchSize(DBCStatement dbStat, long firstRow, long maxRows, int fetchSize) {
-        boolean useFetchSize = fetchSize > 0 || dbStat.getSession().getDataSource().getContainer().getPreferenceStore().getBoolean(ModelPreferences.RESULT_SET_USE_FETCH_SIZE);
+        boolean useFetchSize = fetchSize > 0 || dbStat.getSession().getDataSource().getContainer().getPreferenceStore().getBoolean(
+            ModelPreferences.RESULT_SET_USE_FETCH_SIZE);
         if (useFetchSize) {
             if (fetchSize <= 0) {
                 fetchSize = DEFAULT_READ_FETCH_SIZE;

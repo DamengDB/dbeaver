@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
-import org.jkiss.dbeaver.ModelPreferences;
+import org.jkiss.dbeaver.model.data.DBDConstants;
 import org.jkiss.dbeaver.model.data.DBDDisplayFormat;
 import org.jkiss.dbeaver.model.exec.DBCException;
 import org.jkiss.dbeaver.model.exec.DBCExecutionPurpose;
@@ -75,7 +75,7 @@ public class DateTimeStandaloneEditor extends ValueViewDialog {
         timeEditor.createDateFormat(valueController.getValueType());
         timeEditor.setEditable(!valueController.isReadOnly());
 
-        if (!DBWorkbench.getPlatform().getPreferenceStore().getBoolean(ModelPreferences.RESULT_SET_USE_DATETIME_EDITOR)){
+        if (!DBWorkbench.getPlatform().getPreferenceStore().getBoolean(DBDConstants.RESULT_SET_USE_DATETIME_EDITOR)){
             timeEditor.setToTextComposite();
         }
         primeEditorValue(value);
@@ -94,7 +94,7 @@ public class DateTimeStandaloneEditor extends ValueViewDialog {
     }
 
     private boolean isCalendarMode() {
-        return DBWorkbench.getPlatform().getPreferenceStore().getBoolean(ModelPreferences.RESULT_SET_USE_DATETIME_EDITOR);
+        return DBWorkbench.getPlatform().getPreferenceStore().getBoolean(DBDConstants.RESULT_SET_USE_DATETIME_EDITOR);
     }
 
     @Override

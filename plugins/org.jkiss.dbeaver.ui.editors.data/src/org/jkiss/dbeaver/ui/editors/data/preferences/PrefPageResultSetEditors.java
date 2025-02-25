@@ -24,6 +24,7 @@ import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.ModelPreferences;
 import org.jkiss.dbeaver.model.DBPDataSourceContainer;
 import org.jkiss.dbeaver.model.data.DBDBinaryFormatter;
+import org.jkiss.dbeaver.model.data.DBDConstants;
 import org.jkiss.dbeaver.model.data.DBDValueFormatting;
 import org.jkiss.dbeaver.model.preferences.DBPPreferenceStore;
 import org.jkiss.dbeaver.runtime.DBWorkbench;
@@ -75,9 +76,9 @@ public class PrefPageResultSetEditors extends TargetPrefPage
             store.contains(ResultSetPreferences.RESULT_SET_STRING_USE_CONTENT_EDITOR) ||
 
             store.contains(ModelPreferences.MEMORY_CONTENT_MAX_SIZE) ||
-            store.contains(ModelPreferences.RESULT_SET_BINARY_PRESENTATION) ||
+            store.contains(DBDConstants.RESULT_SET_BINARY_PRESENTATION) ||
             store.contains(ResultSetPreferences.RESULT_SET_BINARY_EDITOR_TYPE) ||
-            store.contains(ModelPreferences.RESULT_SET_BINARY_STRING_MAX_LEN) ||
+            store.contains(DBDConstants.RESULT_SET_BINARY_STRING_MAX_LEN) ||
             store.contains(ModelPreferences.CONTENT_HEX_ENCODING) ||
             store.contains(ModelPreferences.CONTENT_CACHE_CLOB) ||
             store.contains(ModelPreferences.CONTENT_CACHE_BLOB) ||
@@ -175,9 +176,9 @@ public class PrefPageResultSetEditors extends TargetPrefPage
             stringUseEditorCheck.setSelection(store.getBoolean(ResultSetPreferences.RESULT_SET_STRING_USE_CONTENT_EDITOR));
 
             memoryContentSize.setSelection(store.getInt(ModelPreferences.MEMORY_CONTENT_MAX_SIZE));
-            binaryStringMaxLength.setSelection(store.getInt(ModelPreferences.RESULT_SET_BINARY_STRING_MAX_LEN));
+            binaryStringMaxLength.setSelection(store.getInt(DBDConstants.RESULT_SET_BINARY_STRING_MAX_LEN));
 
-            DBDBinaryFormatter formatter = DBDValueFormatting.getBinaryPresentation(store.getString(ModelPreferences.RESULT_SET_BINARY_PRESENTATION));
+            DBDBinaryFormatter formatter = DBDValueFormatting.getBinaryPresentation(store.getString(DBDConstants.RESULT_SET_BINARY_PRESENTATION));
             for (int i = 0; i < binaryPresentationCombo.getItemCount(); i++) {
                 if (binaryPresentationCombo.getItem(i).equals(formatter.getTitle())) {
                     binaryPresentationCombo.select(i);
@@ -217,11 +218,11 @@ public class PrefPageResultSetEditors extends TargetPrefPage
             String presentationTitle = binaryPresentationCombo.getItem(binaryPresentationCombo.getSelectionIndex());
             for (DBDBinaryFormatter formatter : DBDValueFormatting.BINARY_FORMATS) {
                 if (formatter.getTitle().equals(presentationTitle)) {
-                    store.setValue(ModelPreferences.RESULT_SET_BINARY_PRESENTATION, formatter.getId());
+                    store.setValue(DBDConstants.RESULT_SET_BINARY_PRESENTATION, formatter.getId());
                     break;
                 }
             }
-            store.setValue(ModelPreferences.RESULT_SET_BINARY_STRING_MAX_LEN, binaryStringMaxLength.getSelection());
+            store.setValue(DBDConstants.RESULT_SET_BINARY_STRING_MAX_LEN, binaryStringMaxLength.getSelection());
             store.setValue(ResultSetPreferences.RESULT_SET_BINARY_EDITOR_TYPE,
                 binaryEditorType.getSelectionIndex() == 0 ?
                     IValueController.EditType.EDITOR.name() :
@@ -247,8 +248,8 @@ public class PrefPageResultSetEditors extends TargetPrefPage
         store.setToDefault(ResultSetPreferences.RESULT_SET_STRING_USE_CONTENT_EDITOR);
 
         store.setToDefault(ModelPreferences.MEMORY_CONTENT_MAX_SIZE);
-        store.setToDefault(ModelPreferences.RESULT_SET_BINARY_PRESENTATION);
-        store.setToDefault(ModelPreferences.RESULT_SET_BINARY_STRING_MAX_LEN);
+        store.setToDefault(DBDConstants.RESULT_SET_BINARY_PRESENTATION);
+        store.setToDefault(DBDConstants.RESULT_SET_BINARY_STRING_MAX_LEN);
         store.setToDefault(ResultSetPreferences.RESULT_SET_BINARY_EDITOR_TYPE);
         store.setToDefault(ModelPreferences.CONTENT_HEX_ENCODING);
         store.setToDefault(ModelPreferences.CONTENT_CACHE_CLOB);
@@ -265,9 +266,9 @@ public class PrefPageResultSetEditors extends TargetPrefPage
     protected void performDefaults() {
         DBPPreferenceStore store = DBWorkbench.getPlatform().getPreferenceStore();
         stringUseEditorCheck.setSelection(store.getDefaultBoolean(ResultSetPreferences.RESULT_SET_STRING_USE_CONTENT_EDITOR));
-        binaryPresentationCombo.select(store.getDefaultInt(ModelPreferences.RESULT_SET_BINARY_PRESENTATION));
+        binaryPresentationCombo.select(store.getDefaultInt(DBDConstants.RESULT_SET_BINARY_PRESENTATION));
         binaryEditorType.select(IValueController.EditType.EDITOR.ordinal());
-        binaryStringMaxLength.setSelection(store.getDefaultInt(ModelPreferences.RESULT_SET_BINARY_STRING_MAX_LEN));
+        binaryStringMaxLength.setSelection(store.getDefaultInt(DBDConstants.RESULT_SET_BINARY_STRING_MAX_LEN));
         memoryContentSize.setSelection(store.getDefaultInt(ModelPreferences.MEMORY_CONTENT_MAX_SIZE));
         UIUtils.setComboSelection(encodingCombo, GeneralUtils.getDefaultFileEncoding());
         contentCacheClob.setSelection(store.getDefaultBoolean(ModelPreferences.CONTENT_CACHE_CLOB));

@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,11 @@
 package org.jkiss.dbeaver.ui.controls.resultset.plaintext;
 
 import org.jkiss.code.NotNull;
-import org.jkiss.dbeaver.ModelPreferences;
 import org.jkiss.dbeaver.model.DBConstants;
 import org.jkiss.dbeaver.model.DBPDataKind;
 import org.jkiss.dbeaver.model.DBUtils;
 import org.jkiss.dbeaver.model.data.DBDAttributeBinding;
+import org.jkiss.dbeaver.model.data.DBDConstants;
 import org.jkiss.dbeaver.model.data.DBDDisplayFormat;
 import org.jkiss.dbeaver.model.impl.data.DBDValueError;
 import org.jkiss.dbeaver.model.preferences.DBPPreferenceStore;
@@ -215,7 +215,7 @@ public class PlainTextFormatter {
         if (cellValue instanceof DBDValueError) {
             return ((DBDValueError) cellValue).getErrorTitle();
         }
-        if (cellValue instanceof Number && prefs.getBoolean(ModelPreferences.RESULT_NATIVE_NUMERIC_FORMAT)) {
+        if (cellValue instanceof Number && prefs.getBoolean(DBDConstants.RESULT_NATIVE_NUMERIC_FORMAT)) {
             displayFormat = DBDDisplayFormat.NATIVE;
         }
 

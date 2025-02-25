@@ -172,7 +172,7 @@ public final class DBDValueFormatting {
     @NotNull
     public static DBDBinaryFormatter getBinaryPresentation(@NotNull DBPDataSource dataSource)
     {
-        String id = dataSource.getContainer().getPreferenceStore().getString(ModelPreferences.RESULT_SET_BINARY_PRESENTATION);
+        String id = dataSource.getContainer().getPreferenceStore().getString(DBDConstants.RESULT_SET_BINARY_PRESENTATION);
         if (id != null) {
             DBDBinaryFormatter formatter = getBinaryPresentation(id);
             if (formatter != null) {
@@ -317,7 +317,7 @@ public final class DBDValueFormatting {
         // Convert bytes to string
         int length = data.length;
         if (format == DBDDisplayFormat.UI || forceLimit) {
-            int maxLength = dataSource.getContainer().getPreferenceStore().getInt(ModelPreferences.RESULT_SET_BINARY_STRING_MAX_LEN);
+            int maxLength = dataSource.getContainer().getPreferenceStore().getInt(DBDConstants.RESULT_SET_BINARY_STRING_MAX_LEN);
             if (length > maxLength) {
                 length = maxLength;
             }

@@ -49,7 +49,6 @@ import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
-import org.jkiss.dbeaver.ModelPreferences;
 import org.jkiss.dbeaver.model.*;
 import org.jkiss.dbeaver.model.data.*;
 import org.jkiss.dbeaver.model.data.hints.DBDAttributeHintProvider;
@@ -912,7 +911,7 @@ public class SpreadsheetPresentation extends AbstractPresentation
         showBooleanAsCheckbox = preferenceStore.getBoolean(ResultSetPreferences.RESULT_SET_SHOW_BOOLEAN_AS_CHECKBOX);
         showWhitespaceCharacters = preferenceStore.getBoolean(ResultSetPreferences.RESULT_SET_SHOW_WHITESPACE_CHARACTERS);
         booleanStyles = BooleanStyleSet.getDefaultStyles(preferenceStore);
-        useNativeNumbersFormat = controller.getPreferenceStore().getBoolean(ModelPreferences.RESULT_NATIVE_NUMERIC_FORMAT);
+        useNativeNumbersFormat = controller.getPreferenceStore().getBoolean(DBDConstants.RESULT_NATIVE_NUMERIC_FORMAT);
 
         spreadsheet.setColumnScrolling(!getPreferenceStore().getBoolean(ResultSetPreferences.RESULT_SET_USE_SMOOTH_SCROLLING));
         gridValueFormat = CommonUtils.valueOf(DBDDisplayFormat.class, getPreferenceStore().getString(ResultSetPreferences.RESULT_GRID_VALUE_FORMAT), DBDDisplayFormat.UI);
@@ -2196,7 +2195,7 @@ public class SpreadsheetPresentation extends AbstractPresentation
                 !controller.isRefreshInProgress() &&
                 !(controller.getContainer().getDataContainer() != null && controller.getContainer().getDataContainer().isFeatureSupported(
                     DBDDataContainer.FEATURE_DATA_MODIFIED_ON_REFRESH)) &&
-                !(getPreferenceStore().getInt(ModelPreferences.RESULT_SET_MAX_ROWS) < getSpreadsheet().getMaxVisibleRows()) &&
+                !(getPreferenceStore().getInt(DBDConstants.RESULT_SET_MAX_ROWS) < getSpreadsheet().getMaxVisibleRows()) &&
                 (controller.isRecordMode() || spreadsheet.isRowVisible(rowNum))) {
                 controller.readNextSegment();
             }

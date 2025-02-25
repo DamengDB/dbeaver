@@ -23,7 +23,7 @@ import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.progress.UIJob;
 import org.jkiss.code.NotNull;
-import org.jkiss.dbeaver.ModelPreferences;
+import org.jkiss.dbeaver.model.data.DBDConstants;
 import org.jkiss.dbeaver.model.data.DBDDataContainer;
 import org.jkiss.dbeaver.model.data.DBDDataFilter;
 import org.jkiss.dbeaver.model.exec.*;
@@ -97,7 +97,7 @@ abstract class ResultSetJobDataRead extends ResultSetJobAbstract implements ILoa
             fetchFlags |= DBDDataContainer.FLAG_FETCH_SEGMENT;
         }
 
-        if (offset > 0 && getExecutionContext().getDataSource().getContainer().getPreferenceStore().getBoolean(ModelPreferences.RESULT_SET_REREAD_ON_SCROLLING)) {
+        if (offset > 0 && getExecutionContext().getDataSource().getContainer().getPreferenceStore().getBoolean(DBDConstants.RESULT_SET_REREAD_ON_SCROLLING)) {
             if (maxRows > 0) {
                 maxRows += offset;
             }

@@ -2,5 +2,8 @@
 <?eclipse version="3.2"?>
 <plugin>
 
+    <extension point="org.eclipse.core.runtime.preferences">
+        <initializer class="org.jkiss.dbeaver.model.impl.data.internal.DataModelPreferencesInitializer"/>
+    </extension>
 
 </plugin>

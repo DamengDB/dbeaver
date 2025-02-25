@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,16 @@ package org.jkiss.dbeaver.model.impl.data.transformers;
 
 import org.jkiss.code.NotNull;
 import org.jkiss.dbeaver.DBException;
-import org.jkiss.dbeaver.ModelPreferences;
 import org.jkiss.dbeaver.model.DBUtils;
-import org.jkiss.dbeaver.model.data.*;
+import org.jkiss.dbeaver.model.data.DBDAttributeBinding;
+import org.jkiss.dbeaver.model.data.DBDAttributeBindingType;
+import org.jkiss.dbeaver.model.data.DBDAttributeTransformer;
+import org.jkiss.dbeaver.model.data.DBDConstants;
 import org.jkiss.dbeaver.model.exec.DBCSession;
-import org.jkiss.dbeaver.model.struct.*;
+import org.jkiss.dbeaver.model.struct.DBSBindableDataType;
+import org.jkiss.dbeaver.model.struct.DBSDataType;
+import org.jkiss.dbeaver.model.struct.DBSEntity;
+import org.jkiss.dbeaver.model.struct.DBSEntityAttribute;
 import org.jkiss.utils.CommonUtils;
 
 import java.util.ArrayList;
@@ -41,7 +46,7 @@ public class ComplexTypeAttributeTransformer implements DBDAttributeTransformer 
         @NotNull List<Object[]> rows,
         @NotNull Map<String, Object> options
     ) throws DBException {
-        if (!session.getDataSource().getContainer().getPreferenceStore().getBoolean(ModelPreferences.RESULT_TRANSFORM_COMPLEX_TYPES)) {
+        if (!session.getDataSource().getContainer().getPreferenceStore().getBoolean(DBDConstants.RESULT_TRANSFORM_COMPLEX_TYPES)) {
             return;
         }
         DBSDataType dataType = DBUtils.getDataType(attribute);
