@@ -81,7 +81,7 @@ public class OceanbaseMySQLCatalog extends MySQLCatalog {
 
     @Override
     public synchronized void cacheStructure(@NotNull DBRProgressMonitor monitor, int scope) throws DBException {
-        // Oceanbase unsupport caching of attributes
+        // Oceanbase does not support caching of attributes
         super.cacheStructure(monitor, scope & ~STRUCT_ATTRIBUTES);
     }
 
