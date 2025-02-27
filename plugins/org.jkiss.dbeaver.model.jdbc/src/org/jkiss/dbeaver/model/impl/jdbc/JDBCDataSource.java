@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package org.jkiss.dbeaver.model.impl.jdbc;
 
 import org.eclipse.core.runtime.IAdaptable;
 import org.jkiss.api.ObjectWithContextParameters;
-import org.jkiss.api.verification.FileSystemAccessVerifyer;
+import org.jkiss.api.verification.FileSystemAccessVerifier;
 import org.jkiss.api.verification.ObjectWithVerification;
 import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
@@ -273,14 +273,16 @@ public abstract class JDBCDataSource extends AbstractDataSource
             if (driverInstance instanceof ObjectWithVerification
                 && DBWorkbench.getPlatform().getApplication().isMultiuser()
             ) {
-                owcp.setObjectContextParameter(ObjectWithVerification.CONTEXT_PARAMETER_FILE_SYSTEM_VERIFIER,
-                    (FileSystemAccessVerifyer) path -> {
+                owcp.setObjectContextParameter(
+                    ObjectWithVerification.CONTEXT_PARAMETER_FILE_SYSTEM_VERIFIER,
+                    (FileSystemAccessVerifier) path -> {
                         if (IOUtils.isFileFromDefaultFS(path)) {
                             return path.normalize().startsWith(project.getAbsolutePath());
                         }
                         //allow all files from external storage
                         return true;
-                    });
+                    }
+                );
 
             }
         }
@@ -601,7 +603,7 @@ public abstract class JDBCDataSource extends AbstractDataSource
         return this;
     }
 
-    protected JDBCExecutionContext createExecutionContext(JDBCRemoteInstance instance, String type) {
+    protected JDBCExecutionContext createExecutionContext(JDBCRemoteInstance instance, String type) throws DBCException {
         return new JDBCExecutionContext(instance, type);
     }
 
