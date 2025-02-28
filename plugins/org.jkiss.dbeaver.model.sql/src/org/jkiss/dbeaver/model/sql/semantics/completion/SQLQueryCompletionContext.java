@@ -209,6 +209,10 @@ public abstract class SQLQueryCompletionContext {
         return Collections.emptyList();
     }
 
+    public boolean isColumnNameConflicting(String name) {
+        return false;
+    }
+
     /**
      * Prepare a set of completion proposal items for a given position in the text of the script item
      */
@@ -239,6 +243,9 @@ public abstract class SQLQueryCompletionContext {
     ) {
         return new SQLQueryCompletionContext(scriptItem.offset, requestOffset) {
             private final Set<DBSObjectContainer> exposedContexts = SQLQueryCompletionContext.obtainExposedContexts(dbcExecutionContext);
+            private final Map<String, Boolean> columnNameConflicts = context.deepestContext().getColumnsList().stream()
+                .collect(Collectors.groupingBy(c -> c.symbol.getName())).entrySet().stream()
+                .collect(Collectors.toMap(kv -> kv.getKey(), kv -> kv.getValue().size() > 1));
 
             @NotNull
             @Override
@@ -1001,6 +1008,11 @@ public abstract class SQLQueryCompletionContext {
             @Override
             public List<? extends SQLQueryCompletionItem> prepareCurrentTupleColumns() {
                 return this.prepareTupleColumns(context.deepestContext(), null, true);
+            }
+
+            @Override
+            public boolean isColumnNameConflicting(String name) {
+                return this.columnNameConflicts.get(name);
             }
 
             @NotNull
