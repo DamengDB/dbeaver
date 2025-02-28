@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,6 @@ import org.jkiss.dbeaver.model.impl.jdbc.JDBCUtils;
 import org.jkiss.dbeaver.model.impl.jdbc.exec.JDBCConnectionImpl;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 import org.jkiss.dbeaver.model.sql.DBSQLException;
-import org.jkiss.dbeaver.model.sql.SQLDialect;
 import org.jkiss.dbeaver.model.sql.SQLQuery;
 import org.jkiss.dbeaver.model.sql.SQLUtils;
 import org.jkiss.dbeaver.model.struct.rdb.DBSCatalog;
@@ -316,10 +315,29 @@ public class SQLServerUtils {
         return auth;
     }
 
-    public static String changeCreateToAlterDDL(SQLDialect sqlDialect, String ddl) {
-        String firstKeyword = SQLUtils.getFirstKeyword(sqlDialect, ddl);
+    /**
+     * Modifies the provided DDL statement by replacing the first occurrence of the "CREATE" keyword with
+     * an appropriate alternative based on the SQL Server version.
+     * <p>
+     * If the data source indicates that it is running on SQL Server 2016 SP1 or later (i.e. version 16 or above),
+     * the "CREATE" keyword is replaced with "CREATE OR ALTER". Otherwise, it is replaced with "ALTER".
+     * <p>
+     * This method uses the SQL dialect provided by the {@link SQLServerDataSource#getSQLDialect()} method
+     * to correctly determine the first keyword in the DDL statement.
+     *
+     * @param dataSource the SQL Server data source, used to determine the SQL dialect and version
+     * @param ddl        the DDL statement in which the keyword replacement is to be performed
+     * @return the modified DDL statement if the first keyword was "CREATE", otherwise returns the original DDL statement
+     */
+    @NotNull
+    public static String changeCreateToAlterDDL(
+        @NotNull SQLServerDataSource dataSource,
+        @NotNull String ddl
+    ) {
+        String firstKeyword = SQLUtils.getFirstKeyword(dataSource.getSQLDialect(), ddl);
+        String replacement = dataSource.isAtLeastV16() ? "CREATE OR ALTER" : "ALTER";
         if ("CREATE".equalsIgnoreCase(firstKeyword)) {
-            return ddl.replaceFirst(firstKeyword, "ALTER");
+            return ddl.replaceFirst(firstKeyword, replacement);
         }
         return ddl;
     }
