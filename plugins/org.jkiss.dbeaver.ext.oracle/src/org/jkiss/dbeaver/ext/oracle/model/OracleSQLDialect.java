@@ -85,16 +85,6 @@ public class OracleSQLDialect extends JDBCSQLDialect
         "IS",
     };
 
-    private static final String[] OTHER_TYPES_FUNCTIONS = {
-        //functions without parentheses #8710
-        "CURRENT_DATE",
-        "CURRENT_TIMESTAMP",
-        "DBTIMEZONE",
-        "SESSIONTIMEZONE",
-        "SYSDATE",
-        "SYSTIMESTAMP"
-    };
-
     private static final String[] ADVANCED_KEYWORDS = {
         "REPLACE",
         "PACKAGE",
@@ -125,6 +115,19 @@ public class OracleSQLDialect extends JDBCSQLDialect
         "TEMPFILE",
         "DATAFILE",
         "TABLESPACE"
+    };
+
+    private static final GlobalVariableInfo[] GLOBAL_VARIABLES = {
+        new GlobalVariableInfo("SYSDATE", "", DBPDataKind.DATETIME),
+        new GlobalVariableInfo("SYSTIMESTAMP", "", DBPDataKind.DATETIME),
+        new GlobalVariableInfo("DBTIMEZONE", "", DBPDataKind.DATETIME),
+        new GlobalVariableInfo("SESSIONTIMEZONE", "", DBPDataKind.DATETIME),
+        new GlobalVariableInfo("CURRENT_DATE", "", DBPDataKind.DATETIME),
+        new GlobalVariableInfo("CURRENT_TIMESTAMP", "", DBPDataKind.DATETIME),
+        new GlobalVariableInfo("ORA_INVOKING_USER", "", DBPDataKind.STRING),
+        new GlobalVariableInfo("ORA_INVOKING_USERID", "", DBPDataKind.NUMERIC),
+        new GlobalVariableInfo("UID", "", DBPDataKind.NUMERIC),
+        new GlobalVariableInfo("USER", "", DBPDataKind.STRING),
     };
 
     private static final String AUTO_INCREMENT_KEYWORD = "GENERATED ALWAYS AS IDENTITY";
@@ -372,7 +375,7 @@ public class OracleSQLDialect extends JDBCSQLDialect
             addSQLKeyword(kw);
         }
 
-        addKeywords(Arrays.asList(OTHER_TYPES_FUNCTIONS), DBPKeywordType.OTHER);
+        addKeywords(Arrays.stream(GLOBAL_VARIABLES).map(GlobalVariableInfo::name).toList(), DBPKeywordType.OTHER);
         turnFunctionIntoKeyword("TRUNCATE");
 
         cachedDialectSkipTokenPredicates = this.makeDialectSkipTokenPredicates(dataSource);
@@ -404,6 +407,12 @@ public class OracleSQLDialect extends JDBCSQLDialect
     @Override
     public String[] getExecuteKeywords() {
         return EXEC_KEYWORDS;
+    }
+
+    @NotNull
+    @Override
+    public GlobalVariableInfo[] getGlobalVariables() {
+        return GLOBAL_VARIABLES;
     }
 
     @NotNull
