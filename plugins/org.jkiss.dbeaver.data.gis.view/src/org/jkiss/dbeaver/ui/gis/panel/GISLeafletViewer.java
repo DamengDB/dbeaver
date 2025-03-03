@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -145,28 +145,31 @@ public class GISLeafletViewer implements IGeometryValueEditor, DBPPreferenceList
 
         if (browser != null) {
             browser.setLayoutData(new GridData(GridData.FILL_BOTH));
-            new BrowserFunction(browser, "setClipboardContents") {
-                @Override
-                public Object function(Object[] arguments) {
-                    UIUtils.setClipboardContents(Display.getCurrent(), TextTransfer.getInstance(), arguments[0]);
-                    return null;
-                }
-            };
-
-            if (presentation instanceof SpreadsheetPresentation) {
-                new BrowserFunction(browser, "setPresentationSelection") {
+            UIUtils.asyncExec(() -> {
+                new BrowserFunction(browser, "setClipboardContents") {
                     @Override
                     public Object function(Object[] arguments) {
-                        final List<GridPos> selection = new ArrayList<>();
-                        for (Object pos : ((Object[]) arguments[0])) {
-                            final String[] split = ((String) pos).split(":");
-                            selection.add(new GridPos(CommonUtils.toInt(split[0]), CommonUtils.toInt(split[1])));
-                        }
-                        ((AbstractPresentation) presentation).setSelection(new StructuredSelection(selection), false);
+                        UIUtils.setClipboardContents(Display.getCurrent(), TextTransfer.getInstance(), arguments[0]);
                         return null;
                     }
                 };
-            }
+
+
+                if (presentation instanceof SpreadsheetPresentation) {
+                    new BrowserFunction(browser, "setPresentationSelection") {
+                        @Override
+                        public Object function(Object[] arguments) {
+                            final List<GridPos> selection = new ArrayList<>();
+                            for (Object pos : ((Object[]) arguments[0])) {
+                                final String[] split = ((String) pos).split(":");
+                                selection.add(new GridPos(CommonUtils.toInt(split[0]), CommonUtils.toInt(split[1])));
+                            }
+                            ((AbstractPresentation) presentation).setSelection(new StructuredSelection(selection), false);
+                            return null;
+                        }
+                    };
+                }
+            });
 
             browser.addDisposeListener(e -> {
                 cleanupFiles();
