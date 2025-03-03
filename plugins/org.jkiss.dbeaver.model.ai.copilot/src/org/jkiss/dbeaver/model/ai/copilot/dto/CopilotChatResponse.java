@@ -14,15 +14,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.jkiss.dbeaver.model.ai.copilot.dto;
 
-package org.jkiss.dbeaver.model.ai.completion;
+import java.util.List;
 
-/**
- * Completion request
- */
-public record DAICompletionResponse(
-    String resultPrompt,
-    String resultCompletion,
-    String resultMessage
-) {
+public record CopilotChatResponse(List<Choice> choices) {
+
+    public record Choice(Message message) {
+    }
+
+    public record Message(String content) {
+
+    }
 }

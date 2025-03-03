@@ -14,15 +14,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.jkiss.dbeaver.model.ai.copilot.dto;
 
-package org.jkiss.dbeaver.model.ai.completion;
+import org.jkiss.dbeaver.model.ai.completion.DAIChatMessage;
+import org.jkiss.dbeaver.model.ai.completion.DAIChatRole;
 
-/**
- * Completion request
- */
-public record DAICompletionResponse(
-    String resultPrompt,
-    String resultCompletion,
-    String resultMessage
+public record CopilotMessage(
+    String role,
+    String content
 ) {
+    public static CopilotMessage from(DAIChatMessage message) {
+        return new CopilotMessage(mapRole(message.role()), message.content());
+    }
+
+    private static String mapRole(DAIChatRole role) {
+        return switch (role) {
+            case USER -> "user";
+            case ASSISTANT -> "assistant";
+            case SYSTEM -> "system";
+        };
+    }
 }

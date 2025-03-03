@@ -14,15 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jkiss.dbeaver.model.ai.completion;
 
 /**
- * Completion request
+ * Role of the message
  */
-public record DAICompletionResponse(
-    String resultPrompt,
-    String resultCompletion,
-    String resultMessage
-) {
+public enum DAIChatRole {
+    SYSTEM,
+    USER,
+    ASSISTANT;
 }

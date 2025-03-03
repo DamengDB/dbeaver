@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,9 @@ import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.model.DBPEvaluationContext;
 import org.jkiss.dbeaver.model.DBUtils;
+import org.jkiss.dbeaver.model.ai.completion.DAIChatRole;
 import org.jkiss.dbeaver.model.ai.completion.DAICompletionContext;
-import org.jkiss.dbeaver.model.ai.completion.DAICompletionMessage;
+import org.jkiss.dbeaver.model.ai.completion.DAIChatMessage;
 import org.jkiss.dbeaver.model.ai.completion.DAICompletionScope;
 import org.jkiss.dbeaver.model.ai.format.IAIFormatter;
 import org.jkiss.dbeaver.model.exec.DBCExecutionContext;
@@ -106,12 +107,11 @@ public class MetadataProcessor {
      * Creates a new message containing completion metadata for the request
      */
     @NotNull
-    public DAICompletionMessage createMetadataMessage(
+    public DAIChatMessage createMetadataMessage(
         @NotNull DBRProgressMonitor monitor,
         @NotNull DAICompletionContext context,
         @Nullable DBSObjectContainer mainObject,
         @NotNull IAIFormatter formatter,
-        @NotNull String instructions,
         int maxRequestTokens
     ) throws DBException {
         if (mainObject == null || mainObject.getDataSource() == null) {
@@ -119,7 +119,7 @@ public class MetadataProcessor {
         }
 
         final DBCExecutionContext executionContext = context.getExecutionContext();
-        final StringBuilder sb = new StringBuilder(instructions);
+        final StringBuilder sb = new StringBuilder();
         final String extraInstructions = formatter.getExtraInstructions(monitor, mainObject, executionContext);
         if (CommonUtils.isNotEmpty(extraInstructions)) {
             sb.append(", ").append(extraInstructions);
@@ -161,8 +161,8 @@ public class MetadataProcessor {
             ));
         }
 
-        return new DAICompletionMessage(
-            DAICompletionMessage.Role.SYSTEM,
+        return new DAIChatMessage(
+            DAIChatRole.SYSTEM,
             sb.toString()
         );
     }

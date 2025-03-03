@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,46 +19,52 @@ package org.jkiss.dbeaver.model.ai.completion;
 
 import org.jkiss.code.NotNull;
 import org.jkiss.dbeaver.DBException;
-import org.jkiss.dbeaver.model.ai.format.IAIFormatter;
+import org.jkiss.dbeaver.model.ai.AISettingsEventListener;
+import org.jkiss.dbeaver.model.ai.n.AIStreamingResponseHandler;
+import org.jkiss.dbeaver.model.data.DBDObject;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Completion engine
  */
-public interface DAICompletionEngine<SERVICE> {
+public interface DAICompletionEngine extends AISettingsEventListener {
 
     /**
      * Completion engine name
      */
+    @NotNull
     String getEngineName();
 
-    /**
-     * Do query completion
-     */
-    @NotNull
-    List<DAICompletionResponse> performQueryCompletion(
+    int getContextWindowSize(@NotNull DBRProgressMonitor monitor);
+
+    void chat(
         @NotNull DBRProgressMonitor monitor,
         @NotNull DAICompletionContext context,
-        @NotNull DAICompletionMessage message,
-        @NotNull IAIFormatter formatter
-    ) throws DBException;
+        @NotNull List<DAIChatMessage> messages,
+        @NotNull AIStreamingResponseHandler handler
+    );
 
-    /**
-     * Do query completion in a session
-     */
-    @NotNull
-    List<DAICompletionResponse> performSessionCompletion(
+    void describe(
         @NotNull DBRProgressMonitor monitor,
         @NotNull DAICompletionContext context,
-        @NotNull DAICompletionSession session,
-        @NotNull IAIFormatter formatter,
-        boolean allMessages
+        @NotNull DBDObject toDescribe,
+        @NotNull AIStreamingResponseHandler handler
+    );
+
+    String translateTextToSql(
+        @NotNull DBRProgressMonitor monitor,
+        @NotNull DAICompletionContext context,
+        @NotNull String text
     ) throws DBException;
 
-    boolean isValidConfiguration();
+    @NotNull
+    String command(
+        @NotNull DBRProgressMonitor monitor,
+        @NotNull DAICompletionContext context,
+        @NotNull String text
+    ) throws DBException;
 
-    Map<String, SERVICE> getServiceMap();
+    boolean hasValidConfiguration();
 }
