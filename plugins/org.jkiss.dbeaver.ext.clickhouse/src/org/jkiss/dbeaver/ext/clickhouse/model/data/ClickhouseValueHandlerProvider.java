@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,10 @@ public class ClickhouseValueHandlerProvider implements DBDValueHandlerProvider {
         DBPDataKind dataKind = type.getDataKind();
         if ("enum8".equals(lowerTypeName) || "enum16".equals(lowerTypeName)) {
             return ClickhouseEnumValueHandler.INSTANCE;
-        } else if (dataKind == DBPDataKind.ARRAY) {
+        } else if (ClickhouseGeometryValueHandler.isGeometryType(lowerTypeName)) {
+            return ClickhouseGeometryValueHandler.INSTANCE;
+        }
+        if (dataKind == DBPDataKind.ARRAY) {
             return ClickhouseArrayValueHandler.INSTANCE;
         } else if (dataKind == DBPDataKind.STRUCT) {
             return ClickhouseStructValueHandler.INSTANCE;
