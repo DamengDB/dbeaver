@@ -75,7 +75,7 @@ class IndentFormatter {
 
         switch (tokenString) {
             case "(":
-                functionBracket.add(formatterCfg.isFunction(prev.getString()) ? Boolean.TRUE : Boolean.FALSE);
+                functionBracket.add(formatterCfg.isFunction(prev.getString()) || formatterCfg.isIdentifier(prev.getString()) ? Boolean.TRUE : Boolean.FALSE);
                 conditionBracket.add(isCondition(argList, index) ? Boolean.TRUE : Boolean.FALSE);
                 isFirstConditionInBrackets = true;
                 bracketIndent.add(indent);
