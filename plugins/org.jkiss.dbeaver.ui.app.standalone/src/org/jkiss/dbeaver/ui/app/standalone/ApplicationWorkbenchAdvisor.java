@@ -18,6 +18,10 @@ package org.jkiss.dbeaver.ui.app.standalone;
 
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IAdaptable;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.core.runtime.preferences.DefaultScope;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
@@ -32,6 +36,7 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.*;
 import org.eclipse.ui.application.IWorkbenchConfigurer;
 import org.eclipse.ui.application.IWorkbenchWindowConfigurer;
@@ -64,6 +69,7 @@ import org.jkiss.dbeaver.runtime.DBWorkbench;
 import org.jkiss.dbeaver.runtime.OperationSystemState;
 import org.jkiss.dbeaver.ui.DBeaverIcons;
 import org.jkiss.dbeaver.ui.UIFonts;
+import org.jkiss.dbeaver.ui.UIUtils;
 import org.jkiss.dbeaver.ui.actions.datasource.DataSourceHandler;
 import org.jkiss.dbeaver.ui.app.standalone.internal.CoreApplicationActivator;
 import org.jkiss.dbeaver.ui.app.standalone.internal.CoreApplicationMessages;
@@ -82,8 +88,8 @@ import java.awt.*;
 import java.awt.desktop.SystemEventListener;
 import java.awt.desktop.SystemSleepEvent;
 import java.awt.desktop.SystemSleepListener;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 /**
  * This workbench advisor creates the window advisor, and specifies
@@ -366,8 +372,34 @@ public class ApplicationWorkbenchAdvisor extends IDEWorkbenchAdvisor {
     }
 
     private void startVersionChecker() {
-        DBeaverVersionChecker checker = new DBeaverVersionChecker(false);
-        checker.schedule(3000);
+        Job versionCheckerWrapper = new Job("Version Checker Wrapper") {
+            @Override
+            protected IStatus run(IProgressMonitor monitor) {
+                final IWorkbenchWindow[] windowHolder = new IWorkbenchWindow[1];
+                Display display = PlatformUI.getWorkbench().getDisplay();
+                display.syncExec(() -> {
+                    IWorkbenchWindow window = UIUtils.findActiveWorkbenchWindow();
+                    windowHolder[0] = window;
+                });
+                IWorkbenchWindow window = windowHolder[0];
+                if (window == null) {
+                    schedule(5000);
+                    return Status.OK_STATUS;
+                }
+                final Shell shell = window.getShell();
+                final Shell[] activeShellHolder = new Shell[1];
+                display.syncExec(() -> activeShellHolder[0] = display.getActiveShell());
+                Shell activeShell = activeShellHolder[0];
+                if (activeShell != null && !activeShell.equals(shell)) {
+                    schedule(5000);
+                } else {
+                    DBeaverVersionChecker checker = new DBeaverVersionChecker(false);
+                    checker.schedule(0);
+                }
+                return Status.OK_STATUS;
+            }
+        };
+        versionCheckerWrapper.schedule(3000);
     }
 
     ///////////////////////
