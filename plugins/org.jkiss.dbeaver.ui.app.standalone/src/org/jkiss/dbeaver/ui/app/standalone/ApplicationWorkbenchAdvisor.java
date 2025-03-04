@@ -372,9 +372,7 @@ public class ApplicationWorkbenchAdvisor extends IDEWorkbenchAdvisor {
         if (mainShell != null) {
             UIUtils.scheduleDelayedPopup(
                 mainShell,
-                () -> new DBeaverVersionChecker(false).schedule(0),
-                3000,
-                5000,
+                () -> new DBeaverVersionChecker(false).schedule(),
                 "Version Checker Wrapper"
             );
         }

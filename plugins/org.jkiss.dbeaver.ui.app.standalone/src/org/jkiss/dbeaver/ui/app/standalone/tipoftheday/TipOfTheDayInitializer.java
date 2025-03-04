@@ -35,8 +35,6 @@ public class TipOfTheDayInitializer implements IWorkbenchWindowInitializer {
         UIUtils.scheduleDelayedPopup(
             mainShell,
             () -> ShowTipOfTheDayHandler.showTipOfTheDay(window),
-            3000,
-            3000,
             "Show tip of the day"
         );
     }

@@ -80,8 +80,6 @@ public class WorkbenchInitializerCreateSampleDatabase implements IWorkbenchWindo
                     createSampleDatabase(registry);
                 }
             },
-            3000,
-            5000,
             "Sample Database Prompt Wrapper"
         );
     }
