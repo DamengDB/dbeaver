@@ -65,6 +65,7 @@ import org.eclipse.ui.handlers.IHandlerService;
 import org.eclipse.ui.internal.WorkbenchMessages;
 import org.eclipse.ui.menus.CommandContributionItem;
 import org.eclipse.ui.preferences.IWorkbenchPreferenceContainer;
+import org.eclipse.ui.progress.UIJob;
 import org.eclipse.ui.services.IServiceLocator;
 import org.eclipse.ui.swt.IFocusService;
 import org.jkiss.code.NotNull;
@@ -2526,6 +2527,44 @@ public class UIUtils {
             }
         }
         return UIMessages.label_catalog_schema;
+    }
+
+    /**
+     * Schedules a popup action to be executed after an initial delay, and if necessary,
+     * reschedules the action until the specified main shell becomes active.
+     * <p>
+     * This method creates a new {@link UIJob} with the given {@code jobName} that
+     * checks the currently active shell on the display. If the active shell is not the same
+     * as the provided {@code mainShell} (for example, when a modal dialog is open), the job is rescheduled
+     * after the specified {@code retryDelay}. Once the main shell is active, the provided {@code popupAction}
+     * is executed.
+     * </p>
+     *
+     * @param mainShell    the main {@link Shell} that must be active for the popup action to run; must not be null.
+     * @param popupAction  the action to be executed when the main shell is active; must not be null.
+     * @param initialDelay the initial delay in milliseconds before the job is first scheduled.
+     * @param retryDelay   the delay in milliseconds before the job is rescheduled if the main shell is not active.
+     * @param jobName      the name of the UIJob for identification purposes; must not be null.
+     */
+    public static void scheduleDelayedPopup(
+        @NotNull Shell mainShell,
+        @NotNull Runnable popupAction,
+        long initialDelay,
+        long retryDelay,
+        @NotNull String jobName
+    ) {
+        new UIJob(mainShell.getDisplay(), jobName) {
+            @Override
+            public IStatus runInUIThread(IProgressMonitor monitor) {
+                Shell activeShell = mainShell.getDisplay().getActiveShell();
+                if (activeShell != null && !activeShell.equals(mainShell)) {
+                    schedule(retryDelay);
+                } else {
+                    popupAction.run();
+                }
+                return Status.OK_STATUS;
+            }
+        }.schedule(initialDelay);
     }
 
     /**

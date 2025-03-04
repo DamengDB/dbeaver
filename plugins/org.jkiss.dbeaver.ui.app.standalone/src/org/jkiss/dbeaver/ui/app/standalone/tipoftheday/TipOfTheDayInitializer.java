@@ -16,14 +16,11 @@
  */
 package org.jkiss.dbeaver.ui.app.standalone.tipoftheday;
 
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IWorkbenchWindow;
-import org.eclipse.ui.progress.UIJob;
 import org.jkiss.dbeaver.runtime.DBWorkbench;
 import org.jkiss.dbeaver.ui.IWorkbenchWindowInitializer;
+import org.jkiss.dbeaver.ui.UIUtils;
 import org.jkiss.utils.CommonUtils;
 
 public class TipOfTheDayInitializer implements IWorkbenchWindowInitializer {
@@ -34,24 +31,14 @@ public class TipOfTheDayInitializer implements IWorkbenchWindowInitializer {
         if (!isTipsEnabled() || window.getWorkbench().getWorkbenchWindowCount() > 1) {
             return;
         }
-        scheduleTipJob(window, 3000);
-    }
-
-    private void scheduleTipJob(IWorkbenchWindow window, long delay) {
-        // Show tips with delay to let UI initialize properly
-        new UIJob(window.getShell().getDisplay(), "Show tip of the day") {
-            @Override
-            public IStatus runInUIThread(IProgressMonitor monitor) {
-                Shell activeShell = window.getShell().getDisplay().getActiveShell();
-                if (activeShell != null && !activeShell.equals(window.getShell())) {
-                    // If the window is different from "Show tip of the day" - retry
-                    scheduleTipJob(window, delay);
-                } else {
-                    ShowTipOfTheDayHandler.showTipOfTheDay(window);
-                }
-                return Status.OK_STATUS;
-            }
-        }.schedule(delay);
+        Shell mainShell = window.getShell();
+        UIUtils.scheduleDelayedPopup(
+            mainShell,
+            () -> ShowTipOfTheDayHandler.showTipOfTheDay(window),
+            3000,
+            3000,
+            "Show tip of the day"
+        );
     }
 
     private static boolean isTipsEnabled() {

@@ -18,10 +18,6 @@ package org.jkiss.dbeaver.ui.app.standalone;
 
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IAdaptable;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
-import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.core.runtime.preferences.DefaultScope;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
@@ -372,34 +368,16 @@ public class ApplicationWorkbenchAdvisor extends IDEWorkbenchAdvisor {
     }
 
     private void startVersionChecker() {
-        Job versionCheckerWrapper = new Job("Version Checker Wrapper") {
-            @Override
-            protected IStatus run(IProgressMonitor monitor) {
-                final IWorkbenchWindow[] windowHolder = new IWorkbenchWindow[1];
-                Display display = PlatformUI.getWorkbench().getDisplay();
-                display.syncExec(() -> {
-                    IWorkbenchWindow window = UIUtils.findActiveWorkbenchWindow();
-                    windowHolder[0] = window;
-                });
-                IWorkbenchWindow window = windowHolder[0];
-                if (window == null) {
-                    schedule(5000);
-                    return Status.OK_STATUS;
-                }
-                final Shell shell = window.getShell();
-                final Shell[] activeShellHolder = new Shell[1];
-                display.syncExec(() -> activeShellHolder[0] = display.getActiveShell());
-                Shell activeShell = activeShellHolder[0];
-                if (activeShell != null && !activeShell.equals(shell)) {
-                    schedule(5000);
-                } else {
-                    DBeaverVersionChecker checker = new DBeaverVersionChecker(false);
-                    checker.schedule(0);
-                }
-                return Status.OK_STATUS;
-            }
-        };
-        versionCheckerWrapper.schedule(3000);
+        Shell mainShell = UIUtils.getActiveWorkbenchShell();
+        if (mainShell != null) {
+            UIUtils.scheduleDelayedPopup(
+                mainShell,
+                () -> new DBeaverVersionChecker(false).schedule(0),
+                3000,
+                5000,
+                "Version Checker Wrapper"
+            );
+        }
     }
 
     ///////////////////////
