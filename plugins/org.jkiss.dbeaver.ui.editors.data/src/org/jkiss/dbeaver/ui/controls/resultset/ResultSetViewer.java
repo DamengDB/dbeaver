@@ -121,8 +121,8 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 /**
@@ -4047,7 +4047,9 @@ public class ResultSetViewer extends Viewer
 
     @Override
     public boolean refreshData(@Nullable Runnable onSuccess) {
-        if (!verifyQuerySafety() || !checkForChanges()) {
+        AtomicBoolean panelVisible = new AtomicBoolean(false);
+        mainPanel.getDisplay().syncExec(() -> panelVisible.set(mainPanel.isVisible()));
+        if (!verifyQuerySafety() || !checkForChanges() || !panelVisible.get()) {
             autoRefreshControl.scheduleAutoRefresh(false);
             return false;
         }
