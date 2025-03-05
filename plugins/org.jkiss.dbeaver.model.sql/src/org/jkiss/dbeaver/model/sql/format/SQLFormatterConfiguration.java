@@ -112,10 +112,10 @@ public class SQLFormatterConfiguration {
         return syntaxManager.getDialect().getFunctions().contains(name.toUpperCase(Locale.ENGLISH));
     }
 
-    public boolean isIdentifier(String name) {
+    public boolean isIdentifier(@NotNull String name) {
         SQLDialect dialect = syntaxManager.getDialect();
         boolean isQuoted = dialect.isQuotedIdentifier(name);
-        return name.chars().mapToObj(c -> (char) c).allMatch(c -> dialect.validIdentifierPart(c, isQuoted));
+        return name.chars().allMatch(c -> dialect.validIdentifierPart((char) c, isQuoted));
     }
 
     public Object getProperty(String name) {
