@@ -126,7 +126,7 @@ public class GISLeafletViewer implements IGeometryValueEditor, DBPPreferenceList
         CSSUtils.setCSSClass(composite, DBStyles.COLORED_BY_CONNECTION_TYPE);
         browserCreating = true;
         try {
-            browser = new Browser(composite, SWT.NONE);
+            browser = new Browser(composite, SWT.WEBKIT);
         } catch (SWTError error) {
             log.warn("Internal web browser initialization failed", error);
             browser = null;
@@ -135,9 +135,6 @@ public class GISLeafletViewer implements IGeometryValueEditor, DBPPreferenceList
                     control.dispose();
                 }
                 throw error;
-            } else {
-                // HACK: Will force SWT to use IE instead. We can't use SWT.DEFAULT because it might resolve to SWT.EDGE
-                browser = new Browser(composite, SWT.WEBKIT);
             }
         } finally {
             browserCreating = false;
@@ -145,31 +142,28 @@ public class GISLeafletViewer implements IGeometryValueEditor, DBPPreferenceList
 
         if (browser != null) {
             browser.setLayoutData(new GridData(GridData.FILL_BOTH));
-            UIUtils.asyncExec(() -> {
-                new BrowserFunction(browser, "setClipboardContents") {
+            new BrowserFunction(browser, "setClipboardContents") {
+                @Override
+                public Object function(Object[] arguments) {
+                    UIUtils.setClipboardContents(Display.getCurrent(), TextTransfer.getInstance(), arguments[0]);
+                    return null;
+                }
+            };
+
+            if (presentation instanceof SpreadsheetPresentation) {
+                new BrowserFunction(browser, "setPresentationSelection") {
                     @Override
                     public Object function(Object[] arguments) {
-                        UIUtils.setClipboardContents(Display.getCurrent(), TextTransfer.getInstance(), arguments[0]);
+                        final List<GridPos> selection = new ArrayList<>();
+                        for (Object pos : ((Object[]) arguments[0])) {
+                            final String[] split = ((String) pos).split(":");
+                            selection.add(new GridPos(CommonUtils.toInt(split[0]), CommonUtils.toInt(split[1])));
+                        }
+                        ((AbstractPresentation) presentation).setSelection(new StructuredSelection(selection), false);
                         return null;
                     }
                 };
-
-
-                if (presentation instanceof SpreadsheetPresentation) {
-                    new BrowserFunction(browser, "setPresentationSelection") {
-                        @Override
-                        public Object function(Object[] arguments) {
-                            final List<GridPos> selection = new ArrayList<>();
-                            for (Object pos : ((Object[]) arguments[0])) {
-                                final String[] split = ((String) pos).split(":");
-                                selection.add(new GridPos(CommonUtils.toInt(split[0]), CommonUtils.toInt(split[1])));
-                            }
-                            ((AbstractPresentation) presentation).setSelection(new StructuredSelection(selection), false);
-                            return null;
-                        }
-                    };
-                }
-            });
+            }
 
             browser.addDisposeListener(e -> {
                 cleanupFiles();
