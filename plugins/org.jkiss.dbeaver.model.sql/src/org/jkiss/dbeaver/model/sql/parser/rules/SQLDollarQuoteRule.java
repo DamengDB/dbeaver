@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -113,14 +113,26 @@ public class SQLDollarQuoteRule implements TPPredicateRule {
                     totalRead++;
                     if (c == '$') {
                         qname.append((char) c);
-                        return qname.toString();
+                        String quoteName = qname.toString();
+
+                        int savedOffset = scanner.getOffset();
+                        boolean hasAnotherQuote = hasMatchingDollarQuote(scanner, quoteName);
+                        if (!hasAnotherQuote) {
+                            hasAnotherQuote = hasOpeningDollarQuoteBefore(scanner, quoteName);
+                        }
+                        unread(scanner, scanner.getOffset() - savedOffset);
+                        if (hasAnotherQuote) {
+                            return quoteName;
+                        }
+
+                        break;
                     }
                 } while (c != TPCharacterScanner.EOF && (Character.isLetterOrDigit(c) || c == '_'));
             } else {
                 c = scanner.read();
                 totalRead++;
                 if (c == '$') {
-                    return  "$$";
+                    return "$$";
                 }
             }
         }
@@ -129,10 +141,60 @@ public class SQLDollarQuoteRule implements TPPredicateRule {
         return null;
     }
 
+    /**
+     * Checks if there is a paired named quote ($name$ or $$) in the stream (forward).
+     * After checking, restores the position.
+     */
+    private boolean hasMatchingDollarQuote(TPCharacterScanner scanner, String quoteName) {
+        int matchLength = quoteName.length();
+        int c;
+        StringBuilder buffer = new StringBuilder();
+        int readCount = 0;
+
+        while ((c = scanner.read()) != TPCharacterScanner.EOF) {
+            buffer.append((char) c);
+            readCount++;
+
+            if (buffer.length() > matchLength) {
+                buffer.deleteCharAt(0);
+            }
+
+            if (buffer.toString().equals(quoteName)) {
+                unread(scanner, readCount);
+                return true;
+            }
+        }
+        readCount++;
+        unread(scanner, readCount);
+
+        return false;
+    }
+
+    /**
+     * Checks if there is an OPEN quote $name$ or $$ before the current offset.
+     * After checking, restores the position.
+     */
+    private boolean hasOpeningDollarQuoteBefore(TPCharacterScanner scanner, String quoteName) {
+        StringBuilder prefixBuffer = new StringBuilder();
+        int readCount = 0;
+
+        while (scanner.getOffset() > 0) {
+            scanner.unread();
+            readCount++;
+        }
+
+        while (readCount-- > 0) {
+            prefixBuffer.append((char) scanner.read());
+        }
+        prefixBuffer.delete(prefixBuffer.length() - quoteName.length(), prefixBuffer.length());
+        return prefixBuffer.toString().contains(quoteName);
+    }
+
+
+
     private static void unread(TPCharacterScanner scanner, int totalRead) {
         while (totalRead-- > 0) {
             scanner.unread();
         }
     }
-
 }
