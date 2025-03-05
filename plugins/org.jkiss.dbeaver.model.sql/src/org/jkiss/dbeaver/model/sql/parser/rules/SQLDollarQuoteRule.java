@@ -16,6 +16,8 @@
  */
 package org.jkiss.dbeaver.model.sql.parser.rules;
 
+import org.jkiss.code.NotNull;
+import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.model.sql.parser.tokens.SQLBlockToggleToken;
 import org.jkiss.dbeaver.model.sql.parser.tokens.SQLTokenType;
 import org.jkiss.dbeaver.model.text.parser.*;
@@ -56,16 +58,16 @@ public class SQLDollarQuoteRule implements TPPredicateRule {
     }
 
     @Override
-    public TPToken evaluate(TPCharacterScanner scanner) {
+    public TPToken evaluate(@NotNull TPCharacterScanner scanner) {
         return evaluate(scanner, false);
     }
 
+    @NotNull
     @Override
-    public TPToken evaluate(TPCharacterScanner scanner, boolean resume) {
+    public TPToken evaluate(@NotNull TPCharacterScanner scanner, boolean resume) {
         String start = this.tryReadDollarQuote(scanner);
         if (start != null) {
-            if ((start.length() == 2 && this.fullyConsumeUnnamed) || (start.length() > 2 && this.fullyConsumeNamed)) {
-                int c = scanner.read();
+            if ((start.length() == 2 && this.fullyConsumeUnnamed) || (start.length() > 2 && this.fullyConsumeNamed)) {int c = scanner.read();
                 int captured = 1;
                 while (c != TPCharacterScanner.EOF) {
                     if (c == '$') {
@@ -99,7 +101,8 @@ public class SQLDollarQuoteRule implements TPPredicateRule {
         return TPTokenAbstract.UNDEFINED;
     }
 
-    private String tryReadDollarQuote(TPCharacterScanner scanner) {
+    @Nullable
+    private String tryReadDollarQuote(@NotNull TPCharacterScanner scanner) {
         int totalRead = 0;
         int c = scanner.read();
         totalRead++;
@@ -113,18 +116,13 @@ public class SQLDollarQuoteRule implements TPPredicateRule {
                     totalRead++;
                     if (c == '$') {
                         qname.append((char) c);
-                        String quoteName = qname.toString();
-
-                        int savedOffset = scanner.getOffset();
-                        boolean hasAnotherQuote = hasMatchingDollarQuote(scanner, quoteName);
-                        if (!hasAnotherQuote) {
-                            hasAnotherQuote = hasOpeningDollarQuoteBefore(scanner, quoteName);
+                        if (qname.length() == 2) {
+                            return qname.toString();
                         }
-                        unread(scanner, scanner.getOffset() - savedOffset);
-                        if (hasAnotherQuote) {
+                        String quoteName = qname.toString();
+                        if (hasMatchingDollarQuoteAfter(scanner, quoteName) || hasOpeningDollarQuoteBefore(scanner, quoteName)) {
                             return quoteName;
                         }
-
                         break;
                     }
                 } while (c != TPCharacterScanner.EOF && (Character.isLetterOrDigit(c) || c == '_'));
@@ -142,39 +140,38 @@ public class SQLDollarQuoteRule implements TPPredicateRule {
     }
 
     /**
-     * Checks if there is a paired named quote ($name$ or $$) in the stream (forward).
+     * Checks if there is a paired named quote ($name$) in the stream (forward).
      * After checking, restores the position.
      */
-    private boolean hasMatchingDollarQuote(TPCharacterScanner scanner, String quoteName) {
+    private boolean hasMatchingDollarQuoteAfter(@NotNull TPCharacterScanner scanner, @NotNull String quoteName) {
         int matchLength = quoteName.length();
-        int c;
-        StringBuilder buffer = new StringBuilder();
         int readCount = 0;
+        int c = scanner.read();
+        readCount++;
+        StringBuilder buffer = new StringBuilder();
 
-        while ((c = scanner.read()) != TPCharacterScanner.EOF) {
+
+        while (c != TPCharacterScanner.EOF) {
             buffer.append((char) c);
+            c = scanner.read();
             readCount++;
-
             if (buffer.length() > matchLength) {
                 buffer.deleteCharAt(0);
             }
-
             if (buffer.toString().equals(quoteName)) {
                 unread(scanner, readCount);
                 return true;
             }
         }
-        readCount++;
         unread(scanner, readCount);
-
         return false;
     }
 
     /**
-     * Checks if there is an OPEN quote $name$ or $$ before the current offset.
+     * Checks if there is an OPEN quote $name$ before the current offset.
      * After checking, restores the position.
      */
-    private boolean hasOpeningDollarQuoteBefore(TPCharacterScanner scanner, String quoteName) {
+    private boolean hasOpeningDollarQuoteBefore(@NotNull TPCharacterScanner scanner, @NotNull String quoteName) {
         StringBuilder prefixBuffer = new StringBuilder();
         int readCount = 0;
 
