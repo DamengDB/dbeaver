@@ -24,6 +24,6 @@ jobs:
       timeout-minutes: 5
 
   lint-java:
-    name: Code style
+    name: Check style
     uses: dbeaver/dbeaver-common/.github/workflows/java-checkstyle.yml@devel
     secrets: inherit
