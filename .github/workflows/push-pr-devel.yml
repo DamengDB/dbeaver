@@ -19,7 +19,6 @@ jobs:
     name: Build product
     secrets: inherit
     with:
-      mvn-args: -T1C
       project-directory: ./dbeaver/product/aggregate
       project-deps: ./dbeaver/project.deps
       timeout-minutes: 5
