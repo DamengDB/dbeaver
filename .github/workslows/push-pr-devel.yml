@@ -1,4 +1,4 @@
-name: CI
+name: PR Check
 
 on:
   pull_request:
@@ -23,7 +23,7 @@ jobs:
       project-deps: ./dbeaver/project.deps
       timeout-minutes: 5
 
-  lint-офмф:
+  lint-java:
     name: Server
     uses: dbeaver/dbeaver-common/.github/workflows/java-checkstyle.yml@devel
     secrets: inherit
