@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+  push:
+    branches: [devel]
+
+concurrency:
+  group: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || 'push-pr-devel' }}
+  cancel-in-progress: true
+
+jobs:
+  build-server:
+    uses: dbeaver/dbeaver-common/.github/workflows/mvn-package.yml@devel
+    name: Check
+    secrets: inherit
+    with:
+      project-directory: ./dbeaver/product/aggregate
+      project-deps: ./dbeaver/project.deps
+      timeout-minutes: 5
+
+  lint-офмф:
+    name: Server
+    uses: dbeaver/dbeaver-common/.github/workflows/java-checkstyle.yml@devel
+    secrets: inherit
