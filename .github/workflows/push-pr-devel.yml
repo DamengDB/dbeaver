@@ -16,7 +16,7 @@ concurrency:
 jobs:
   build-java:
     uses: dbeaver/dbeaver-common/.github/workflows/mvn-package.yml@devel
-    name: Build product
+    name: Build
     secrets: inherit
     with:
       project-directory: ./dbeaver/product/aggregate
