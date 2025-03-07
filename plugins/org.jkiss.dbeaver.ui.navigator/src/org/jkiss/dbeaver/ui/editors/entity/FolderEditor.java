@@ -67,6 +67,7 @@ public class FolderEditor extends EditorPart implements INavigatorModelView, IRe
             setTitleImage(DBeaverIcons.getImage(navigatorNode.getNodeIcon()));
             setPartName(navigatorNode.getNodeDisplayName());
 
+            itemControl.setRootNode(navigatorNode);
             itemControl.loadData();
 
             DBNNode rootNode = getRootNode();
