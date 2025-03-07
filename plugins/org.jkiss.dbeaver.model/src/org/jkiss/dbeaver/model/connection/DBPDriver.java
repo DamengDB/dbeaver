@@ -19,14 +19,12 @@ package org.jkiss.dbeaver.model.connection;
 
 import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
-import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.model.DBPDataSourceContainer;
 import org.jkiss.dbeaver.model.DBPDataSourceProvider;
 import org.jkiss.dbeaver.model.DBPImage;
 import org.jkiss.dbeaver.model.DBPNamedObject;
 import org.jkiss.dbeaver.model.navigator.meta.DBXTreeNode;
 import org.jkiss.dbeaver.model.preferences.DBPPropertyDescriptor;
-import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 import org.jkiss.dbeaver.model.sql.SQLDialectMetadata;
 import org.jkiss.utils.Pair;
 
@@ -200,36 +198,10 @@ public interface DBPDriver extends DBPNamedObject, DBPDriverLibraryProvider {
     List<? extends DBPDriverFileSource> getDriverFileSources();
 
     @NotNull
-    DBPDriverLoader getDriverLoader(@NotNull DBPDataSourceContainer dataSourceContainer);
-
-    @Nullable
-    ClassLoader getClassLoader();
+    DBPDriverLoader getDefaultDriverLoader();
 
     @NotNull
-    <T> T getDriverInstance(@NotNull DBRProgressMonitor monitor) throws DBException;
-
-    void loadDriver(DBRProgressMonitor monitor) throws DBException;
-
-    /**
-     * Flag that shows if a driver needs external dependencies (f.e. not all files are present).
-     */
-    boolean needsExternalDependencies();
-
-    /**
-     * Validates driver library files presence and download them if needed without creating a driver instance
-     */
-    void validateFilesPresence(@NotNull DBRProgressMonitor monitor);
-
-    /**
-     * Indicates whether the driver library files are installed.
-     */
-    boolean isDriverInstalled();
-
-    /**
-     * Downloads driver library files from external resources if it is possible.
-     */
-    boolean downloadDriverLibraries(@NotNull DBRProgressMonitor monitor, boolean resetVersions);
-
+    DBPDriverLoader getDriverLoader(@NotNull DBPDataSourceContainer dataSourceContainer);
 
     @Nullable
     String getConnectionURL(DBPConnectionConfiguration configuration);
