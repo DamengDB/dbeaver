@@ -18,38 +18,36 @@ package org.jkiss.dbeaver.ui.dialogs.connection;
 
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.MenuManager;
+import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.IDialogPage;
+import org.eclipse.jface.preference.PreferenceDialog;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.*;
-import org.eclipse.swt.events.KeyListener;
-import org.eclipse.swt.events.SelectionAdapter;
-import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.events.*;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
-import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.*;
+import org.eclipse.ui.dialogs.PreferencesUtil;
 import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBeaverPreferences;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.core.CoreMessages;
-import org.jkiss.dbeaver.model.DBConstants;
-import org.jkiss.dbeaver.model.DBIcon;
-import org.jkiss.dbeaver.model.DBPDataSourceContainer;
+import org.jkiss.dbeaver.model.*;
 import org.jkiss.dbeaver.model.app.DBPDataSourceRegistry;
 import org.jkiss.dbeaver.model.connection.DBPConnectionConfiguration;
 import org.jkiss.dbeaver.model.connection.DBPDriver;
 import org.jkiss.dbeaver.model.connection.DBPDriverSubstitutionDescriptor;
 import org.jkiss.dbeaver.model.exec.DBCSession;
 import org.jkiss.dbeaver.model.net.DBWHandlerConfiguration;
+import org.jkiss.dbeaver.model.net.DBWNetworkProfile;
 import org.jkiss.dbeaver.model.rcp.RCPProject;
 import org.jkiss.dbeaver.model.runtime.DBRRunnableContext;
 import org.jkiss.dbeaver.registry.DataSourceDescriptor;
@@ -64,6 +62,7 @@ import org.jkiss.dbeaver.ui.*;
 import org.jkiss.dbeaver.ui.dialogs.ActiveWizardPage;
 import org.jkiss.dbeaver.ui.dialogs.ConfirmationDialog;
 import org.jkiss.dbeaver.ui.dialogs.driver.DriverEditDialog;
+import org.jkiss.dbeaver.ui.preferences.PrefPageProjectNetworkProfiles;
 import org.jkiss.dbeaver.utils.GeneralUtils;
 import org.jkiss.utils.ArrayUtils;
 import org.jkiss.utils.CommonUtils;
@@ -271,38 +270,41 @@ class ConnectionPageSettings extends ActiveWizardPage<ConnectionWizard> implemen
                 tabFolder.setLayoutData(new GridData(GridData.FILL_BOTH));
                 tabFolder.setUnselectedCloseVisible(false);
 
-                final ToolBar tabFolderChevron = createChevron(allPages);
-                tabFolder.setTopRight(tabFolderChevron, SWT.RIGHT);
+                // Create and populate top-right toolbar
+                var toolBar = new ToolBar(tabFolder, SWT.FLAT | SWT.RIGHT);
+                createHandlerItem(toolBar, allPages);
+                createProfileItem(toolBar);
+                tabFolder.setTopRight(toolBar, SWT.RIGHT);
 
                 tabFolder.addCTabFolder2Listener(new CTabFolder2Adapter() {
                     @Override
                     public void close(CTabFolderEvent event) {
-                        if (confirmTabClose((CTabItem) event.item)) {
-                            final ConnectionPageNetworkHandler page = (ConnectionPageNetworkHandler) event.item.getData();
-                            final NetworkHandlerDescriptor descriptor = page.getHandlerDescriptor();
-                            final DBPConnectionConfiguration configuration = getActiveDataSource().getConnectionConfiguration();
-                            final DBWHandlerConfiguration handler = configuration.getHandler(descriptor.getId());
-
-                            if (handler != null) {
-                                handler.setEnabled(false);
-                            }
-                        } else {
+                        CTabItem item = (CTabItem) event.item;
+                        if (!closeTab(item)) {
                             event.doit = false;
                         }
                     }
 
                     //@Override
                     public void itemsCount(CTabFolderEvent event) {
-                        tabFolderChevron.setVisible(canShowChevron(allPages));
+                        toolBar.setVisible(canShowChevron(allPages));
                     }
                 });
+                tabFolder.addMouseListener(MouseListener.mouseUpAdapter(event -> {
+                    if (event.button == 2) {
+                        var folder = (CTabFolder) event.widget;
+                        var item = folder.getItem(new Point(event.x, event.y));
+                        if (item != null) {
+                            closeTab(item);
+                        }
+                    }
+                }));
                 tabFolder.addKeyListener(KeyListener.keyPressedAdapter(event -> {
                     if (event.keyCode == SWT.DEL && event.stateMask == 0) {
-                        final CTabFolder folder = (CTabFolder) event.widget;
-                        final CTabItem selection = folder.getSelection();
-
-                        if (selection != null && selection.getShowClose() && confirmTabClose(selection)) {
-                            selection.dispose();
+                        var folder = (CTabFolder) event.widget;
+                        var selection = folder.getSelection();
+                        if (selection != null) {
+                            closeTab(selection);
                         }
                     }
                 }));
@@ -336,38 +338,103 @@ class ConnectionPageSettings extends ActiveWizardPage<ConnectionWizard> implemen
     }
 
     @NotNull
-    private ToolBar createChevron(@NotNull List<IDialogPage> pages) {
-        final MenuManager manager = new MenuManager();
-        manager.setRemoveAllWhenShown(true);
-        manager.addMenuListener(m -> {
+    private ToolItem createHandlerItem(@NotNull ToolBar toolBar, @NotNull List<IDialogPage> pages) {
+        var handlerManager = new MenuManager();
+        handlerManager.setRemoveAllWhenShown(true);
+        handlerManager.addMenuListener(manager -> {
             for (int i = 0; i < pages.size(); i++) {
-                final IDialogPage page = pages.get(i);
-
+                var page = pages.get(i);
                 if (canShowInChevron(page)) {
-                    manager.add(new AddNetworkHandlerAction(getActiveDataSource(), (ConnectionPageNetworkHandler) page, i));
+                    manager.add(new AddHandlerAction(getActiveDataSource(), (ConnectionPageNetworkHandler) page, i));
                 }
             }
         });
 
-        final ToolBar toolBar = new ToolBar(tabFolder, SWT.FLAT | SWT.RIGHT);
-
-        final ToolItem toolItem = UIUtils
-            .createToolItem(toolBar, CoreMessages.dialog_connection_network_add_tunnel_label, null, UIIcon.ADD, null);
+        var toolItem = UIUtils.createToolItem(toolBar, CoreMessages.dialog_connection_network_add_tunnel_label, null, UIIcon.ADD, null);
+        toolItem.addDisposeListener(e -> handlerManager.dispose());
         toolItem.addSelectionListener(SelectionListener.widgetSelectedAdapter(e -> {
-            final Rectangle bounds = toolItem.getBounds();
-            final Point location = toolBar.getDisplay().map(toolBar, null, 0, bounds.height);
-            final Menu menu = manager.createContextMenu(tabFolder);
+            var bounds = toolItem.getBounds();
+            var location = toolBar.getDisplay().map(toolBar, null, bounds.x, bounds.height);
+            var menu = handlerManager.createContextMenu(tabFolder);
             menu.setLocation(location.x, location.y);
             menu.setVisible(true);
         }));
-        toolItem.addDisposeListener(e -> manager.dispose());
 
-        return toolBar;
+        return toolItem;
+    }
+
+    @NotNull
+    private ToolItem createProfileItem(@NotNull ToolBar toolBar) {
+        var profileManager = new MenuManager();
+        profileManager.setRemoveAllWhenShown(true);
+        profileManager.addMenuListener(manager -> {
+            manager.add(new ChooseNetworkProfileAction());
+            manager.add(new Separator());
+
+            var dataSource = getActiveDataSource();
+            int index = 0;
+
+            if (dataSource.getOrigin() instanceof DBPDataSourceOriginExternal origin) {
+                for (DBWNetworkProfile profile : origin.getAvailableNetworkProfiles()) {
+                    manager.add(new ChooseNetworkProfileAction(dataSource, profile, origin, index++));
+                }
+            }
+
+            manager.add(new Separator());
+
+            for (DBWNetworkProfile profile : getProject().getDataSourceRegistry().getNetworkProfiles()) {
+                manager.add(new ChooseNetworkProfileAction(dataSource, profile, null, index++));
+            }
+
+            manager.add(new Separator());
+            manager.add(new Action("Edit profiles...", DBeaverIcons.getImageDescriptor(UIIcon.RENAME)) {
+                @Override
+                public void run() {
+                    editProfile(null);
+                }
+            });
+        });
+
+        var profileItem = UIUtils.createToolItem(toolBar, "Profiles ...", "Active profile", DBIcon.TYPE_DOCUMENT, null);
+        profileItem.addDisposeListener(e -> profileManager.dispose());
+        profileItem.addSelectionListener(SelectionListener.widgetSelectedAdapter(e -> {
+            var bounds = profileItem.getBounds();
+            var location = toolBar.getDisplay().map(toolBar, null, bounds.x, bounds.height);
+            var menu = profileManager.createContextMenu(tabFolder);
+            menu.setLocation(location.x, location.y);
+            menu.setVisible(true);
+        }));
+
+        return profileItem;
+    }
+
+    private void editProfile(@Nullable DBWNetworkProfile profile) {
+        PreferenceDialog dialog = PreferencesUtil.createPropertyDialogOn(
+            getShell(),
+            getProject().getEclipseProject(),
+            PrefPageProjectNetworkProfiles.PAGE_ID,
+            null,
+            profile != null ? profile.getProfileName() : null
+        );
+        if (dialog == null) {
+            log.error("Can't open network profiles preferences");
+            return;
+        }
+        if (dialog.open() == IDialogConstants.OK_ID) {
+            // TODO: Update tabs to reflect possible profile changes
+        }
+    }
+
+    private boolean closeTab(@NotNull CTabItem item) {
+        if (item.getShowClose() && confirmTabClose(item)) {
+            item.dispose();
+            return true;
+        }
+        return false;
     }
 
     private boolean confirmTabClose(@NotNull CTabItem item) {
-        if (item.getData() instanceof ConnectionPageNetworkHandler) {
-            final ConnectionPageNetworkHandler page = (ConnectionPageNetworkHandler) item.getData();
+        if (item.getData() instanceof ConnectionPageNetworkHandler page) {
             final NetworkHandlerDescriptor descriptor = page.getHandlerDescriptor();
 
             final int decision = ConfirmationDialog.confirmAction(
@@ -732,12 +799,12 @@ class ConnectionPageSettings extends ActiveWizardPage<ConnectionWizard> implemen
         return selection != null ? (IDialogPage) selection.getData() : null;
     }
 
-    private class AddNetworkHandlerAction extends Action {
+    private class AddHandlerAction extends Action {
         private final DBPDataSourceContainer container;
         private final ConnectionPageNetworkHandler page;
         private final int index;
 
-        public AddNetworkHandlerAction(@NotNull DBPDataSourceContainer container, @NotNull ConnectionPageNetworkHandler page, int index) {
+        public AddHandlerAction(@NotNull DBPDataSourceContainer container, @NotNull ConnectionPageNetworkHandler page, int index) {
             super(page.getHandlerDescriptor().getCodeName(), AS_PUSH_BUTTON);
 
             this.container = container;
@@ -759,6 +826,51 @@ class ConnectionPageSettings extends ActiveWizardPage<ConnectionWizard> implemen
             handler.setEnabled(true);
             tabFolder.setSelection(createPageTab(page, Math.min(tabFolder.getItemCount(), index)));
             activateCurrentItem();
+        }
+    }
+
+    private class ChooseNetworkProfileAction extends Action {
+        private final DBWNetworkProfile profile;
+
+        public ChooseNetworkProfileAction() {
+            super("None", AS_RADIO_BUTTON);
+            this.profile = null;
+        }
+
+        public ChooseNetworkProfileAction(
+            @NotNull DBPDataSourceContainer container,
+            @NotNull DBWNetworkProfile profile,
+            @Nullable DBPDataSourceOrigin origin,
+            int index
+        ) {
+            super(null, AS_RADIO_BUTTON);
+            this.profile = profile;
+
+            setText(ActionUtils.getLabelWithIndexMnemonic(getProfileName(profile, origin), index));
+            setChecked(isProfileSelected(profile, container));
+        }
+
+        @Override
+        public void run() {
+            log.debug("TODO ChooseNetworkProfileAction#run");
+        }
+
+        @NotNull
+        private static String getProfileName(@NotNull DBWNetworkProfile profile, @Nullable DBPDataSourceOrigin origin) {
+            if (origin != null) {
+                return NLS.bind("{0} {1}", profile.getProfileName(), origin.getDisplayName());
+            } else {
+                return profile.getProfileName();
+            }
+        }
+
+        private static boolean isProfileSelected(@NotNull DBWNetworkProfile profile, @NotNull DBPDataSourceContainer container) {
+            DBPConnectionConfiguration config = container.getConnectionConfiguration();
+            if (CommonUtils.isEmptyTrimmed(config.getConfigProfileName())) {
+                return false;
+            }
+            return Objects.equals(profile.getProfileName(), config.getConfigProfileName())
+                && Objects.equals(profile.getProfileSource(), config.getConfigProfileSource());
         }
     }
 }
