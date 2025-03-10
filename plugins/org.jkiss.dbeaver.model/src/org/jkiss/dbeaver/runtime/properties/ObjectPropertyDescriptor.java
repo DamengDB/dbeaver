@@ -689,4 +689,9 @@ public class ObjectPropertyDescriptor extends ObjectAttributeDescriptor implemen
 //        return ResourceBundle.getBundle("plugin", locale, ownerClass.getClassLoader()); //$NON-NLS-1$
     }
 
+    @Nullable
+    public String getVisibleExpr() {
+        return CommonUtils.notEmpty(propInfo.visibleExpr());
+    }
+
 }
