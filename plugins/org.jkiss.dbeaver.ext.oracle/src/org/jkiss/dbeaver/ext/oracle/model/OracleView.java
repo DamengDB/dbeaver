@@ -56,12 +56,12 @@ public class OracleView extends OracleTableBase implements OracleSourceObject, D
         private OracleView superView;
 
         @Property(viewable = false, order = 10, supportsPreview = true)
-        public Object getType(DBRProgressMonitor monitor) throws DBException {
+        public Object getType(DBRProgressMonitor monitor) {
             if (typeOwner == null) {
                 return null;
             }
-            OracleSchema owner = getDataSource().getSchema(monitor, typeOwner);
-            return owner == null ? null : owner.getDataType(monitor, typeName);
+
+            return OracleDataType.resolveDataType(monitor, getDataSource(), typeOwner, typeName.toString());
         }
 
         @Property(viewable = false, order = 11)
