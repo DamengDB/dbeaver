@@ -48,6 +48,7 @@ import org.jkiss.dbeaver.model.connection.DBPDriverSubstitutionDescriptor;
 import org.jkiss.dbeaver.model.exec.DBCSession;
 import org.jkiss.dbeaver.model.net.DBWHandlerConfiguration;
 import org.jkiss.dbeaver.model.net.DBWHandlerDescriptor;
+import org.jkiss.dbeaver.model.net.DBWNetworkHandler;
 import org.jkiss.dbeaver.model.net.DBWNetworkProfile;
 import org.jkiss.dbeaver.model.rcp.RCPProject;
 import org.jkiss.dbeaver.model.runtime.DBRRunnableContext;
@@ -408,7 +409,32 @@ class ConnectionPageSettings extends ActiveWizardPage<ConnectionWizard> implemen
     }
 
     private void selectProfile(@Nullable DBWNetworkProfile profile) {
-        log.debug("TODO selectProfile " + profile);
+        if (profile != null) {
+            Set<DBWHandlerDescriptor> handlersToRemove = new HashSet<>();
+            Set<DBWHandlerDescriptor> handlersToAdd = new HashSet<>();
+
+            for (DBWHandlerConfiguration configuration : profile.getConfigurations()) {
+                handlersToAdd.add(configuration.getHandlerDescriptor());
+            }
+
+            for (CTabItem item : tabFolder.getItems()) {
+                if (item.getData() instanceof ConnectionPageNetworkHandler page) {
+                    NetworkHandlerDescriptor descriptor = page.getHandlerDescriptor();
+                    if (handlersToAdd.contains(descriptor)) {
+                        handlersToAdd.remove(descriptor);
+                    } else {
+                        handlersToRemove.add(descriptor);
+                    }
+                }
+            }
+
+            // TODO: All pages must manually be opened to correctly initialize
+
+            handlersToRemove.forEach(this::disableHandler);
+            handlersToAdd.forEach(this::enableHandler);
+        } else {
+            log.debug("TODO selectProfile <none>");
+        }
     }
 
     private void enableHandler(@NotNull DBWHandlerDescriptor descriptor) {
