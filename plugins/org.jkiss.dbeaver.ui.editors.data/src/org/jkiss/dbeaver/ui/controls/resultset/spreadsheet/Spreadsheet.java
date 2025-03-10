@@ -246,6 +246,8 @@ public class Spreadsheet extends LightGrid implements Listener {
             selectionEvent.data = cell;
             notifyListeners(SWT.Selection, selectionEvent);
         }
+
+        tableEditor.layout();
     }
 
     public void addCursorChangeListener(Listener listener) {
