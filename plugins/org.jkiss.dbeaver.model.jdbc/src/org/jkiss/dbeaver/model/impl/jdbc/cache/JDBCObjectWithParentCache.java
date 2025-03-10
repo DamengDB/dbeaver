@@ -35,7 +35,6 @@ import org.jkiss.dbeaver.model.struct.cache.DBSCompositeCache;
 import org.jkiss.utils.CommonUtils;
 
 import java.sql.SQLException;
-import java.sql.SQLFeatureNotSupportedException;
 import java.util.*;
 
 /**

@@ -47,7 +47,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Clob;
 import java.sql.SQLException;
-import java.sql.SQLFeatureNotSupportedException;
 
 /**
  * JDBCContentCLOB
@@ -163,10 +162,10 @@ public class JDBCContentCLOB extends JDBCContentLOB implements DBDContent {
     }
 
     @Override
-    public void bindParameter(JDBCSession session, JDBCPreparedStatement preparedStatement,
-                              DBSTypedObject columnType, int paramIndex)
-        throws DBCException
-    {
+    public void bindParameter(
+        JDBCSession session, JDBCPreparedStatement preparedStatement,
+        DBSTypedObject columnType, int paramIndex
+    ) throws DBCException {
         try {
             if (storage != null) {
 //                String stringValue = ContentUtils.getContentStringValue(session.getProgressMonitor(), this);
@@ -177,9 +176,9 @@ public class JDBCContentCLOB extends JDBCContentLOB implements DBDContent {
                 try {
                     preparedStatement.setNCharacterStream(
                         paramIndex,
-                        tmpReader);
-                }
-                catch (Throwable e) {
+                        tmpReader
+                    );
+                } catch (Throwable e) {
                     if (e instanceof SQLException && !(JDBCUtils.isFeatureNotSupportedError(session.getDataSource(), e))) {
                         throw (SQLException) e;
                     } else {
@@ -188,16 +187,17 @@ public class JDBCContentCLOB extends JDBCContentLOB implements DBDContent {
                             preparedStatement.setCharacterStream(
                                 paramIndex,
                                 tmpReader,
-                                streamLength);
-                        }
-                        catch (Throwable e1) {
+                                streamLength
+                            );
+                        } catch (Throwable e1) {
                             if (e1 instanceof SQLException && !(JDBCUtils.isFeatureNotSupportedError(session.getDataSource(), e1))) {
                                 throw (SQLException) e1;
                             } else {
                                 preparedStatement.setCharacterStream(
                                     paramIndex,
                                     tmpReader,
-                                    (int) streamLength);
+                                    (int) streamLength
+                                );
                             }
                         }
                     }
@@ -207,11 +207,9 @@ public class JDBCContentCLOB extends JDBCContentLOB implements DBDContent {
             } else {
                 preparedStatement.setNull(paramIndex, java.sql.Types.CLOB);
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new DBCException(e, session.getExecutionContext());
-        }
-        catch (Throwable e) {
+        } catch (Throwable e) {
             throw new DBCException("IO error while binding content", e);
         }
     }
