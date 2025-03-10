@@ -47,6 +47,7 @@ import org.jkiss.dbeaver.model.connection.DBPDriver;
 import org.jkiss.dbeaver.model.connection.DBPDriverSubstitutionDescriptor;
 import org.jkiss.dbeaver.model.exec.DBCSession;
 import org.jkiss.dbeaver.model.net.DBWHandlerConfiguration;
+import org.jkiss.dbeaver.model.net.DBWHandlerDescriptor;
 import org.jkiss.dbeaver.model.net.DBWNetworkProfile;
 import org.jkiss.dbeaver.model.rcp.RCPProject;
 import org.jkiss.dbeaver.model.runtime.DBRRunnableContext;
@@ -341,10 +342,9 @@ class ConnectionPageSettings extends ActiveWizardPage<ConnectionWizard> implemen
         var handlerManager = new MenuManager();
         handlerManager.setRemoveAllWhenShown(true);
         handlerManager.addMenuListener(manager -> {
-            for (int i = 0; i < pages.size(); i++) {
-                var page = pages.get(i);
-                if (canShowInChevron(page)) {
-                    manager.add(new AddHandlerAction(getActiveDataSource(), (ConnectionPageNetworkHandler) page, i));
+            for (IDialogPage page : pages) {
+                if (canShowInChevron(page) && page instanceof ConnectionPageNetworkHandler handlerPage) {
+                    manager.add(new AddHandlerAction(handlerPage.getHandlerDescriptor()));
                 }
             }
         });
@@ -407,6 +407,79 @@ class ConnectionPageSettings extends ActiveWizardPage<ConnectionWizard> implemen
         return profileItem;
     }
 
+    private void selectProfile(@Nullable DBWNetworkProfile profile) {
+        log.debug("TODO selectProfile " + profile);
+    }
+
+    private void enableHandler(@NotNull DBWHandlerDescriptor descriptor) {
+        if (findHandlerItem(descriptor) != null) {
+            log.error("Handler " + descriptor + " is already enabled");
+            return;
+        }
+
+        var page = findHandlerPage(descriptor);
+        if (page == null) {
+            log.error("Can't find page for handler " + descriptor);
+            return;
+        }
+
+        var dataSource = getActiveDataSource();
+        var configuration = dataSource.getConnectionConfiguration();
+        var handler = configuration.getHandler(descriptor.getId());
+
+        if (handler == null) {
+            handler = new DBWHandlerConfiguration(descriptor, dataSource);
+            configuration.updateHandler(handler);
+        }
+
+        handler.setEnabled(true);
+
+        var handlerIndex = Math.min(tabFolder.getItemCount(), ArrayUtils.indexOf(subPages, page) + 1 /* main tab */);
+        var handlerItem = createPageTab(page, handlerIndex);
+
+        tabFolder.setSelection(handlerItem);
+        activateCurrentItem();
+    }
+
+    private void disableHandler(@NotNull DBWHandlerDescriptor descriptor) {
+        var item = findHandlerItem(descriptor);
+
+        if (item == null) {
+            log.error("Can't find page item for handler " + descriptor);
+            return;
+        }
+
+        var handlerPage = (ConnectionPageNetworkHandler) item.getData();
+        var handlerDescriptor = handlerPage.getHandlerDescriptor();
+        var handlerConfig = getActiveDataSource().getConnectionConfiguration().getHandler(handlerDescriptor.getId());
+
+        if (handlerConfig != null) {
+            handlerConfig.setEnabled(false);
+        }
+
+        item.dispose();
+    }
+
+    @Nullable
+    private CTabItem findHandlerItem(@NotNull DBWHandlerDescriptor descriptor) {
+        for (CTabItem it : tabFolder.getItems()) {
+            if (it.getData() instanceof ConnectionPageNetworkHandler page && page.getHandlerDescriptor() == descriptor) {
+                return it;
+            }
+        }
+        return null;
+    }
+
+    @Nullable
+    private ConnectionPageNetworkHandler findHandlerPage(@NotNull DBWHandlerDescriptor descriptor) {
+        for (IDialogPage subPage : subPages) {
+            if (subPage instanceof ConnectionPageNetworkHandler page && page.getHandlerDescriptor() == descriptor) {
+                return page;
+            }
+        }
+        return null;
+    }
+
     private void editProfile(@Nullable DBWNetworkProfile profile) {
         PreferenceDialog dialog = PreferencesUtil.createPropertyDialogOn(
             getShell(),
@@ -430,14 +503,8 @@ class ConnectionPageSettings extends ActiveWizardPage<ConnectionWizard> implemen
         //       and therefore not saving its _updated_ state
         if (item.getShowClose() && tabFolder.getSelection() == item && confirmTabClose(item)) {
             var page = (ConnectionPageNetworkHandler) item.getData();
-            var config = getActiveDataSource().getConnectionConfiguration();
-            var handlerDescriptor = page.getHandlerDescriptor();
-            var handlerConfig = config.getHandler(handlerDescriptor.getId());
-            if (handlerConfig != null) {
-                handlerConfig.setEnabled(false);
-            }
-
-            item.dispose();
+            var descriptor = page.getHandlerDescriptor();
+            disableHandler(descriptor);
             return true;
         }
         return false;
@@ -806,32 +873,16 @@ class ConnectionPageSettings extends ActiveWizardPage<ConnectionWizard> implemen
     }
 
     private class AddHandlerAction extends Action {
-        private final DBPDataSourceContainer container;
-        private final ConnectionPageNetworkHandler page;
-        private final int index;
+        private final DBWHandlerDescriptor descriptor;
 
-        public AddHandlerAction(@NotNull DBPDataSourceContainer container, @NotNull ConnectionPageNetworkHandler page, int index) {
-            super(page.getHandlerDescriptor().getCodeName(), AS_PUSH_BUTTON);
-
-            this.container = container;
-            this.page = page;
-            this.index = index;
+        public AddHandlerAction(@NotNull DBWHandlerDescriptor descriptor) {
+            super(descriptor.getCodeName(), AS_PUSH_BUTTON);
+            this.descriptor = descriptor;
         }
 
         @Override
         public void run() {
-            final NetworkHandlerDescriptor descriptor = page.getHandlerDescriptor();
-            final DBPConnectionConfiguration configuration = container.getConnectionConfiguration();
-            DBWHandlerConfiguration handler = configuration.getHandler(descriptor.getId());
-
-            if (handler == null) {
-                handler = new DBWHandlerConfiguration(descriptor, container);
-                configuration.updateHandler(handler);
-            }
-
-            handler.setEnabled(true);
-            tabFolder.setSelection(createPageTab(page, Math.min(tabFolder.getItemCount(), index)));
-            activateCurrentItem();
+            enableHandler(descriptor);
         }
     }
 
@@ -858,7 +909,7 @@ class ConnectionPageSettings extends ActiveWizardPage<ConnectionWizard> implemen
 
         @Override
         public void run() {
-            log.debug("TODO ChooseNetworkProfileAction#run");
+            selectProfile(profile);
         }
 
         @NotNull
