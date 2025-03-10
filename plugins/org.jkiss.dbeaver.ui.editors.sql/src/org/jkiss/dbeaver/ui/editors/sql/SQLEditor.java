@@ -2969,7 +2969,7 @@ public class SQLEditor extends SQLEditorBase implements
             }
             if (confirmResult == IDialogConstants.YES_ID) {
                 for (int i = 0; i < tabsToClose.size(); i++) {
-                    if (tabsToClose.get(0).getData() instanceof SingleTabQueryProcessor sqp && keepFirstTab) {
+                    if (i == 0 && tabsToClose.get(0).getData() instanceof SingleTabQueryProcessor sqp && keepFirstTab) {
                         // to avoid concurrent modification exception
                         List<QueryResultsContainer> results = new ArrayList<>(sqp.getResultContainers());
                         results.stream().skip(1).forEach(QueryResultsContainer::dispose);
