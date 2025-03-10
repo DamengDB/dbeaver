@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,7 +107,8 @@ public class ConnectionPageNetworkHandler extends ConnectionWizardPage implement
         Composite buttonsGroup = UIUtils.createComposite(composite, 5);
         buttonsGroup.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
-        if (handlerDescriptor.isPinned()) {
+        // TODO: Remove
+        if (false) {
             useHandlerCheck = UIUtils.createCheckbox(buttonsGroup,
                 NLS.bind(UIConnectionMessages.dialog_tunnel_checkbox_use_handler, handlerDescriptor.getLabel()), false);
             useHandlerCheck.addSelectionListener(new SelectionAdapter() {

@@ -78,10 +78,9 @@ class ConnectionPageSettings extends ActiveWizardPage<ConnectionWizard> implemen
 
     public static final String PAGE_NAME = ConnectionPageSettings.class.getSimpleName();
 
-    // Sort network handler pages to be last, with pinned pages first among them
+    // Sort network handler pages to be last
     private static final Comparator<IDialogPage> PAGE_COMPARATOR = Comparator
-        .comparing((IDialogPage page) -> page instanceof ConnectionPageNetworkHandler)
-        .thenComparing(page -> !isPagePinned(page));
+        .comparing(ConnectionPageSettings::isHandlerPage);
 
     @NotNull
     private final ConnectionWizard wizard;
@@ -427,6 +426,14 @@ class ConnectionPageSettings extends ActiveWizardPage<ConnectionWizard> implemen
 
     private boolean closeTab(@NotNull CTabItem item) {
         if (item.getShowClose() && confirmTabClose(item)) {
+            var page = (ConnectionPageNetworkHandler) item.getData();
+            var config = getActiveDataSource().getConnectionConfiguration();
+            var handlerDescriptor = page.getHandlerDescriptor();
+            var handlerConfig = config.getHandler(handlerDescriptor.getId());
+            if (handlerConfig != null) {
+                handlerConfig.setEnabled(false);
+            }
+
             item.dispose();
             return true;
         }
@@ -462,7 +469,7 @@ class ConnectionPageSettings extends ActiveWizardPage<ConnectionWizard> implemen
     }
 
     private boolean canShowInChevron(@NotNull IDialogPage page) {
-        if (isPagePinned(page) || !(page instanceof ConnectionPageNetworkHandler)) {
+        if (!isHandlerPage(page)) {
             return false;
         }
 
@@ -473,17 +480,13 @@ class ConnectionPageSettings extends ActiveWizardPage<ConnectionWizard> implemen
         return handler == null || !handler.isEnabled();
     }
 
-    private static boolean isPagePinned(@NotNull IDialogPage page) {
-        if (page instanceof ConnectionPageNetworkHandler) {
-            return ((ConnectionPageNetworkHandler) page).getHandlerDescriptor().isPinned();
-        } else {
-            return true;
-        }
+    private static boolean isHandlerPage(@NotNull IDialogPage page) {
+        return page instanceof ConnectionPageNetworkHandler;
     }
 
     @NotNull
     private CTabItem createPageTab(@NotNull IDialogPage page, int index) {
-        final CTabItem item = new CTabItem(tabFolder, isPagePinned(page) ? SWT.NONE : SWT.CLOSE, index);
+        final CTabItem item = new CTabItem(tabFolder, isHandlerPage(page) ? SWT.CLOSE : SWT.NONE, index);
         item.setData(page);
         item.setText(CommonUtils.isEmpty(page.getTitle()) ? CoreMessages.dialog_setting_connection_general : page.getTitle());
         item.setToolTipText(page.getDescription());
