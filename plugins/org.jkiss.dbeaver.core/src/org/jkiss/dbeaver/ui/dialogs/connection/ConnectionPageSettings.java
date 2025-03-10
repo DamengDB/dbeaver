@@ -425,7 +425,10 @@ class ConnectionPageSettings extends ActiveWizardPage<ConnectionWizard> implemen
     }
 
     private boolean closeTab(@NotNull CTabItem item) {
-        if (item.getShowClose() && confirmTabClose(item)) {
+        // TODO: Don't require the page to be focused when closing it
+        //       has something to do with page not being initialized
+        //       and therefore not saving its _updated_ state
+        if (item.getShowClose() && tabFolder.getSelection() == item && confirmTabClose(item)) {
             var page = (ConnectionPageNetworkHandler) item.getData();
             var config = getActiveDataSource().getConnectionConfiguration();
             var handlerDescriptor = page.getHandlerDescriptor();
