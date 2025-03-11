@@ -60,7 +60,7 @@ public class SMAuthInfo {
 
     @Nullable
     private final String errorCode;
-    @Nullable
+    @NotNull
     private final String appSessionId;
 
     private SMAuthInfo(
@@ -77,7 +77,7 @@ public class SMAuthInfo {
         boolean mainAuth,
         boolean forceSessionsLogout,
         @Nullable String errorCode,
-        @Nullable String appSessionId
+        @NotNull String appSessionId
     ) {
         this.authStatus = authStatus;
         this.error = error;
@@ -98,13 +98,15 @@ public class SMAuthInfo {
     public static SMAuthInfo expired(
         @NotNull String authAttemptId,
         @NotNull Map<SMAuthConfigurationReference, Object> authData,
-        boolean mainAuth
+        boolean mainAuth,
+        @NotNull String appSessionId
     ) {
         return new Builder()
             .setAuthStatus(SMAuthStatus.EXPIRED)
             .setAuthAttemptId(authAttemptId)
             .setAuthData(authData)
             .setMainAuth(mainAuth)
+            .setAppSessionId(appSessionId)
             .build();
     }
 
@@ -112,7 +114,8 @@ public class SMAuthInfo {
         @NotNull String authAttemptId,
         @NotNull String error,
         boolean mainAuth,
-        @Nullable String errorCode
+        @Nullable String errorCode,
+        @NotNull String appSessionId
     ) {
         return new Builder()
             .setAuthStatus(SMAuthStatus.ERROR)
@@ -120,6 +123,7 @@ public class SMAuthInfo {
             .setError(error)
             .setMainAuth(mainAuth)
             .setErrorCode(errorCode)
+            .setAppSessionId(appSessionId)
             .build();
     }
 
@@ -150,7 +154,8 @@ public class SMAuthInfo {
         @Nullable String refreshToken,
         @NotNull SMAuthPermissions smAuthPermissions,
         @NotNull Map<SMAuthConfigurationReference, Object> authData,
-        @Nullable String authRole
+        @Nullable String authRole,
+        @NotNull String appSessionId
     ) {
         return new Builder().setAuthStatus(SMAuthStatus.SUCCESS)
             .setAuthAttemptId(authAttemptId)
@@ -160,19 +165,22 @@ public class SMAuthInfo {
             .setAuthPermissions(smAuthPermissions)
             .setAuthRole(authRole)
             .setMainAuth(true)
+            .setAppSessionId(appSessionId)
             .build();
     }
 
     public static SMAuthInfo successChildSession(
         @NotNull String authAttemptId,
         SMAuthPermissions permissions,
-        @NotNull Map<SMAuthConfigurationReference, Object> authData
+        @NotNull Map<SMAuthConfigurationReference, Object> authData,
+        @NotNull String appSessionId
     ) {
         return new Builder().setAuthStatus(SMAuthStatus.SUCCESS)
             .setAuthAttemptId(authAttemptId)
             .setAuthPermissions(permissions)
             .setAuthData(authData)
             .setMainAuth(false)
+            .setAppSessionId(appSessionId)
             .build();
     }
 
@@ -248,7 +256,7 @@ public class SMAuthInfo {
         return errorCode;
     }
 
-    @Nullable
+    @NotNull
     public String getAppSessionId() {
         return appSessionId;
     }
