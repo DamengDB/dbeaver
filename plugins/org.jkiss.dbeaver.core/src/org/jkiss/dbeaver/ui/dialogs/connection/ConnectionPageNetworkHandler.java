@@ -194,6 +194,8 @@ public class ConnectionPageNetworkHandler extends ConnectionWizardPage {
         }
 
         configurator.loadSettings(handlerConfiguration);
+        handlerComposite.layout(true, true);
+
         updatePageCompletion();
     }
 
