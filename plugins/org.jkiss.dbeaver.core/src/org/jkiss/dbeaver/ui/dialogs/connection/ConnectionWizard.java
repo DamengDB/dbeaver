@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.widgets.*;
 import org.eclipse.ui.INewWizard;
 import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
@@ -56,6 +57,7 @@ import org.jkiss.utils.ArrayUtils;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+import java.util.List;
 
 /**
  * Abstract connection wizard
@@ -233,6 +235,13 @@ public abstract class ConnectionWizard extends ActiveWizard implements IConnecti
                         throw new InterruptedException("cancel");
                     }
                 });
+                var activeShell = UIUtils.getActiveShell();
+                if (activeShell != null) {
+                    var userPassword = targetDataSource.getActualConnectionConfiguration().getUserPassword();
+                    if (userPassword != null) {
+                        updatePasswordInComposite(activeShell, userPassword);
+                    }
+                }
 
                 new ConnectionTestDialog(
                     getShell(),
@@ -240,6 +249,7 @@ public abstract class ConnectionWizard extends ActiveWizard implements IConnecti
                     op.getServerVersion(),
                     op.getClientVersion(),
                     op.getConnectTime()).open();
+
 
             } catch (InterruptedException ex) {
                 if (!"cancel".equals(ex.getMessage())) {
@@ -261,6 +271,21 @@ public abstract class ConnectionWizard extends ActiveWizard implements IConnecti
         } finally {
             if (activeDataSource != targetDataSource) {
                 targetDataSource.dispose();
+            }
+        }
+    }
+
+    private void updatePasswordInComposite(
+        Composite parent,
+        String newPassword
+    ) {
+        for (var child : parent.getChildren()) {
+            if (child instanceof Text passwordText && ((child.getStyle() & SWT.PASSWORD) != 0)) {
+                passwordText.setText(newPassword);
+                return;
+            }
+            if (child instanceof Composite innerComposite) {
+                updatePasswordInComposite(innerComposite, newPassword);
             }
         }
     }
