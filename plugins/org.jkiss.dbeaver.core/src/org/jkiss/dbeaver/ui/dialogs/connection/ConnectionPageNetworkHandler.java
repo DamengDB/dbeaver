@@ -17,49 +17,34 @@
 package org.jkiss.dbeaver.ui.dialogs.connection;
 
 import org.eclipse.jface.dialogs.ControlEnableState;
-import org.eclipse.jface.dialogs.IDialogConstants;
-import org.eclipse.jface.preference.PreferenceDialog;
-import org.eclipse.jface.util.IPropertyChangeListener;
-import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.SelectionAdapter;
-import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.custom.CLabel;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.*;
-import org.eclipse.ui.dialogs.PreferencesUtil;
+import org.eclipse.swt.widgets.Composite;
 import org.jkiss.code.NotNull;
+import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.model.DBPDataSourceContainer;
-import org.jkiss.dbeaver.model.DBPDataSourceOrigin;
-import org.jkiss.dbeaver.model.DBPDataSourceOriginExternal;
 import org.jkiss.dbeaver.model.connection.DBPConnectionConfiguration;
 import org.jkiss.dbeaver.model.net.DBWHandlerConfiguration;
 import org.jkiss.dbeaver.model.net.DBWNetworkProfile;
-import org.jkiss.dbeaver.model.secret.DBSSecretController;
 import org.jkiss.dbeaver.registry.configurator.UIPropertyConfiguratorDescriptor;
 import org.jkiss.dbeaver.registry.configurator.UIPropertyConfiguratorRegistry;
 import org.jkiss.dbeaver.registry.network.NetworkHandlerDescriptor;
-import org.jkiss.dbeaver.runtime.DBWorkbench;
-import org.jkiss.dbeaver.ui.*;
-import org.jkiss.dbeaver.ui.internal.UIConnectionMessages;
-import org.jkiss.dbeaver.ui.preferences.PrefPageProjectNetworkProfiles;
+import org.jkiss.dbeaver.ui.IDataSourceConnectionEditorSite;
+import org.jkiss.dbeaver.ui.IObjectPropertyConfigurator;
+import org.jkiss.dbeaver.ui.UIUtils;
 import org.jkiss.utils.CommonUtils;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * Network handlers edit dialog page
  */
-public class ConnectionPageNetworkHandler extends ConnectionWizardPage implements IPropertyChangeListener {
+public class ConnectionPageNetworkHandler extends ConnectionWizardPage {
 
     private static final Log log = Log.getLog(ConnectionPageNetworkHandler.class);
-
-    private static final String PROP_CONFIG_PROFILE = "configProfile";
 
     private final IDataSourceConnectionEditorSite site;
     private final NetworkHandlerDescriptor handlerDescriptor;
@@ -68,10 +53,9 @@ public class ConnectionPageNetworkHandler extends ConnectionWizardPage implement
     private ControlEnableState blockEnableState;
     private DBWHandlerConfiguration handlerConfiguration;
     private Composite handlerComposite;
-    private Combo profileCombo;
-    private Button useHandlerCheck;
-    private DBWNetworkProfile activeProfile;
-    private final List<DBWNetworkProfile> allProfiles = new ArrayList<>();;
+
+    // Shown when a handler is provided by a profile
+    private CLabel profileProvidedHint;
 
     public ConnectionPageNetworkHandler(IDataSourceConnectionEditorSite site, NetworkHandlerDescriptor descriptor) {
         super(ConnectionPageNetworkHandler.class.getSimpleName() + "." + descriptor.getId());
@@ -80,7 +64,6 @@ public class ConnectionPageNetworkHandler extends ConnectionWizardPage implement
 
         setTitle(descriptor.getCodeName());
         setDescription(descriptor.getDescription());
-
     }
 
     @Override
@@ -104,71 +87,16 @@ public class ConnectionPageNetworkHandler extends ConnectionWizardPage implement
         composite.setLayout(new GridLayout(1, false));
         composite.setLayoutData(new GridData(GridData.FILL_BOTH));
 
-        Composite buttonsGroup = UIUtils.createComposite(composite, 5);
-        buttonsGroup.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-
-        // TODO: Remove
-        if (false) {
-            useHandlerCheck = UIUtils.createCheckbox(buttonsGroup,
-                NLS.bind(UIConnectionMessages.dialog_tunnel_checkbox_use_handler, handlerDescriptor.getLabel()), false);
-            useHandlerCheck.addSelectionListener(new SelectionAdapter() {
-                @Override
-                public void widgetSelected(SelectionEvent e) {
-                    handlerConfiguration.setEnabled(useHandlerCheck.getSelection());
-                    enableHandlerContent();
-                }
-            });
-        }
-
-        UIUtils.createEmptyLabel(buttonsGroup, 1, 1).setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-
-        profileCombo = UIUtils.createLabelCombo(buttonsGroup, "Profile", SWT.READ_ONLY | SWT.DROP_DOWN);
-        GridData gd = new GridData(GridData.HORIZONTAL_ALIGN_BEGINNING);
-        gd.widthHint = 200;
-        profileCombo.setLayoutData(gd);
-        profileCombo.addSelectionListener(new SelectionAdapter() {
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                int pi = profileCombo.getSelectionIndex();
-                DBWNetworkProfile profile = pi <= 0 ? null : allProfiles.get(pi - 1);
-                setConnectionConfigProfile(profile);
-            }
-        });
-        ToolBar editToolbar = new ToolBar(buttonsGroup, SWT.HORIZONTAL);
-        ToolItem editItem = new ToolItem(editToolbar, SWT.PUSH);
-        editItem.setImage(DBeaverIcons.getImage(UIIcon.EDIT));
-        editItem.setToolTipText("Edit profiles");
-        editItem.addSelectionListener(new SelectionAdapter() {
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                PreferenceDialog preferenceDialog = PreferencesUtil.createPropertyDialogOn(
-                    getShell(),
-                    site.getProject().getEclipseProject(),
-                    PrefPageProjectNetworkProfiles.PAGE_ID,
-                    null,
-                    CommonUtils.isEmpty(profileCombo.getText()) ? null : profileCombo.getText());
-                if (preferenceDialog != null) {
-                    if (preferenceDialog.open() == IDialogConstants.OK_ID) {
-                        int pi = profileCombo.getSelectionIndex();
-                        setConnectionConfigProfile(pi <= 0 ? null : allProfiles.get(pi - 1));
-                    }
-                }
-            }
-        });
+        profileProvidedHint = (CLabel) UIUtils.createInfoLabel(composite, "AAA");
+        profileProvidedHint.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
         handlerComposite = UIUtils.createComposite(composite, 1);
         handlerComposite.setLayoutData(new GridData(GridData.FILL_BOTH));
 
         configurator.createControl(handlerComposite, handlerDescriptor, this::updatePageCompletion);
 
-        if (useHandlerCheck != null) {
-            useHandlerCheck.setSelection(handlerConfiguration.isEnabled());
-        }
-
-        enableHandlerContent();
-        updateProfileList(true);
-
         setControl(composite);
+        refreshConfiguration();
     }
 
     private void loadHandlerConfiguration(DBPDataSourceContainer dataSource) {
@@ -207,131 +135,83 @@ public class ConnectionPageNetworkHandler extends ConnectionWizardPage implement
         return handlerConfiguration == null || !handlerConfiguration.isEnabled() || configurator.isComplete();
     }
 
-    private void setConnectionConfigProfile(DBWNetworkProfile profile) {
-        activeProfile = profile;
-        DBPDataSourceContainer dataSource = site.getActiveDataSource();
-        DBPConnectionConfiguration cfg = dataSource.getConnectionConfiguration();
-        String oldProfileId = cfg.getConfigProfileName();
+    @Override
+    public void saveSettings(DBPDataSourceContainer dataSource) {
+        if (handlerConfiguration == null) {
+            return;
+        }
 
-        if (activeProfile != null) {
-            cfg.setConfigProfile(activeProfile);
-            handlerConfiguration = cfg.getHandler(handlerDescriptor.getId());
-            if (handlerConfiguration == null) {
-                handlerConfiguration = new DBWHandlerConfiguration(handlerDescriptor, dataSource);
-            }
+        DBPConnectionConfiguration configuration = dataSource.getConnectionConfiguration();
+        DBWNetworkProfile profile = getActiveProfile();
+
+        if (profile == null) {
+            configurator.saveSettings(handlerConfiguration);
+            configuration.setConfigProfile(null);
+            configuration.updateHandler(handlerConfiguration);
         } else {
-            cfg.setConfigProfile(null);
+            configuration.setConfigProfile(profile);
+            configuration.updateHandler(handlerConfiguration);
         }
-        site.firePropertyChange(this, PROP_CONFIG_PROFILE, oldProfileId, activeProfile == null ? null : activeProfile.getProfileName());
     }
 
-    private void updateProfileList(boolean updateConfiguration) {
-        DBPDataSourceContainer activeDataSource = site.getActiveDataSource();
-        DBPConnectionConfiguration cfg = activeDataSource.getConnectionConfiguration();
-        activeProfile = CommonUtils.isEmpty(cfg.getConfigProfileName()) ? null : site.getProject().getDataSourceRegistry().getNetworkProfile(
-            cfg.getConfigProfileSource(),
-            cfg.getConfigProfileName());
+    public void refreshConfiguration() {
+        DBWNetworkProfile profile = getActiveProfile();
+        DBWHandlerConfiguration profileConfiguration = profile != null ? profile.getConfiguration(handlerDescriptor) : null;
 
-        // Refresh profile list
-        profileCombo.removeAll();
-        profileCombo.add("");
-
-        allProfiles.clear();
-        DBPDataSourceOrigin dataSourceOrigin = activeDataSource.getOrigin();
-        if (dataSourceOrigin instanceof DBPDataSourceOriginExternal) {
-            allProfiles.addAll(((DBPDataSourceOriginExternal) dataSourceOrigin).getAvailableNetworkProfiles());
-        }
-        allProfiles.addAll(site.getProject().getDataSourceRegistry().getNetworkProfiles());
-        for (DBWNetworkProfile profile : allProfiles) {
-            String profileDisplayName = profile.getProfileName();
-            if (profile.isExternallyProvided()) {
-                profileDisplayName += " - " + dataSourceOrigin.getDisplayName();
+        if (profileConfiguration != null && profileConfiguration.isEnabled()) {
+            if (blockEnableState == null) {
+                blockEnableState = ControlEnableState.disable(handlerComposite);
             }
-            profileCombo.add(profileDisplayName);
-            if (CommonUtils.equalObjects(cfg.getConfigProfileName(), profile.getProfileName()) &&
-                CommonUtils.equalObjects(cfg.getConfigProfileSource(), profile.getProfileSource())) {
-                profileCombo.select(profileCombo.getItemCount() - 1);
-            }
-        }
-
-        // Update settings from profile
-        if (activeProfile != null) {
-            try {
-                DBSSecretController secretController = DBSSecretController.getProjectSecretController(
-                    activeDataSource.getProject());
-                activeProfile.resolveSecrets(secretController);
-            } catch (DBException e) {
-                DBWorkbench.getPlatformUI().showError("Secret resolve error", "Cannot save resolve profile secrets", e);
-            }
-        }
-
-        if (updateConfiguration) {
-            loadHandlerConfiguration(activeDataSource);
-        }
-
-        if (useHandlerCheck != null) {
-            useHandlerCheck.setSelection(handlerConfiguration.isEnabled());
-        }
-        configurator.loadSettings(handlerConfiguration);
-        enableHandlerContent();
-    }
-
-    protected void enableHandlerContent() {
-
-        DBWHandlerConfiguration profileConfig = activeProfile == null ? null : activeProfile.getConfiguration(handlerDescriptor);
-        boolean hasProfileConfig = profileConfig != null && profileConfig.isEnabled();
-        if (handlerConfiguration.isEnabled() && !hasProfileConfig) {
+            profileProvidedHint.setText(NLS.bind("Provided by profile ''{0}''", profile.getProfileName()));
+            UIUtils.setControlVisible(profileProvidedHint, true);
+        } else {
             if (blockEnableState != null) {
                 blockEnableState.restore();
                 blockEnableState = null;
             }
-        } else if (blockEnableState == null) {
-            blockEnableState = ControlEnableState.disable(handlerComposite);
+            UIUtils.setControlVisible(profileProvidedHint, false);
         }
-        if (useHandlerCheck != null) {
-            useHandlerCheck.setEnabled(!hasProfileConfig);
-            updatePageCompletion();
-        }
-    }
 
-    @Override
-    public void setVisible(boolean visible) {
-        super.setVisible(visible);
-        if (visible) {
-
-        }
-    }
-
-    @Override
-    public void saveSettings(DBPDataSourceContainer dataSource) {
-        if (activeProfile == null) {
-            if (handlerConfiguration != null) {
-                // Just copy handler config prom profile
-                handlerConfiguration = new DBWHandlerConfiguration(handlerConfiguration);
+        if (profile != null) {
+            // Use configuration from the profile
+            if (profileConfiguration != null && profileConfiguration.isEnabled()) {
+                handlerConfiguration = profileConfiguration;
+            } else {
+                throw new IllegalStateException("Attempt to configure a handler with an active profile set that doesn't provide it");
             }
         } else {
-            handlerConfiguration = activeProfile.getConfiguration(handlerDescriptor.getId());
-        }
+            // Use configuration from the connection
+            DBPDataSourceContainer dataSource = site.getActiveDataSource();
+            DBPConnectionConfiguration configuration = dataSource.getConnectionConfiguration();
 
-        if (handlerConfiguration != null) {
-            if (activeProfile == null) {
-                handlerConfiguration.setProperties(Collections.emptyMap());
-                configurator.saveSettings(handlerConfiguration);
+            handlerConfiguration = configuration.getHandler(handlerDescriptor.getId());
+
+            // It could not exist, let's create it
+            if (handlerConfiguration == null) {
+                handlerConfiguration = new DBWHandlerConfiguration(handlerDescriptor, dataSource);
+                configuration.updateHandler(handlerConfiguration);
             }
-            dataSource.getConnectionConfiguration().setConfigProfile(activeProfile);
-            dataSource.getConnectionConfiguration().updateHandler(handlerConfiguration);
         }
-    }
 
-    @Override
-    public void propertyChange(PropertyChangeEvent event) {
-        if (PROP_CONFIG_PROFILE.equals(event.getProperty())) {
-            updateProfileList(false);
-        }
+        configurator.loadSettings(handlerConfiguration);
+        updatePageCompletion();
     }
 
     @NotNull
     public NetworkHandlerDescriptor getHandlerDescriptor() {
         return handlerDescriptor;
+    }
+
+    @Nullable
+    private DBWNetworkProfile getActiveProfile() {
+        DBPDataSourceContainer dataSource = site.getActiveDataSource();
+        DBPConnectionConfiguration configuration = dataSource.getConnectionConfiguration();
+        if (CommonUtils.isEmpty(configuration.getConfigProfileName())) {
+            return null;
+        }
+        return dataSource.getRegistry().getNetworkProfile(
+            configuration.getConfigProfileSource(),
+            configuration.getConfigProfileName()
+        );
     }
 }

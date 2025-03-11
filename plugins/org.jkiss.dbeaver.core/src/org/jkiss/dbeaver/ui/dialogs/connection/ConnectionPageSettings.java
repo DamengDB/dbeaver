@@ -48,7 +48,6 @@ import org.jkiss.dbeaver.model.connection.DBPDriverSubstitutionDescriptor;
 import org.jkiss.dbeaver.model.exec.DBCSession;
 import org.jkiss.dbeaver.model.net.DBWHandlerConfiguration;
 import org.jkiss.dbeaver.model.net.DBWHandlerDescriptor;
-import org.jkiss.dbeaver.model.net.DBWNetworkHandler;
 import org.jkiss.dbeaver.model.net.DBWNetworkProfile;
 import org.jkiss.dbeaver.model.rcp.RCPProject;
 import org.jkiss.dbeaver.model.runtime.DBRRunnableContext;
@@ -84,6 +83,8 @@ class ConnectionPageSettings extends ActiveWizardPage<ConnectionWizard> implemen
     private static final Comparator<IDialogPage> PAGE_COMPARATOR = Comparator
         .comparing(ConnectionPageSettings::isHandlerPage);
 
+    private static final int MAX_CHEVRON_ITEMS_TO_PREVIEW = 2;
+
     @NotNull
     private final ConnectionWizard wizard;
     @NotNull
@@ -95,7 +96,10 @@ class ConnectionPageSettings extends ActiveWizardPage<ConnectionWizard> implemen
     private IDataSourceConnectionEditor originalConnectionEditor;
     private final Set<DataSourceDescriptor> activated = new HashSet<>();
     private IDialogPage[] subPages, extraPages;
+
     private CTabFolder tabFolder;
+    private ToolItem handlerItem;
+    private ToolItem profileItem;
 
     /**
      * Constructor for ConnectionPageSettings
@@ -273,9 +277,12 @@ class ConnectionPageSettings extends ActiveWizardPage<ConnectionWizard> implemen
 
                 // Create and populate top-right toolbar
                 var toolBar = new ToolBar(tabFolder, SWT.FLAT | SWT.RIGHT);
-                createHandlerItem(toolBar, allPages);
-                createProfileItem(toolBar);
+                handlerItem = createHandlerItem(toolBar, allPages);
+                profileItem = createProfileItem(toolBar);
                 tabFolder.setTopRight(toolBar, SWT.RIGHT);
+
+                updateHandlerItem(allPages);
+                updateProfileItem();
 
                 tabFolder.addCTabFolder2Listener(new CTabFolder2Adapter() {
                     @Override
@@ -288,7 +295,7 @@ class ConnectionPageSettings extends ActiveWizardPage<ConnectionWizard> implemen
 
                     //@Override
                     public void itemsCount(CTabFolderEvent event) {
-                        toolBar.setVisible(canShowChevron(allPages));
+                        updateHandlerItem(allPages);
                     }
                 });
                 tabFolder.addMouseListener(MouseListener.mouseUpAdapter(event -> {
@@ -395,7 +402,7 @@ class ConnectionPageSettings extends ActiveWizardPage<ConnectionWizard> implemen
             });
         });
 
-        var profileItem = UIUtils.createToolItem(toolBar, "Profiles ...", "Active profile", DBIcon.TYPE_DOCUMENT, null);
+        var profileItem = UIUtils.createToolItem(toolBar, "N/A", "Active profile", DBIcon.TYPE_DOCUMENT, null);
         profileItem.addDisposeListener(e -> profileManager.dispose());
         profileItem.addSelectionListener(SelectionListener.widgetSelectedAdapter(e -> {
             var bounds = profileItem.getBounds();
@@ -408,7 +415,48 @@ class ConnectionPageSettings extends ActiveWizardPage<ConnectionWizard> implemen
         return profileItem;
     }
 
+    @NotNull
+    private String computeChevronTitle(@NotNull List<IDialogPage> pages) {
+        List<String> items = pages.stream()
+            .filter(this::canShowInChevron)
+            .map(ConnectionPageNetworkHandler.class::cast)
+            .map(x -> x.getHandlerDescriptor().getCodeName())
+            .toList();
+        StringJoiner joiner = new StringJoiner(", ");
+        for (int i = 0; i < Math.min(items.size(), MAX_CHEVRON_ITEMS_TO_PREVIEW); i++) {
+            joiner.add(items.get(i));
+        }
+        if (items.size() > MAX_CHEVRON_ITEMS_TO_PREVIEW) {
+            joiner.add("...");
+        }
+        return joiner.toString();
+    }
+
+    private void updateHandlerItem(@NotNull List<IDialogPage> allPages) {
+        if (canShowChevron(allPages)) {
+            handlerItem.setText(computeChevronTitle(allPages));
+            handlerItem.setImage(DBeaverIcons.getImage(UIIcon.ADD));
+            handlerItem.setEnabled(true);
+        } else {
+            handlerItem.setText("");
+            handlerItem.setImage(null);
+            handlerItem.setEnabled(false);
+        }
+    }
+
+    private void updateProfileItem() {
+        String profileName = getActiveDataSource().getConnectionConfiguration().getConfigProfileName();
+        if (CommonUtils.isNotEmpty(profileName)) {
+            profileItem.setText(NLS.bind("Profile ''{0}''", profileName));
+        } else {
+            profileItem.setText("No profile");
+        }
+    }
+
     private void selectProfile(@Nullable DBWNetworkProfile profile) {
+        getActiveDataSource().getConnectionConfiguration().setConfigProfile(profile);
+        updateProfileItem();
+
         if (profile != null) {
             Set<DBWHandlerDescriptor> handlersToRemove = new HashSet<>();
             Set<DBWHandlerDescriptor> handlersToAdd = new HashSet<>();
@@ -434,6 +482,16 @@ class ConnectionPageSettings extends ActiveWizardPage<ConnectionWizard> implemen
             handlersToAdd.forEach(this::enableHandler);
         } else {
             log.debug("TODO selectProfile <none>");
+        }
+
+        for (CTabItem item : tabFolder.getItems()) {
+            if (item.getData() instanceof ConnectionPageNetworkHandler page) {
+                // TODO: Stop activating pages
+                tabFolder.setSelection(item);
+                activateCurrentItem();
+
+                page.refreshConfiguration();
+            }
         }
     }
 
@@ -530,6 +588,7 @@ class ConnectionPageSettings extends ActiveWizardPage<ConnectionWizard> implemen
         if (item.getShowClose() && tabFolder.getSelection() == item && confirmTabClose(item)) {
             var page = (ConnectionPageNetworkHandler) item.getData();
             var descriptor = page.getHandlerDescriptor();
+            selectProfile(null);
             disableHandler(descriptor);
             return true;
         }
@@ -908,6 +967,7 @@ class ConnectionPageSettings extends ActiveWizardPage<ConnectionWizard> implemen
 
         @Override
         public void run() {
+            selectProfile(null);
             enableHandler(descriptor);
         }
     }
