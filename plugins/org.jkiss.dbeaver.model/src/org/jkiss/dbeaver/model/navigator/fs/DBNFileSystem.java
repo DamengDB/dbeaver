@@ -154,6 +154,9 @@ public class DBNFileSystem extends DBNNode implements DBNLazyNode
         @NotNull DBRProgressMonitor monitor,
         @Nullable DBNFileSystemRoot[] mergeWith
     ) throws DBException {
+        if (fileSystem == null) { // when app stops fileSystem is null
+            return new DBNFileSystemRoot[]{};
+        }
         List<DBNFileSystemRoot> result = new ArrayList<>();
         if (mergeWith != null) {
             fileSystem.refreshRoots(monitor);
