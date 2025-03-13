@@ -96,25 +96,9 @@ public final class SQLSchemaManager {
                     txn.rollback();
                     if (currentSchemaVersion < 0) {
                         createNewSchema(monitor, dbCon);
-
-                        // Update schema version
-                        versionManager.updateCurrentSchemaVersion(
-                            monitor,
-                            dbCon,
-                            databaseConfig.getSchema(),
-                            versionManager.getLatestSchemaVersion()
-                        );
                     } else if (schemaVersionObsolete > 0 && currentSchemaVersion < schemaVersionObsolete) {
                         dropSchema(monitor, dbCon);
                         createNewSchema(monitor, dbCon);
-
-                        // Update schema version
-                        versionManager.updateCurrentSchemaVersion(
-                            monitor,
-                            dbCon,
-                            databaseConfig.getSchema(),
-                            versionManager.getLatestSchemaVersion()
-                        );
                     } else if (schemaVersionActual > currentSchemaVersion) {
                         if (databaseConfig.isBackupEnabled()) {
                             JDBCDatabaseBackupDescriptor descriptor =
@@ -178,6 +162,13 @@ public final class SQLSchemaManager {
         try (Reader ddlStream = scriptSource.openSchemaCreateScript(monitor)) {
             executeScript(monitor, connection, ddlStream, false);
         }
+        // Update schema version
+        versionManager.updateCurrentSchemaVersion(
+            monitor,
+            connection,
+            databaseConfig.getSchema(),
+            versionManager.getLatestSchemaVersion()
+        );
         versionManager.fillInitialSchemaData(monitor, connection);
     }
 
