@@ -183,7 +183,7 @@ public class ConnectionPageNetworkHandler extends ConnectionWizardPage {
             } else {
                 throw new IllegalStateException("Attempt to configure a handler with an active profile set that doesn't provide it");
             }
-        } else {
+        } else if (handlerConfiguration == null) {
             // Use configuration from the connection
             DBPDataSourceContainer dataSource = site.getActiveDataSource();
             DBPConnectionConfiguration configuration = dataSource.getConnectionConfiguration();

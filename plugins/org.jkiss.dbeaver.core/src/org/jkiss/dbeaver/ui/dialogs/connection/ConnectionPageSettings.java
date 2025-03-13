@@ -71,6 +71,7 @@ import org.jkiss.utils.CommonUtils;
 
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Settings connection page. Hosts particular drivers' connection pages
@@ -467,14 +468,11 @@ class ConnectionPageSettings extends ActiveWizardPage<ConnectionWizard> implemen
         }
     }
 
-    private void selectProfile(@Nullable DBWNetworkProfile profile) {
-        getActiveDataSource().getConnectionConfiguration().setConfigProfile(profile);
-        updateProfileItem();
+    private boolean selectProfile(@Nullable DBWNetworkProfile profile) {
+        Set<DBWHandlerDescriptor> handlersToRemove = new HashSet<>();
+        Set<DBWHandlerDescriptor> handlersToAdd = new HashSet<>();
 
         if (profile != null) {
-            Set<DBWHandlerDescriptor> handlersToRemove = new HashSet<>();
-            Set<DBWHandlerDescriptor> handlersToAdd = new HashSet<>();
-
             for (DBWHandlerConfiguration configuration : profile.getConfigurations()) {
                 handlersToAdd.add(configuration.getHandlerDescriptor());
             }
@@ -490,13 +488,23 @@ class ConnectionPageSettings extends ActiveWizardPage<ConnectionWizard> implemen
                 }
             }
 
-            // TODO: All pages must manually be opened to correctly initialize
-
-            handlersToRemove.forEach(this::disableHandler);
-            handlersToAdd.forEach(this::enableHandler);
-        } else {
-            log.debug("TODO selectProfile <none>");
+            if (!handlersToRemove.isEmpty()) {
+                String message = NLS.bind(
+                    "Changing the profile to ''{0}'' will remove {1}.\n\nDo you want to continue?",
+                    profile.getProfileName(),
+                    handlersToRemove.stream().map(DBWHandlerDescriptor::getCodeName).collect(Collectors.joining(", "))
+                );
+                if (!UIUtils.confirmAction(getShell(), "Change profile", message)) {
+                    return false;
+                }
+            }
         }
+
+        getActiveDataSource().getConnectionConfiguration().setConfigProfile(profile);
+        updateProfileItem();
+
+        handlersToRemove.forEach(this::disableHandler);
+        handlersToAdd.forEach(this::enableHandler);
 
         for (CTabItem item : tabFolder.getItems()) {
             if (item.getData() instanceof ConnectionPageNetworkHandler page) {
@@ -507,6 +515,8 @@ class ConnectionPageSettings extends ActiveWizardPage<ConnectionWizard> implemen
                 page.refreshConfiguration();
             }
         }
+
+        return true;
     }
 
     private void enableHandler(@NotNull DBWHandlerDescriptor descriptor) {
@@ -585,9 +595,10 @@ class ConnectionPageSettings extends ActiveWizardPage<ConnectionWizard> implemen
         if (item.getShowClose() && tabFolder.getSelection() == item && confirmTabClose(item)) {
             var page = (ConnectionPageNetworkHandler) item.getData();
             var descriptor = page.getHandlerDescriptor();
-            selectProfile(null);
-            disableHandler(descriptor);
-            return true;
+            if (selectProfile(null)) {
+                disableHandler(descriptor);
+                return true;
+            }
         }
         return false;
     }
@@ -964,8 +975,9 @@ class ConnectionPageSettings extends ActiveWizardPage<ConnectionWizard> implemen
 
         @Override
         public void run() {
-            selectProfile(null);
-            enableHandler(descriptor);
+            if (selectProfile(null)) {
+                enableHandler(descriptor);
+            }
         }
     }
 
@@ -992,7 +1004,9 @@ class ConnectionPageSettings extends ActiveWizardPage<ConnectionWizard> implemen
 
         @Override
         public void run() {
-            selectProfile(profile);
+            if (isChecked()) {
+                selectProfile(profile);
+            }
         }
 
         @NotNull
