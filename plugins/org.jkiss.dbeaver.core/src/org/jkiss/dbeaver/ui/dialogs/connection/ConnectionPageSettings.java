@@ -22,7 +22,6 @@ import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.IDialogPage;
-import org.eclipse.jface.preference.PreferenceDialog;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.wizard.IWizardPage;
@@ -33,8 +32,10 @@ import org.eclipse.swt.events.*;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.widgets.*;
-import org.eclipse.ui.dialogs.PreferencesUtil;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.ToolBar;
+import org.eclipse.swt.widgets.ToolItem;
 import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBeaverPreferences;
@@ -68,7 +69,7 @@ import org.jkiss.dbeaver.utils.GeneralUtils;
 import org.jkiss.utils.ArrayUtils;
 import org.jkiss.utils.CommonUtils;
 
-import java.util.List;
+import java.lang.reflect.Method;
 import java.util.*;
 
 /**
@@ -320,7 +321,7 @@ class ConnectionPageSettings extends ActiveWizardPage<ConnectionWizard> implemen
                 setControl(tabFolder);
 
                 for (IDialogPage page : allPages) {
-                    if (ArrayUtils.contains(extraPages, page) || canShowInChevron(page)) {
+                    if (ArrayUtils.contains(extraPages, page) || canAddHandler(page)) {
                         // Ignore extra pages
                         continue;
                     }
@@ -351,7 +352,7 @@ class ConnectionPageSettings extends ActiveWizardPage<ConnectionWizard> implemen
         handlerManager.setRemoveAllWhenShown(true);
         handlerManager.addMenuListener(manager -> {
             for (IDialogPage page : pages) {
-                if (canShowInChevron(page) && page instanceof ConnectionPageNetworkHandler handlerPage) {
+                if (canAddHandler(page) && page instanceof ConnectionPageNetworkHandler handlerPage) {
                     manager.add(new AddHandlerAction(handlerPage.getHandlerDescriptor()));
                 }
             }
@@ -418,7 +419,7 @@ class ConnectionPageSettings extends ActiveWizardPage<ConnectionWizard> implemen
     @NotNull
     private String computeChevronTitle(@NotNull List<IDialogPage> pages) {
         List<String> items = pages.stream()
-            .filter(this::canShowInChevron)
+            .filter(this::canAddHandler)
             .map(ConnectionPageNetworkHandler.class::cast)
             .map(x -> x.getHandlerDescriptor().getCodeName())
             .toList();
@@ -433,7 +434,7 @@ class ConnectionPageSettings extends ActiveWizardPage<ConnectionWizard> implemen
     }
 
     private void updateHandlerItem(@NotNull List<IDialogPage> allPages) {
-        if (canShowChevron(allPages)) {
+        if (hasHandlersToAdd(allPages)) {
             handlerItem.setText(computeChevronTitle(allPages));
             handlerItem.setImage(DBeaverIcons.getImage(UIIcon.ADD));
             handlerItem.setEnabled(true);
@@ -452,6 +453,17 @@ class ConnectionPageSettings extends ActiveWizardPage<ConnectionWizard> implemen
         } else {
             profileItem.setText("No profile");
             profileItem.setToolTipText("No active profile is set");
+        }
+        updateFolderToolbar();
+    }
+
+    private void updateFolderToolbar() {
+        try {
+            Method method = CTabFolder.class.getDeclaredMethod("updateFolder", int.class);
+            method.setAccessible(true);
+            method.invoke(tabFolder, 8 /* UPDATE_TAB_HEIGHT | REDRAW */);
+        } catch (ReflectiveOperationException e) {
+            log.error("Can't update folder toolbar", e);
         }
     }
 
@@ -598,9 +610,9 @@ class ConnectionPageSettings extends ActiveWizardPage<ConnectionWizard> implemen
         return false;
     }
 
-    private boolean canShowChevron(@NotNull List<IDialogPage> pages) {
+    private boolean hasHandlersToAdd(@NotNull List<IDialogPage> pages) {
         for (IDialogPage page : pages) {
-            if (canShowInChevron(page)) {
+            if (canAddHandler(page)) {
                 return true;
             }
         }
@@ -608,7 +620,7 @@ class ConnectionPageSettings extends ActiveWizardPage<ConnectionWizard> implemen
         return false;
     }
 
-    private boolean canShowInChevron(@NotNull IDialogPage page) {
+    private boolean canAddHandler(@NotNull IDialogPage page) {
         if (!isHandlerPage(page)) {
             return false;
         }
