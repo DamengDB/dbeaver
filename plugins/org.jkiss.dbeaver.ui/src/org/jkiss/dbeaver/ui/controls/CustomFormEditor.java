@@ -40,9 +40,13 @@ import org.jkiss.dbeaver.model.preferences.DBPPropertySource;
 import org.jkiss.dbeaver.model.struct.DBSObject;
 import org.jkiss.dbeaver.runtime.DBWorkbench;
 import org.jkiss.dbeaver.runtime.properties.ObjectPropertyDescriptor;
+import org.jkiss.dbeaver.ui.DBeaverIcons;
+import org.jkiss.dbeaver.ui.UIIcon;
 import org.jkiss.dbeaver.ui.UIUtils;
 import org.jkiss.dbeaver.ui.contentassist.ContentAssistUtils;
 import org.jkiss.dbeaver.ui.contentassist.StringContentProposalProvider;
+import org.jkiss.dbeaver.ui.dialogs.EditTextDialog;
+import org.jkiss.dbeaver.ui.internal.UIMessages;
 import org.jkiss.dbeaver.utils.GeneralUtils;
 import org.jkiss.utils.BeanUtils;
 import org.jkiss.utils.CommonUtils;
@@ -301,17 +305,51 @@ public class CustomFormEditor {
             link.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
             return link;
         } else if (isTextPropertyType(propType)) {
-            if (property instanceof ObjectPropertyDescriptor && ((ObjectPropertyDescriptor) property).getLength() == PropertyLength.MULTILINE) {
+            if (property instanceof ObjectPropertyDescriptor && property.getLength() == PropertyLength.MULTILINE) {
                 Label label = UIUtils.createControlLabel(parent, propertyDisplayName);
                 label.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_BEGINNING));
-                Text editor = new Text(parent, SWT.BORDER | SWT.MULTI | SWT.V_SCROLL | SWT.WRAP | (readOnly ? SWT.READ_ONLY : SWT.NONE));
-
+                Composite composite = new Composite(parent, SWT.BORDER);
+                Text editor = new Text(composite, SWT.MULTI | SWT.WRAP | (readOnly ? SWT.READ_ONLY : SWT.NONE));
                 editor.setText(objectValueToString(value));
-                GridData gd = new GridData(GridData.FILL_HORIZONTAL);
-                // Make multiline editor at least two lines height
-                gd.heightHint = (UIUtils.getTextHeight(editor) + editor.getBorderWidth()) * 2;
-                editor.setLayoutData(gd);
-                return editor;
+                if (readOnly) {
+                    editor.setBackground(editor.getDisplay().getSystemColor(SWT.COLOR_WIDGET_BACKGROUND));
+                }
+                composite.setBackground(editor.getDisplay().getSystemColor(SWT.COLOR_LIST_BACKGROUND));
+
+                GridLayout layout = new GridLayout(readOnly ? 1 : 2, false);
+                layout.marginHeight = 0;
+                layout.marginWidth = 1;
+                composite.setLayout(layout);
+
+                int textHeight = UIUtils.getTextHeight(editor) * 3;
+                GridData gdEditor = new GridData(SWT.FILL, SWT.TOP, true, false);
+                gdEditor.heightHint = textHeight;
+                editor.setLayoutData(gdEditor);
+                if (!readOnly) {
+                    Button advancedButton = new Button(composite, SWT.FLAT | SWT.PUSH);
+                    advancedButton.setImage(DBeaverIcons.getImage(UIIcon.DOTS_BUTTON));
+                    advancedButton.setBackground(composite.getBackground());
+                    GridData gdButton = new GridData(SWT.END, SWT.FILL, false, true);
+                    gdButton.verticalIndent = 2;
+                    advancedButton.setLayoutData(gdButton);
+                    advancedButton.addSelectionListener(new SelectionAdapter() {
+                        @Override
+                        public void widgetSelected(SelectionEvent e) {
+                            String newValue = EditTextDialog.editText(
+                                editor.getShell(),
+                                UIMessages.edit_text_dialog_title_edit_value,
+                                editor.getText()
+                            );
+                            if (newValue != null) {
+                                editor.setText(newValue);
+                            }
+                        }
+                    });
+                }
+                GridData gdComposite = new GridData(SWT.FILL, SWT.TOP, true, false);
+                gdComposite.heightHint = textHeight + 6;
+                composite.setLayoutData(gdComposite);
+                return composite;
             } else {
                 Text text = UIUtils.createLabelText(
                     parent,
