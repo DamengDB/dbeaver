@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.net.URL;
+import java.util.Enumeration;
 
 /**
  * Script source which reads scripts from class loader
@@ -59,10 +61,21 @@ public class ClassLoaderScriptSource implements SQLSchemaScriptSource {
         int versionNumber,
         @Nullable String specificPrefix
     ) throws IOException, DBException {
-        InputStream resource = classLoader.getResourceAsStream(updateScriptPrefix + versionNumber + "_" + specificPrefix + ".sql");
+        String migrationFileNameWithSpecificPrefix = updateScriptPrefix + versionNumber + "_" + specificPrefix + ".sql";
+        verifySingleResource(migrationFileNameWithSpecificPrefix);
+        String migrationFileName = updateScriptPrefix + versionNumber + ".sql";
+        verifySingleResource(migrationFileName);
+        InputStream resource = classLoader.getResourceAsStream(migrationFileNameWithSpecificPrefix);
         if (resource == null) {
-            resource = classLoader.getResourceAsStream(updateScriptPrefix + versionNumber + ".sql");
+            resource = classLoader.getResourceAsStream(migrationFileName);
         }
         return resource == null ? null : new InputStreamReader(resource);
+    }
+
+    private void verifySingleResource(@NotNull String fileName) throws DBException, IOException {
+        Enumeration<URL> resources = classLoader.getResources(fileName);
+        if (resources.hasMoreElements()) {
+            throw new DBException("Multiple migration files with name: " + fileName + " detected. Expected only one.");
+        }
     }
 }

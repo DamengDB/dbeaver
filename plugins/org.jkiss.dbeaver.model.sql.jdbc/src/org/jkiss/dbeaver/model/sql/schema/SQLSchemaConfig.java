@@ -23,6 +23,7 @@ public record SQLSchemaConfig(
     @NotNull String createScriptPath,
     @NotNull String updateScriptPrefix,
     int schemaVersionActual,
-    int schemaVersionObsolete
+    int schemaVersionObsolete,
+    @NotNull SQLSchemaVersionManager versionManager
 ) {
 }
