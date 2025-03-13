@@ -31,27 +31,27 @@ import org.locationtech.jts.geom.*;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Locale;
-import java.util.Set;
 import java.util.stream.Stream;
 
-// https://clickhouse.com/docs/sql-reference/data-types/geo
 public class ClickhouseGeometryValueHandler extends JDBCAbstractValueHandler {
     public static final ClickhouseGeometryValueHandler INSTANCE = new ClickhouseGeometryValueHandler();
 
-    private static final Set<String> supportedTypes = Set.of(
-        "point",
-        "ring",
-        "linestring",
-        "multilinestring",
-        "polygon",
-        "multipolygon"
-    );
+    // https://clickhouse.com/docs/sql-reference/data-types/geo
+    private static final String TYPE_POINT = "point";
+    private static final String TYPE_RING = "ring";
+    private static final String TYPE_LINESTRING = "linestring";
+    private static final String TYPE_MULTILINESTRING = "multilinestring";
+    private static final String TYPE_POLYGON = "polygon";
+    private static final String TYPE_MULTIPOLYGON = "multipolygon";
 
     private ClickhouseGeometryValueHandler() {
     }
 
     public static boolean isGeometryType(@NotNull String typeName) {
-        return supportedTypes.contains(typeName.toLowerCase(Locale.ROOT));
+        return switch (typeName.toLowerCase(Locale.ROOT)) {
+            case TYPE_POINT, TYPE_RING, TYPE_LINESTRING, TYPE_MULTILINESTRING, TYPE_POLYGON, TYPE_MULTIPOLYGON -> true;
+            default -> false;
+        };
     }
 
     @Nullable
@@ -67,13 +67,13 @@ public class ClickhouseGeometryValueHandler extends JDBCAbstractValueHandler {
             return null;
         }
         var factory = new GeometryFactory(new PrecisionModel());
-        var geometry = switch (type.getTypeName()) {
-            case "Point" -> createPoint(factory, (double[]) object);
-            case "Ring" -> createRing(factory, (double[][]) object);
-            case "LineString" -> createLineString(factory, (double[][]) object);
-            case "MultiLineString" -> createMultiLineString(factory, (double[][][]) object);
-            case "Polygon" -> createPolygon(factory, (double[][][]) object);
-            case "MultiPolygon" -> createMultiPolygon(factory, (double[][][][]) object);
+        var geometry = switch (type.getTypeName().toLowerCase(Locale.ROOT)) {
+            case TYPE_POINT -> createPoint(factory, (double[]) object);
+            case TYPE_RING -> createRing(factory, (double[][]) object);
+            case TYPE_LINESTRING -> createLineString(factory, (double[][]) object);
+            case TYPE_MULTILINESTRING -> createMultiLineString(factory, (double[][][]) object);
+            case TYPE_POLYGON -> createPolygon(factory, (double[][][]) object);
+            case TYPE_MULTIPOLYGON -> createMultiPolygon(factory, (double[][][][]) object);
             default -> throw new DBCException("Unexpected geo type: " + type.getTypeName(), null, session.getExecutionContext());
         };
         return new DBGeometry(geometry);
