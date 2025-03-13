@@ -37,10 +37,8 @@ import org.jkiss.dbeaver.utils.VersionUtils;
 import org.jkiss.utils.CommonUtils;
 import org.jkiss.utils.IOUtils;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -51,7 +49,6 @@ import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.zip.CRC32;
 
 /**
  * DriverLoaderDescriptor
@@ -643,7 +640,7 @@ public abstract class DriverLoaderDescriptor implements DBPDriverLoader {
                             DriverUtils.getDistributedLibraryPath(fileInfo.getFile())
                         );
                         Files.write(localDriverFile, fileData, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE);
-                        fileInfo.setFileCRC(DriverLoaderDescriptor.calculateFileCRC(localDriverFile));
+                        fileInfo.setFileCRC(DriverUtils.calculateFileCRC(localDriverFile));
                         localFilePaths.add(localDriverFile);
                     } catch (Exception e) {
                         log.error("Error downloading driver file '" + fileInfo.getFile() + "'", e);
@@ -660,36 +657,7 @@ public abstract class DriverLoaderDescriptor implements DBPDriverLoader {
 
     private static boolean crcNotMatch(@NotNull DriverFileInfo depFile, @NotNull Path localDriverFile) {
         return !Files.exists(localDriverFile) || depFile.getFileCRC() == 0 ||
-            depFile.getFileCRC() != calculateFileCRC(localDriverFile);
-    }
-
-    public static long calculateFileCRC(Path localDriverFile) {
-        try (InputStream is = Files.newInputStream(localDriverFile)) {
-            return calculateCRC(is);
-        } catch (IOException e) {
-            log.error("Error reading file '" + localDriverFile + "', CRC calculation failed", e);
-            return 0;
-        }
-    }
-
-    public static long calculateBytesCRC(byte[] bytes) {
-        try (InputStream is = new ByteArrayInputStream(bytes)) {
-            return calculateCRC(is);
-        } catch (IOException e) {
-            log.error("CRC calculation failed from bytes", e);
-            return 0;
-        }
-    }
-
-    private static long calculateCRC(InputStream is) throws IOException {
-        CRC32 crc = new CRC32();
-
-        byte[] buffer = new byte[65536];
-        int bytesRead;
-        while ((bytesRead = is.read(buffer)) != -1) {
-            crc.update(buffer, 0, bytesRead);
-        }
-        return crc.getValue();
+            depFile.getFileCRC() != DriverUtils.calculateFileCRC(localDriverFile);
     }
 
     List<DriverFileInfo> getCachedFiles(DBPDriverLibrary library) {
@@ -869,7 +837,7 @@ public abstract class DriverLoaderDescriptor implements DBPDriverLoader {
         Path relPath = targetFileLocation.relativize(trgLocalFile);
         DriverFileInfo info = new DriverFileInfo(trgLocalFile.getFileName().toString(), null, library.getType(),
             relPath, trgLocalFile.toString());
-        info.fileCRC = calculateFileCRC(srcLocalFile);
+        info.fileCRC = DriverUtils.calculateFileCRC(srcLocalFile);
         return info;
     }
 

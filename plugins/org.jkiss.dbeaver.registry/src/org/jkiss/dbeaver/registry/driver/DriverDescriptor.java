@@ -991,8 +991,8 @@ public class DriverDescriptor extends AbstractDescriptor implements DBPDriver {
         resolvedFiles.put(library, new ArrayList<>());
     }
 
-    public void addLibraryFile(DBPDriverLibrary library, DriverFileInfo fileInfo) {
-        List<DriverFileInfo> files = resolvedFiles.computeIfAbsent(library, k -> new ArrayList<>());
+    public void addLibraryFile(DBPDriverLibrary library, DriverLoaderDescriptor.DriverFileInfo fileInfo) {
+        List<DriverLoaderDescriptor.DriverFileInfo> files = resolvedFiles.computeIfAbsent(library, k -> new ArrayList<>());
         files.add(fileInfo);
     }
 
