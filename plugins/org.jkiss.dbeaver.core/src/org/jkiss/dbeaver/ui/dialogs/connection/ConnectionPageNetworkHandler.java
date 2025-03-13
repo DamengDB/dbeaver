@@ -19,10 +19,10 @@ package org.jkiss.dbeaver.ui.dialogs.connection;
 import org.eclipse.jface.dialogs.ControlEnableState;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.custom.CLabel;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Link;
 import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
@@ -37,6 +37,7 @@ import org.jkiss.dbeaver.registry.network.NetworkHandlerDescriptor;
 import org.jkiss.dbeaver.ui.IDataSourceConnectionEditorSite;
 import org.jkiss.dbeaver.ui.IObjectPropertyConfigurator;
 import org.jkiss.dbeaver.ui.UIUtils;
+import org.jkiss.dbeaver.ui.preferences.PrefPageProjectNetworkProfiles;
 import org.jkiss.utils.CommonUtils;
 
 /**
@@ -55,7 +56,7 @@ public class ConnectionPageNetworkHandler extends ConnectionWizardPage {
     private Composite handlerComposite;
 
     // Shown when a handler is provided by a profile
-    private CLabel profileProvidedHint;
+    private Link profileProvidedHint;
 
     public ConnectionPageNetworkHandler(IDataSourceConnectionEditorSite site, NetworkHandlerDescriptor descriptor) {
         super(ConnectionPageNetworkHandler.class.getSimpleName() + "." + descriptor.getId());
@@ -87,8 +88,11 @@ public class ConnectionPageNetworkHandler extends ConnectionWizardPage {
         composite.setLayout(new GridLayout(1, false));
         composite.setLayoutData(new GridData(GridData.FILL_BOTH));
 
-        profileProvidedHint = (CLabel) UIUtils.createInfoLabel(composite, "AAA");
-        profileProvidedHint.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+        profileProvidedHint = UIUtils.createInfoLink(
+            composite,
+            "N/A",
+            () -> PrefPageProjectNetworkProfiles.open(getShell(), site.getProject(), getActiveProfile())
+        );
 
         handlerComposite = UIUtils.createComposite(composite, 1);
         handlerComposite.setLayoutData(new GridData(GridData.FILL_BOTH));
@@ -162,14 +166,14 @@ public class ConnectionPageNetworkHandler extends ConnectionWizardPage {
             if (blockEnableState == null) {
                 blockEnableState = ControlEnableState.disable(handlerComposite);
             }
-            profileProvidedHint.setText(NLS.bind("Provided by profile ''{0}''", profile.getProfileName()));
-            UIUtils.setControlVisible(profileProvidedHint, true);
+            profileProvidedHint.setText(NLS.bind("Using configuration from profile ''<a href=\"#\">{0}</a>''", profile.getProfileName()));
+            UIUtils.setControlVisible(profileProvidedHint.getParent(), true);
         } else {
             if (blockEnableState != null) {
                 blockEnableState.restore();
                 blockEnableState = null;
             }
-            UIUtils.setControlVisible(profileProvidedHint, false);
+            UIUtils.setControlVisible(profileProvidedHint.getParent(), false);
         }
 
         if (profile != null) {

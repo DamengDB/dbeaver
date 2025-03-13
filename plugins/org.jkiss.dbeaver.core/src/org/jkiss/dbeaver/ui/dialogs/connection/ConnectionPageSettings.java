@@ -397,7 +397,7 @@ class ConnectionPageSettings extends ActiveWizardPage<ConnectionWizard> implemen
             manager.add(new Action("Edit profiles...", DBeaverIcons.getImageDescriptor(UIIcon.RENAME)) {
                 @Override
                 public void run() {
-                    editProfile(null);
+                    PrefPageProjectNetworkProfiles.open(getShell(), getProject(), null);
                 }
             });
         });
@@ -448,8 +448,10 @@ class ConnectionPageSettings extends ActiveWizardPage<ConnectionWizard> implemen
         String profileName = getActiveDataSource().getConnectionConfiguration().getConfigProfileName();
         if (CommonUtils.isNotEmpty(profileName)) {
             profileItem.setText(NLS.bind("Profile ''{0}''", profileName));
+            profileItem.setToolTipText(NLS.bind("Active profile is ''{0}''", profileName));
         } else {
             profileItem.setText("No profile");
+            profileItem.setToolTipText("No active profile is set");
         }
     }
 
@@ -562,23 +564,6 @@ class ConnectionPageSettings extends ActiveWizardPage<ConnectionWizard> implemen
             }
         }
         return null;
-    }
-
-    private void editProfile(@Nullable DBWNetworkProfile profile) {
-        PreferenceDialog dialog = PreferencesUtil.createPropertyDialogOn(
-            getShell(),
-            getProject().getEclipseProject(),
-            PrefPageProjectNetworkProfiles.PAGE_ID,
-            null,
-            profile != null ? profile.getProfileName() : null
-        );
-        if (dialog == null) {
-            log.error("Can't open network profiles preferences");
-            return;
-        }
-        if (dialog.open() == IDialogConstants.OK_ID) {
-            // TODO: Update tabs to reflect possible profile changes
-        }
     }
 
     private boolean closeTab(@NotNull CTabItem item) {
