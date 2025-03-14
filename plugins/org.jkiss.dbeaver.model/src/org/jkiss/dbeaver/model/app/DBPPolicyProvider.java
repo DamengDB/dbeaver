@@ -22,7 +22,7 @@ import org.jkiss.code.Nullable;
 /**
  * Provides policy data
  */
-public interface DBPPolicyDataProvider {
+public interface DBPPolicyProvider {
     /**
      * Return boolean value of policy data property
      *
