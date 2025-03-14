@@ -34,7 +34,6 @@ import org.eclipse.ui.handlers.HandlerUtil;
 import org.eclipse.ui.menus.UIElement;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.model.data.DBDDisplayFormat;
-import org.jkiss.dbeaver.registry.BasePolicyDataProvider;
 import org.jkiss.dbeaver.ui.ActionUtils;
 import org.jkiss.dbeaver.ui.IActionConstants;
 import org.jkiss.dbeaver.ui.UIUtils;
@@ -59,16 +58,10 @@ public class ResultSetHandlerCopySpecial extends ResultSetHandlerMain implements
     public static final String CMD_COPY_SPECIAL_LAST = IActionConstants.CMD_COPY_SPECIAL_LAST;
     private static ResultSetCopySettings copySettingsLast = null;
 
+
     @Override
     public Object execute(ExecutionEvent event) throws ExecutionException {
-        if (BasePolicyDataProvider.getInstance().isPolicyEnabled(BasePolicyDataProvider.POLICY_DATA_COPY)) {
-            UIUtils.showMessageBox(HandlerUtil.getActiveShell(event),
-                ResultSetMessages.dialog_policy_data_copy_title,
-                ResultSetMessages.dialog_policy_data_copy_msg,
-                SWT.ICON_WARNING
-            );
-            return null;
-        }
+
         IResultSetController resultSet = getActiveResultSet(HandlerUtil.getActivePart(event));
         if (resultSet == null) {
             return null;

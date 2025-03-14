@@ -21,7 +21,6 @@ import com.sun.jna.platform.win32.WinReg;
 import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.Log;
-import org.jkiss.dbeaver.model.app.DBPPolicyDataProvider;
 import org.jkiss.dbeaver.utils.RuntimeUtils;
 import org.jkiss.utils.CommonUtils;
 
@@ -30,37 +29,32 @@ import org.jkiss.utils.CommonUtils;
  * The general logic catch policy value in .ini file as system property next in
  * windows registry under HKEY_CURRENT_USER and HKEY_LOCAL_MACHINE nodes.
  */
-public class BasePolicyDataProvider implements DBPPolicyDataProvider {
+public class BasePolicyDataProvider {
     private static final Log log = Log.getLog(BasePolicyDataProvider.class);
 
     private static final String DBEAVER_REGISTRY_POLICY_NODE = "Software\\DBeaver Corp\\DBeaver\\policy"; //$NON-NLS-1$
-
-    public static final String POLICY_DATA_EXPORT = "policy.data.export.disabled"; //$NON-NLS-1$
-    public static final String POLICY_DATA_COPY = "policy.data.copy.disabled"; //$NON-NLS-1$
-
-    private static BasePolicyDataProvider INSTANCE = new BasePolicyDataProvider();
+    private static final BasePolicyDataProvider INSTANCE = new BasePolicyDataProvider();
 
     @NotNull
     public static BasePolicyDataProvider getInstance() {
         return INSTANCE;
     }
 
-    protected BasePolicyDataProvider() {
+    private BasePolicyDataProvider() {
         // private constructor
     }
 
-    public static void setInstance(BasePolicyDataProvider instance) {
-        BasePolicyDataProvider.INSTANCE = instance;
-    }
-
-
-    @Override
+    /**
+     * Return boolean value of policy data property
+     *
+     * @param propertyName - property name
+     * @return - boolean value
+     */
     public boolean isPolicyEnabled(@NotNull String propertyName) {
         return convertToBooleanValue(getPolicyProperty(propertyName));
     }
 
     @Nullable
-    @Override
     public Object getPolicyValue(@NotNull String propertyName) {
         return getPolicyProperty(propertyName);
     }
@@ -81,8 +75,13 @@ public class BasePolicyDataProvider implements DBPPolicyDataProvider {
         return CommonUtils.toBoolean(value);
     }
 
+    /**
+     * Retrieves policy data value from system environment or Windows registry
+     *
+     * @param property  policy data property
+     * @return policy data value or {@code null} if not found
+     */
     @Nullable
-    @Override
     public Object getPolicyProperty(@NotNull String property) {
         Object value = System.getProperty(property);
         if (value != null) {

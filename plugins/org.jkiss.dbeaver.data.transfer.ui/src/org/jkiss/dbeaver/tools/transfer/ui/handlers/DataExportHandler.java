@@ -43,7 +43,7 @@ public class DataExportHandler extends DataTransferHandler {
 
     @Override
     public Object execute(ExecutionEvent event) throws ExecutionException {
-        if (BasePolicyDataProvider.getInstance().isPolicyEnabled(BasePolicyDataProvider.POLICY_DATA_EXPORT)) {
+        if (BasePolicyDataProvider.getInstance().isPolicyEnabled(DTConstants.POLICY_DATA_EXPORT)) {
             UIUtils.showMessageBox(
                 HandlerUtil.getActiveShell(event),
                 DTUIMessages.dialog_policy_data_export_title,
