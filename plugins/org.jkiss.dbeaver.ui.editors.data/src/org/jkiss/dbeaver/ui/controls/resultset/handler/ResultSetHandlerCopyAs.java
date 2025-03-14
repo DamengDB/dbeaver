@@ -23,6 +23,7 @@ import org.eclipse.core.commands.IParameterValues;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.action.*;
+import org.eclipse.swt.SWT;
 import org.eclipse.ui.IWorkbenchPartSite;
 import org.eclipse.ui.actions.CompoundContributionItem;
 import org.eclipse.ui.commands.IElementUpdater;
@@ -38,6 +39,7 @@ import org.jkiss.dbeaver.model.preferences.DBPPropertyDescriptor;
 import org.jkiss.dbeaver.model.runtime.AbstractJob;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 import org.jkiss.dbeaver.model.struct.DBSDataManipulator;
+import org.jkiss.dbeaver.registry.BasePolicyDataProvider;
 import org.jkiss.dbeaver.runtime.DBWorkbench;
 import org.jkiss.dbeaver.runtime.ui.UIServiceSQL;
 import org.jkiss.dbeaver.tools.transfer.IDataTransferConsumer;
@@ -72,6 +74,14 @@ public class ResultSetHandlerCopyAs extends AbstractHandler implements IElementU
     @Override
     public Object execute(ExecutionEvent event) throws ExecutionException
     {
+        if (BasePolicyDataProvider.getInstance().isPolicyEnabled(BasePolicyDataProvider.POLICY_DATA_COPY)) {
+            UIUtils.showMessageBox(HandlerUtil.getActiveShell(event),
+                ResultSetMessages.dialog_policy_data_copy_title,
+                ResultSetMessages.dialog_policy_data_copy_msg,
+                SWT.ICON_WARNING
+            );
+            return null;
+        }
         IResultSetController resultSet = ResultSetHandlerMain.getActiveResultSet(HandlerUtil.getActivePart(event));
         if (resultSet == null) {
             return null;
