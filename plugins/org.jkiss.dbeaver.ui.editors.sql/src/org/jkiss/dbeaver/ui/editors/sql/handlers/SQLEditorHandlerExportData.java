@@ -38,7 +38,7 @@ public class SQLEditorHandlerExportData extends AbstractHandler {
 
     @Override
     public Object execute(ExecutionEvent event) throws ExecutionException {
-        if (BasePolicyDataProvider.getInstance().isPolicyEnabled(DTConstants.POLICY_DATA_EXPORT)) {
+        if (BasePolicyDataProvider.getInstance().isPolicyEnabled(BasePolicyDataProvider.POLICY_DATA_EXPORT)) {
             UIUtils.showMessageBox(HandlerUtil.getActiveShell(event),
                 ResultSetMessages.dialog_policy_data_export_title,
                 ResultSetMessages.dialog_policy_data_export_msg,

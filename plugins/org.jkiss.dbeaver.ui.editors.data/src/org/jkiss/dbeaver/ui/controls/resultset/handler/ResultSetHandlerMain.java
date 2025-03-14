@@ -418,9 +418,18 @@ public class ResultSetHandlerMain extends AbstractHandler implements IElementUpd
                 break;
             }
             case IWorkbenchCommandConstants.EDIT_COPY:
-                ResultSetUtils.copyToClipboard(
-                    presentation.copySelection(
-                        new ResultSetCopySettings(false, false, false, true, false, null, null, null, DBDDisplayFormat.EDIT)));
+                if (BasePolicyDataProvider.getInstance().isPolicyEnabled(BasePolicyDataProvider.POLICY_DATA_COPY)) {
+                    UIUtils.showMessageBox(
+                        HandlerUtil.getActiveShell(event),
+                        ResultSetMessages.dialog_policy_data_copy_title,
+                        ResultSetMessages.dialog_policy_data_copy_msg,
+                        SWT.ICON_WARNING
+                    );
+                } else {
+                    ResultSetUtils.copyToClipboard(
+                        presentation.copySelection(
+                            new ResultSetCopySettings(false, false, false, true, false, null, null, null, DBDDisplayFormat.EDIT)));
+                }
                 break;
             case IWorkbenchCommandConstants.EDIT_PASTE:
                 if (presentation instanceof IResultSetEditor) {
@@ -549,7 +558,7 @@ public class ResultSetHandlerMain extends AbstractHandler implements IElementUpd
                 break;
             }
             case CMD_EXPORT: {
-                if (BasePolicyDataProvider.getInstance().isPolicyEnabled(DTConstants.POLICY_DATA_EXPORT)) {
+                if (BasePolicyDataProvider.getInstance().isPolicyEnabled(BasePolicyDataProvider.POLICY_DATA_EXPORT)) {
                     UIUtils.showMessageBox(HandlerUtil.getActiveShell(event),
                         ResultSetMessages.dialog_policy_data_export_title,
                         ResultSetMessages.dialog_policy_data_export_msg,
