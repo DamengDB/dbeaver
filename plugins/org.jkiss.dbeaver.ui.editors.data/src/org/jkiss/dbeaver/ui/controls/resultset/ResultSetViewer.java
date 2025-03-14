@@ -2641,10 +2641,7 @@ public class ResultSetViewer extends Viewer
         }
         DBCExecutionContext executionContext = getExecutionContext();
         return
-            executionContext == null ||
-            !executionContext.isConnected() ||
-            !executionContext.getDataSource().getContainer().hasModifyPermission(DBPDataSourcePermission.PERMISSION_EDIT_DATA) ||
-            executionContext.getDataSource().getInfo().isReadOnlyData() ||
+            DBExecUtils.isResultSetReadOnly(executionContext) ||
             model.isUniqueKeyUndefinedButRequired(executionContext.getDataSource().getContainer());
     }
 
