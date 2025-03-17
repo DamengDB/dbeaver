@@ -32,6 +32,7 @@ import org.jkiss.dbeaver.model.sql.SQLDialectSchemaController;
 import org.jkiss.dbeaver.model.sql.schema.ClassLoaderScriptSource;
 import org.jkiss.dbeaver.model.sql.schema.SQLSchemaConfig;
 import org.jkiss.dbeaver.model.sql.schema.SQLSchemaManager;
+import org.jkiss.dbeaver.model.sql.schema.SQLSchemaVersionManager;
 import org.jkiss.utils.CommonUtils;
 
 import javax.sql.DataSource;
@@ -139,9 +140,11 @@ public abstract class InternalDB<T extends InternalDatabaseConfig> {
                 ),
                 monitor1 -> connection,
                 schemaConfig.versionManager(),
-                dialect,
-                schemaConfig.schemaVersionActual(),
-                schemaConfig.schemaVersionObsolete(),
+            versionManager,
+            dialect,
+            schemaConfig.schemaVersionActual(),
+            schemaConfig.schemaVersionObsolete(),
+            databaseConfig
                 databaseConfig,
                 this
             );
