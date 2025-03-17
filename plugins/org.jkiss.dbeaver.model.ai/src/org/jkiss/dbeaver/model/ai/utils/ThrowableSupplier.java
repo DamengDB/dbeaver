@@ -14,10 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jkiss.dbeaver.model.ai.n;
+package org.jkiss.dbeaver.model.ai.utils;
 
-public record CommandResult(
-    String sql,
-    String message
-) {
+public interface ThrowableSupplier<T, E extends Exception> {
+    T get() throws E;
 }

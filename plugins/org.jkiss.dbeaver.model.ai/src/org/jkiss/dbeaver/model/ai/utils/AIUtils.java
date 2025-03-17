@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jkiss.dbeaver.model.ai.n;
+package org.jkiss.dbeaver.model.ai.utils;
 
 import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
@@ -28,31 +28,30 @@ import org.jkiss.utils.CommonUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 
-public class AIUtils {
-    @NotNull
-    public static <T> T awaitFuture(
-        DBRProgressMonitor monitor,
-        CompletableFuture<T> responseFuture
-    ) throws InterruptedException {
-        while (true) {
-            if (monitor.isCanceled()) {
-                responseFuture.cancel(true);
-                throw new InterruptedException();
-            }
-
-            if (responseFuture.isDone()) {
-                break;
-            }
-
-            TimeUnit.MILLISECONDS.sleep(100);
+public final class AIUtils {
+    /**
+     * Counts tokens in the given list of messages.
+     *
+     * @param messages list of messages
+     * @return number of tokens
+     */
+    public static int countTokens(@NotNull List<DAIChatMessage> messages) {
+        int count = 0;
+        for (DAIChatMessage message : messages) {
+            count += countContentTokens(message.content());
         }
-
-        return responseFuture.join();
+        return count;
     }
 
+    /**
+     * Truncates messages to fit into the given number of tokens.
+     *
+     * @param chatMode  true if chat mode is enabled
+     * @param messages  list of messages
+     * @param maxTokens maximum number of tokens
+     * @return list of truncated messages
+     */
     @NotNull
     public static List<DAIChatMessage> truncateMessages(
         boolean chatMode,
@@ -98,7 +97,7 @@ public class AIUtils {
      * It is sooooo approximately
      * We should use https://github.com/knuddelsgmbh/jtokkit/ or something similar
      */
-    protected static DAIChatMessage truncateMessage(DAIChatMessage message, int remainingTokens) {
+    private static DAIChatMessage truncateMessage(DAIChatMessage message, int remainingTokens) {
         String content = message.content();
         int contentTokens = countContentTokens(content);
         if (remainingTokens > contentTokens) {
@@ -109,7 +108,7 @@ public class AIUtils {
         return new DAIChatMessage(message.role(), truncatedContent);
     }
 
-    protected static String removeContentTokens(String content, int tokensToRemove) {
+    private static String removeContentTokens(String content, int tokensToRemove) {
         int charsToRemove = tokensToRemove * 2;
         if (charsToRemove >= content.length()) {
             return "";
@@ -117,10 +116,13 @@ public class AIUtils {
         return content.substring(0, content.length() - charsToRemove) + "..";
     }
 
-    protected static int countContentTokens(String content) {
+    private static int countContentTokens(String content) {
         return content.length() / 2;
     }
 
+    /**
+     * Processes completion text.
+     */
     @Nullable
     public static String processCompletion(
         @NotNull DBRProgressMonitor monitor,

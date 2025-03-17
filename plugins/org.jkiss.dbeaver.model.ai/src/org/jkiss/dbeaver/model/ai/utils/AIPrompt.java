@@ -14,23 +14,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jkiss.dbeaver.model.ai.openai;
+package org.jkiss.dbeaver.model.ai.utils;
 
-import com.theokanning.openai.completion.chat.ChatCompletionRequest;
-import com.theokanning.openai.completion.chat.ChatCompletionResult;
-import org.jkiss.code.NotNull;
-import org.jkiss.dbeaver.DBException;
-import org.jkiss.dbeaver.HttpException;
-import org.jkiss.dbeaver.model.ai.AIException;
-import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
-
-public interface OpenAIClient extends AutoCloseable {
-    @NotNull
-    ChatCompletionResult createChatCompletion(
-        @NotNull DBRProgressMonitor monitor,
-        ChatCompletionRequest request
-    ) throws HttpException;
-
-    @Override
-    void close();
+public final class AIPrompt {
+    public static final String SYSTEM_PROMPT = """
+        You are SQL assistant. You must produce SQL code for given prompt.
+        You must produce valid SQL statement enclosed with Markdown code block and terminated with semicolon.
+        All database object names should be properly escaped according to the SQL dialect.
+        All comments MUST be placed before query outside markdown code block.
+        Be polite.
+        """;
 }

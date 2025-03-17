@@ -25,7 +25,7 @@ import org.jkiss.dbeaver.model.ai.completion.DAICompletionContext;
 import org.jkiss.dbeaver.model.ai.completion.DAICompletionScope;
 import org.jkiss.dbeaver.model.ai.completion.DAICompletionSettings;
 import org.jkiss.dbeaver.model.ai.AI;
-import org.jkiss.dbeaver.model.ai.n.CommandResult;
+import org.jkiss.dbeaver.model.ai.CommandResult;
 import org.jkiss.dbeaver.model.exec.output.DBCOutputSeverity;
 import org.jkiss.dbeaver.model.logical.DBSLogicalDataSource;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;

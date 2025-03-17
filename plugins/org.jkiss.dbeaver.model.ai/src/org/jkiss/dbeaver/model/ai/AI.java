@@ -18,86 +18,117 @@ package org.jkiss.dbeaver.model.ai;
 
 import org.jkiss.code.NotNull;
 import org.jkiss.dbeaver.DBException;
+import org.jkiss.dbeaver.HttpException;
 import org.jkiss.dbeaver.model.ai.completion.*;
-import org.jkiss.dbeaver.model.ai.n.AIStreamingResponseHandler;
-import org.jkiss.dbeaver.model.ai.n.AIUtils;
-import org.jkiss.dbeaver.model.ai.n.CommandResult;
-import org.jkiss.dbeaver.model.data.DBDObject;
+import org.jkiss.dbeaver.model.ai.utils.AIUtils;
+import org.jkiss.dbeaver.model.ai.utils.ThrowableSupplier;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 import org.jkiss.dbeaver.model.sql.SQLUtils;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class AI {
     public static final AI INSTANCE = new AI();
+    private static final int MAX_RETRIES = 3;
 
     private final AIEngineRegistry engineRegistry = AIEngineRegistry.getInstance();
 
     private AI() {
     }
 
+    /**
+     * Chat with the AI assistant.
+     *
+     * @param monitor the progress monitor
+     * @param context the completion context
+     * @param session the completion session
+     * @param handler the response handler
+     */
     public void chat(
         @NotNull DBRProgressMonitor monitor,
-        DAICompletionContext context,
-        DAICompletionSession session,
-        AIStreamingResponseHandler handler
+        @NotNull DAICompletionContext context,
+        @NotNull DAICompletionSession session,
+        @NotNull AIStreamingResponseHandler handler
     ) {
-        AIStreamingResponseHandler responseHandler = new AIStreamingResponseHandler() {
-            private final StringBuilder response = new StringBuilder();
-
-            @Override
-            public void onNext(String partialResponse) {
-                response.append(partialResponse);
-
-                handler.onNext(partialResponse);
-            }
-
-            @Override
-            public void onComplete() {
-                session.add(new DAIChatMessage(DAIChatRole.ASSISTANT, response.toString()));
-
-                handler.onComplete();
-            }
-
-            @Override
-            public void onError(Throwable error) {
-                handler.onError(error);
-            }
-        };
-
         try {
-            getActiveEngine().chat(monitor, context, session.getMessages(), responseHandler);
-        } catch (Exception e) {
+            DAICompletionEngine activeEngine = getActiveEngine();
+            AIStreamingResponseHandler chatHandler = new AIStreamingResponseHandler() {
+                private final StringBuilder response = new StringBuilder();
+
+                @Override
+                public void onNext(String partialResponse) {
+                    response.append(partialResponse);
+                    handler.onNext(partialResponse);
+                }
+
+                @Override
+                public void onComplete() {
+                    session.add(new DAIChatMessage(DAIChatRole.ASSISTANT, response.toString()));
+                    handler.onComplete();
+                }
+
+                @Override
+                public void onError(Throwable error) {
+                    handler.onError(error);
+                }
+            };
+
+            executeWithRetry(
+                monitor,
+                context,
+                h -> activeEngine.chat(monitor, context, session.getMessages(), h),
+                chatHandler,
+                0
+            );
+        } catch (DBException e) {
             handler.onError(e);
         }
     }
 
+    /**
+     * Describe the specified object.
+     *
+     * @param monitor         the progress monitor
+     * @param context         the completion context
+     * @param describeRequest the describe request
+     * @param handler         the response handler
+     */
     public void describe(
         @NotNull DBRProgressMonitor monitor,
-        DAICompletionContext context,
-        DBDObject toDescribe,
-        AIStreamingResponseHandler handler
+        @NotNull DAICompletionContext context,
+        @NotNull AIDescribeRequest describeRequest,
+        @NotNull AIStreamingResponseHandler handler
     ) {
-
+        try {
+            DAICompletionEngine activeEngine = getActiveEngine();
+            executeWithRetry(
+                monitor,
+                context,
+                h -> activeEngine.describe(monitor, context, describeRequest, h),
+                handler,
+                0
+            );
+        } catch (DBException e) {
+            handler.onError(e);
+        }
     }
 
-    public String translateTextToSql(@NotNull DBRProgressMonitor monitor, DAICompletionContext context, String text) throws DBException {
-        String completion = getActiveEngine().translateTextToSql(monitor, context, text);
-
-        String processedCompletion = AIUtils.processCompletion(
-            monitor,
-            context.getExecutionContext(),
-            context.getScopeObject(),
-            completion,
-            context.getFormatter(),
-            true
-        );
-
-        MessageChunk[] messageChunks = AITextUtils.splitIntoChunks(
-            SQLUtils.getDialectFromDataSource(context.getExecutionContext().getDataSource()),
-            processedCompletion
-        );
+    /**
+     * Translate the specified text to SQL.
+     *
+     * @param monitor the progress monitor
+     * @param context the completion context
+     * @param text    the text to translate
+     * @return the translated SQL
+     * @throws DBException if an error occurs
+     */
+    @NotNull
+    public String translateTextToSql(
+        @NotNull DBRProgressMonitor monitor,
+        @NotNull DAICompletionContext context,
+        @NotNull String text
+    ) throws DBException {
+        DAICompletionEngine activeEngine = getActiveEngine();
+        String completion = activeEngine.translateTextToSql(monitor, context, text);
+        MessageChunk[] messageChunks = processAndSplitCompletion(monitor, context, completion);
 
         return AITextUtils.convertToSQL(
             new DAIChatMessage(DAIChatRole.USER, text),
@@ -106,25 +137,24 @@ public class AI {
         );
     }
 
+    /**
+     * Translate the specified user command to SQL.
+     *
+     * @param monitor the progress monitor
+     * @param context the completion context
+     * @param text    the command text
+     * @return the command result
+     * @throws DBException if an error occurs
+     */
     @NotNull
     public CommandResult command(
-        @NotNull DBRProgressMonitor monitor, DAICompletionContext context, String text
+        @NotNull DBRProgressMonitor monitor,
+        @NotNull DAICompletionContext context,
+        @NotNull String text
     ) throws DBException {
-        String completion = getActiveEngine().command(monitor, context, text);
-
-        String processedCompletion = AIUtils.processCompletion(
-            monitor,
-            context.getExecutionContext(),
-            context.getScopeObject(),
-            completion,
-            context.getFormatter(),
-            true
-        );
-
-        MessageChunk[] messageChunks = AITextUtils.splitIntoChunks(
-            SQLUtils.getDialectFromDataSource(context.getExecutionContext().getDataSource()),
-            processedCompletion
-        );
+        DAICompletionEngine activeEngine = getActiveEngine();
+        String completion = activeEngine.command(monitor, context, text);
+        MessageChunk[] messageChunks = processAndSplitCompletion(monitor, context, completion);
 
         String finalSQL = null;
         StringBuilder messages = new StringBuilder();
@@ -135,12 +165,81 @@ public class AI {
                 messages.append(textChunk.text());
             }
         }
-
         return new CommandResult(finalSQL, messages.toString());
     }
 
+    /**
+     * Check if the AI assistant has valid configuration.
+     *
+     * @return true if the AI assistant has valid configuration, false otherwise
+     * @throws DBException if an error occurs
+     */
     public boolean hasValidConfiguration() throws DBException {
         return getActiveEngine().hasValidConfiguration();
+    }
+
+    private MessageChunk[] processAndSplitCompletion(
+        DBRProgressMonitor monitor,
+        DAICompletionContext context,
+        String completion
+    ) throws DBException {
+        String processedCompletion = ruwWithRetries(() -> AIUtils.processCompletion(
+            monitor,
+            context.getExecutionContext(),
+            context.getScopeObject(),
+            completion,
+            context.getFormatter(),
+            true
+        ));
+        return AITextUtils.splitIntoChunks(
+            SQLUtils.getDialectFromDataSource(context.getExecutionContext().getDataSource()),
+            processedCompletion
+        );
+    }
+
+    private void executeWithRetry(
+        @NotNull DBRProgressMonitor monitor,
+        DAICompletionContext context,
+        AIRequestExecutor executor,
+        AIStreamingResponseHandler handler,
+        int retryCount
+    ) {
+        executor.execute(new AIStreamingResponseHandler() {
+            @Override
+            public void onNext(String partialResponse) {
+                handler.onNext(partialResponse);
+            }
+
+            @Override
+            public void onComplete() {
+                handler.onComplete();
+            }
+
+            @Override
+            public void onError(Throwable error) {
+                if (error instanceof HttpException && ((HttpException) error).statusCode() == 429 && retryCount < MAX_RETRIES) {
+                    executeWithRetry(monitor, context, executor, handler, retryCount + 1);
+                } else {
+                    handler.onError(error);
+                }
+            }
+        });
+    }
+
+    private static <T> T ruwWithRetries(ThrowableSupplier<T, DBException> supplier) throws DBException {
+        int retry = 0;
+        while (retry < MAX_RETRIES) {
+            try {
+                return supplier.get();
+            } catch (HttpException e) {
+                if (e.statusCode() == 429) {
+                    retry++;
+                } else {
+                    throw e;
+                }
+            }
+        }
+        throw new DBException("Request failed after " + MAX_RETRIES + " attempts");
     }
 
     private DAICompletionEngine getActiveEngine() throws DBException {
@@ -148,75 +247,8 @@ public class AI {
         return engineRegistry.getCompletionEngine(activeEngine);
     }
 
-    @NotNull
-    protected static List<DAIChatMessage> truncateMessages(
-        boolean chatMode,
-        @NotNull List<DAIChatMessage> messages,
-        int maxTokens
-    ) {
-        final List<DAIChatMessage> pending = new ArrayList<>(messages);
-        final List<DAIChatMessage> truncated = new ArrayList<>();
-        int remainingTokens = maxTokens - 20; // Just to be sure
-
-        if (!pending.isEmpty()) {
-            if (pending.get(0).role() == DAIChatRole.SYSTEM) {
-                // Always append main system message and leave space for the next one
-                DAIChatMessage msg = pending.remove(0);
-                DAIChatMessage truncatedMessage = truncateMessage(msg, remainingTokens - 50);
-                remainingTokens -= countContentTokens(truncatedMessage.content());
-                truncated.add(msg);
-            }
-        }
-
-        for (DAIChatMessage message : pending) {
-            final int messageTokens = message.content().length();
-
-            if (remainingTokens < 0 || messageTokens > remainingTokens) {
-                // Exclude old messages that don't fit into given number of tokens
-                if (chatMode) {
-                    break;
-                } else {
-                    // Truncate message itself
-                }
-            }
-
-            DAIChatMessage truncatedMessage = truncateMessage(message, remainingTokens);
-            remainingTokens -= countContentTokens(truncatedMessage.content());
-            truncated.add(message);
-        }
-
-        return truncated;
-    }
-
-    /**
-     * 1 token = 2 bytes
-     * It is sooooo approximately
-     * We should use https://github.com/knuddelsgmbh/jtokkit/ or something similar
-     */
-    protected static DAIChatMessage truncateMessage(DAIChatMessage message, int remainingTokens) {
-        String content = message.content();
-        int contentTokens = countContentTokens(content);
-
-        if (contentTokens <= remainingTokens) {
-            return message;
-        }
-
-        int tokensToRemove = contentTokens - remainingTokens;
-        content = removeContentTokens(content, tokensToRemove);
-
-        return new DAIChatMessage(message.role(), content);
-    }
-
-
-    protected static String removeContentTokens(String content, int tokensToRemove) {
-        int charsToRemove = tokensToRemove * 2;
-        if (charsToRemove >= content.length()) {
-            return "";
-        }
-        return content.substring(0, content.length() - charsToRemove) + "..";
-    }
-
-    protected static int countContentTokens(String content) {
-        return content.length() / 2;
+    @FunctionalInterface
+    private interface AIRequestExecutor {
+        void execute(AIStreamingResponseHandler handler);
     }
 }

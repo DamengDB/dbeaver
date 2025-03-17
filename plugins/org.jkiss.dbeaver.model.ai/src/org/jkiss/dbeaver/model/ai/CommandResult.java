@@ -14,23 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jkiss.dbeaver.model.ai.openai;
+package org.jkiss.dbeaver.model.ai;
 
-import com.theokanning.openai.completion.chat.ChatCompletionRequest;
-import com.theokanning.openai.completion.chat.ChatCompletionResult;
 import org.jkiss.code.NotNull;
-import org.jkiss.dbeaver.DBException;
-import org.jkiss.dbeaver.HttpException;
-import org.jkiss.dbeaver.model.ai.AIException;
-import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
+import org.jkiss.code.Nullable;
 
-public interface OpenAIClient extends AutoCloseable {
-    @NotNull
-    ChatCompletionResult createChatCompletion(
-        @NotNull DBRProgressMonitor monitor,
-        ChatCompletionRequest request
-    ) throws HttpException;
-
-    @Override
-    void close();
+public record CommandResult(
+    @Nullable String sql,
+    @NotNull String message
+) {
 }

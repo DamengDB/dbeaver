@@ -14,9 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jkiss.dbeaver.model.ai.n;
-
-import org.jkiss.dbeaver.DBException;
+package org.jkiss.dbeaver.model.ai.utils;
 
 public abstract class DisposableLazyValue<T, E extends Exception> extends LazyValue<T, E> {
 
@@ -39,5 +37,5 @@ public abstract class DisposableLazyValue<T, E extends Exception> extends LazyVa
      * @param disposedValue the value that was disposed.
      * @throws E if an exception occurs during disposal.
      */
-    protected abstract void onDispose(T disposedValue) throws E, DBException;
+    protected abstract void onDispose(T disposedValue) throws E;
 }
