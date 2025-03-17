@@ -346,7 +346,7 @@ public class CustomFormEditor {
                 GridData gdComposite = new GridData(SWT.FILL, SWT.TOP, true, false);
                 gdComposite.heightHint = textHeight + 6;
                 composite.setLayoutData(gdComposite);
-                return composite;
+                return editor;
             } else {
                 Text text = UIUtils.createLabelText(
                     parent,
