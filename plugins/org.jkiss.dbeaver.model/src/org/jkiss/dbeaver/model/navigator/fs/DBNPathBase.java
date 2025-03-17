@@ -35,10 +35,8 @@ import org.jkiss.utils.ArrayUtils;
 import org.jkiss.utils.ByteNumberFormat;
 
 import java.io.IOException;
-import java.nio.file.CopyOption;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
+import java.io.InputStream;
+import java.nio.file.*;
 import java.nio.file.attribute.FileTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -289,6 +287,14 @@ public abstract class DBNPathBase extends DBNNode implements DBNLazyNode {
                     break;
                 }
                 Path resource = node.getAdapter(Path.class);
+                if (resource == null) {
+                    InputStream adapter = node.getAdapter(InputStream.class);
+                    if (adapter != null) {
+                        String fileName = node.getNodeDisplayName();
+                        copyInputStream(adapter, folder, fileName);
+                        continue;
+                    }
+                }
                 if (resource == null || !Files.exists(resource)) {
                     log.debug("Resource " + resource + " doesn't not exists");
                     continue;
@@ -301,7 +307,7 @@ public abstract class DBNPathBase extends DBNNode implements DBNLazyNode {
                     // Already in this container
                     continue;
                 }
-               boolean doCopy = !isTheSameFileSystem(node);
+                boolean doCopy = !isTheSameFileSystem(node);
                 boolean doDelete = false;
                 monitor.subTask((doCopy ? "Copy" : "Move") + " file " + resource);
                 try {
@@ -347,6 +353,15 @@ public abstract class DBNPathBase extends DBNNode implements DBNLazyNode {
         } finally {
             monitor.done();
         }
+    }
+
+    private void copyInputStream(InputStream inputStream, Path folder, String str) throws IOException {
+        Path targetFile = folder.resolve(str);
+        CopyOption[] options = new CopyOption[0];
+        if (Files.exists(targetFile)) {
+            options = new CopyOption[] {StandardCopyOption.REPLACE_EXISTING};
+        }
+        Files.copy(inputStream, targetFile, options);
     }
 
     protected boolean isTheSameFileSystem(DBNNode node) {
