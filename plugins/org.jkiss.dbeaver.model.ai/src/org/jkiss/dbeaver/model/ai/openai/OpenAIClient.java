@@ -19,12 +19,10 @@ package org.jkiss.dbeaver.model.ai.openai;
 import com.theokanning.openai.completion.chat.ChatCompletionRequest;
 import com.theokanning.openai.completion.chat.ChatCompletionResult;
 import org.jkiss.code.NotNull;
-import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.HttpException;
-import org.jkiss.dbeaver.model.ai.AIException;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 
-public interface OpenAIClient extends AutoCloseable {
+interface OpenAIClient extends AutoCloseable {
     @NotNull
     ChatCompletionResult createChatCompletion(
         @NotNull DBRProgressMonitor monitor,

@@ -34,6 +34,9 @@ public class OpenAISettings {
         this.settings = settings;
     }
 
+    /**
+     * Returns the token used to authenticate with the OpenAI API.
+     */
     public String token() {
         Object token = settings.getProperties().get(AIConstants.GPT_API_TOKEN);
         if (token != null) {
@@ -43,16 +46,25 @@ public class OpenAISettings {
         return DBWorkbench.getPlatform().getPreferenceStore().getString(AIConstants.GPT_API_TOKEN);
     }
 
+    /**
+     * Returns the model used by the OpenAI API.
+     */
     @NotNull
     public OpenAIModel model() {
         String modelId = CommonUtils.toString(settings.getProperties().get(AIConstants.GPT_MODEL), "");
         return CommonUtils.isEmpty(modelId) ? OpenAIModel.GPT_TURBO : OpenAIModel.getByName(modelId);
     }
 
+    /**
+     * Returns the temperature used by the OpenAI API.
+     */
     public double temperature() {
         return CommonUtils.toDouble(settings.getProperties().get(AIConstants.AI_TEMPERATURE), 0.0);
     }
 
+    /**
+     * Returns whether the current configuration is valid.
+     */
     public boolean isValidConfiguration() {
         return !CommonUtils.isEmpty(token());
     }

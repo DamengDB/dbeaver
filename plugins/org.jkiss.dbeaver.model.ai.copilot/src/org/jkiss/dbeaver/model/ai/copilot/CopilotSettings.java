@@ -33,18 +33,30 @@ public class CopilotSettings {
         this.settings = settings;
     }
 
+    /**
+     * Returns the model name to use for Copilot.
+     */
     public String modelName() {
         return CommonUtils.toString(settings.getProperties().get(AIConstants.GPT_MODEL), OpenAIModel.GPT_TURBO16.getName());
     }
 
+    /**
+     * Returns the access token to use for Copilot.
+     */
     public String accessToken() {
         return (String) settings.getProperties().get(CopilotConstants.COPILOT_ACCESS_TOKEN);
     }
 
+    /**
+     * Returns whether the configuration is valid.
+     */
     public boolean isValidConfiguration() {
         return settings.getProperties().get(CopilotConstants.COPILOT_ACCESS_TOKEN) != null;
     }
 
+    /**
+     * Returns the temperature to use for Copilot.
+     */
     public double temperature() {
         return CommonUtils.toDouble(settings.getProperties().get(AIConstants.AI_TEMPERATURE), 0.0);
     }

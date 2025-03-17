@@ -52,6 +52,9 @@ public class CopilotClient implements AutoCloseable {
 
     private final MonitoredHttpClient client = new MonitoredHttpClient(HttpClient.newBuilder().build());
 
+    /**
+     * Request access to the user's account
+     */
     public ResponseDataDTO requestAuth(
         DBRProgressMonitor monitor
     ) throws DBException {
@@ -68,6 +71,9 @@ public class CopilotClient implements AutoCloseable {
         return client.send(monitor, post, ResponseDataDTO.class);
     }
 
+    /**
+     * Request access token
+     */
     public String requestAccessToken(
         String deviceCode,
         DBRProgressMonitor monitor
@@ -102,6 +108,9 @@ public class CopilotClient implements AutoCloseable {
         throw new TimeoutException("OAuth");
     }
 
+    /**
+     * Request session token
+     */
     public CopilotSessionToken sessionToken(
         DBRProgressMonitor monitor,
         String accessToken
@@ -119,6 +128,9 @@ public class CopilotClient implements AutoCloseable {
         return client.send(monitor, request, CopilotSessionToken.class);
     }
 
+    /**
+     * Chat with Copilot
+     */
     public CopilotChatResponse chat(
         DBRProgressMonitor monitor,
         String token,
