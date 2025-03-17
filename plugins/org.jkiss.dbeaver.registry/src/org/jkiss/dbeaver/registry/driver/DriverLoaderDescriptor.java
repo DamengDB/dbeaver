@@ -56,6 +56,8 @@ import java.util.stream.Stream;
  */
 public class DriverLoaderDescriptor implements DBPDriverLoader {
 
+    public static final String DEFAULT_LOADER_ID = "default";
+
     private static final Log log = Log.getLog(DriverLoaderDescriptor.class);
 
     private final DriverDescriptor driver;
@@ -68,6 +70,7 @@ public class DriverLoaderDescriptor implements DBPDriverLoader {
      * Initializes upon the initialization of the very first driver.
      */
     private static ClassLoader rootClassLoader;
+    private final String loaderId;
 
     private Class<?> driverClass;
     private boolean isLoaded;
@@ -75,7 +78,8 @@ public class DriverLoaderDescriptor implements DBPDriverLoader {
 
     private transient boolean isFailed = false;
 
-    protected DriverLoaderDescriptor(DriverDescriptor driver) {
+    protected DriverLoaderDescriptor(@NotNull String loaderId, @NotNull DriverDescriptor driver) {
+        this.loaderId = loaderId;
         this.driver = driver;
     }
 
@@ -89,6 +93,12 @@ public class DriverLoaderDescriptor implements DBPDriverLoader {
 
     public boolean isFailed() {
         return isFailed;
+    }
+
+    @NotNull
+    @Override
+    public String getLoaderId() {
+        return loaderId;
     }
 
     @Nullable

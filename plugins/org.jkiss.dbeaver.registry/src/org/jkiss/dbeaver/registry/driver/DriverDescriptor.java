@@ -39,6 +39,7 @@ import org.jkiss.dbeaver.model.runtime.LoggingProgressMonitor;
 import org.jkiss.dbeaver.model.runtime.OSDescriptor;
 import org.jkiss.dbeaver.model.sql.SQLDialectMetadata;
 import org.jkiss.dbeaver.registry.DataSourceProviderDescriptor;
+import org.jkiss.dbeaver.registry.DataSourceProviderRegistry;
 import org.jkiss.dbeaver.registry.NativeClientDescriptor;
 import org.jkiss.dbeaver.registry.RegistryConstants;
 import org.jkiss.dbeaver.runtime.DBWorkbench;
@@ -81,10 +82,6 @@ public class DriverDescriptor extends AbstractDescriptor implements DBPDriver {
             this.providerId = providerId;
             this.driverId = driverId;
         }
-    }
-
-    private static class DriverLoaderConfig {
-        String authModelId;
     }
 
     private final DataSourceProviderDescriptor providerDescriptor;
@@ -161,7 +158,7 @@ public class DriverDescriptor extends AbstractDescriptor implements DBPDriver {
     private final Map<String, Object> originalConnectionProperties = new HashMap<>();
 
     // Map of driver loaders. Key=auth model ID
-    private final Map<String, DriverLoaderDescriptor> driverLoaders = new LinkedHashMap<>();
+    private volatile Map<String, DriverLoaderDescriptor> driverLoaders;
     private volatile DriverLoaderDescriptor defaultDriverLoader;
 
     static {
@@ -1029,7 +1026,7 @@ public class DriverDescriptor extends AbstractDescriptor implements DBPDriver {
     @Override
     public synchronized DriverLoaderDescriptor getDefaultDriverLoader() {
         if (defaultDriverLoader == null) {
-            defaultDriverLoader = new DriverLoaderDescriptor(this);
+            defaultDriverLoader = new DriverLoaderDescriptor(DriverLoaderDescriptor.DEFAULT_LOADER_ID, this);
         }
         return defaultDriverLoader;
     }
@@ -1037,16 +1034,12 @@ public class DriverDescriptor extends AbstractDescriptor implements DBPDriver {
     @NotNull
     @Override
     public DBPDriverLoader getDriverLoader(@NotNull DBPDataSourceContainer dataSourceContainer) {
+        getAllDriverLoaders();
+
         DBPAuthModelDescriptor authModel = dataSourceContainer.getConnectionConfiguration().getAuthModelDescriptor();
         DriverLoaderDescriptor loader = driverLoaders.get(authModel.getId());
         if (loader != null) {
             return loader;
-        }
-        if (authModel.getInstance() instanceof DBPDriverLibraryProvider amlp) {
-            if (!CommonUtils.isEmpty(amlp.getDriverLibraries())) {
-                DriverLoaderDescriptor dld = new DriverLoaderDescriptor(this);
-                dld.addLibraryProvider(amlp);
-            }
         }
         return getDefaultDriverLoader();
     }
@@ -1054,6 +1047,23 @@ public class DriverDescriptor extends AbstractDescriptor implements DBPDriver {
     @NotNull
     @Override
     public List<DBPDriverLoader> getAllDriverLoaders() {
+        if (driverLoaders == null) {
+            synchronized (this) {
+                if (driverLoaders == null) {
+                    driverLoaders = new LinkedHashMap<>();
+                    for (DBPAuthModelDescriptor authModel : DataSourceProviderRegistry.getInstance().getApplicableAuthModels(this)) {
+                        if (authModel instanceof DBPDriverLibraryProvider dlp) {
+                            List<? extends DBPDriverLibrary> driverLibraries = dlp.getDriverLibraries();
+                            if (!CommonUtils.isEmpty(driverLibraries)) {
+                                DriverLoaderDescriptor loader = new DriverLoaderDescriptor(authModel.getId(), this);
+                                loader.addLibraryProvider(dlp);
+                                driverLoaders.put(authModel.getId(), loader);
+                            }
+                        }
+                    }
+                }
+            }
+        }
         ArrayList<DBPDriverLoader> loaders = new ArrayList<>();
         loaders.add(getDefaultDriverLoader());
         loaders.addAll(driverLoaders.values());
@@ -1070,8 +1080,8 @@ public class DriverDescriptor extends AbstractDescriptor implements DBPDriver {
 
     @Override
     public void resetDriverInstance() {
-        for (DriverLoaderDescriptor dld : driverLoaders.values()) {
-            dld.resetDriverInstance();
+        for (DBPDriverLoader dld : getAllDriverLoaders()) {
+            ((DriverLoaderDescriptor)dld).resetDriverInstance();
         }
     }
 

@@ -32,6 +32,9 @@ import java.nio.file.Path;
  */
 public interface DBPDriverLoader {
 
+    @NotNull
+    String getLoaderId();
+
     @Nullable
     ClassLoader getClassLoader();
 
