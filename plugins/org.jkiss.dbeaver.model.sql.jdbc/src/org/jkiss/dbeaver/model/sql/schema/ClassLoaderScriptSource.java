@@ -75,7 +75,10 @@ public class ClassLoaderScriptSource implements SQLSchemaScriptSource {
     private void verifySingleResource(@NotNull String fileName) throws DBException, IOException {
         Enumeration<URL> resources = classLoader.getResources(fileName);
         if (resources.hasMoreElements()) {
-            throw new DBException("Multiple migration files with name: " + fileName + " detected. Expected only one.");
+            resources.nextElement();
+            if (resources.hasMoreElements()) {
+                throw new DBException("Multiple migration files with name: " + fileName + " detected. Expected only one.");
+            }
         }
     }
 }
