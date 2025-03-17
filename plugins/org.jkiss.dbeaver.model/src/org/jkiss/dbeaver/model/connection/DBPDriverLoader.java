@@ -22,6 +22,8 @@ import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 
+import java.nio.file.Path;
+
 /**
  * Driver loader. Contains class loader which loads all necessary dependencies.
  * Each driver may have several loaders.
@@ -57,5 +59,7 @@ public interface DBPDriverLoader {
      * Downloads driver library files from external resources if it is possible.
      */
     boolean downloadDriverLibraries(@NotNull DBRProgressMonitor monitor, boolean resetVersions);
+
+    boolean resolveDriverFiles(Path targetFileLocation);
 
 }

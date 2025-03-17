@@ -20,6 +20,7 @@ import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.ModelPreferences;
 import org.jkiss.dbeaver.model.DBPImage;
 import org.jkiss.dbeaver.model.connection.DBPDriverLibrary;
+import org.jkiss.dbeaver.model.connection.DBPDriverLoader;
 import org.jkiss.dbeaver.model.connection.DBPNativeClientLocation;
 import org.jkiss.dbeaver.model.connection.LocalNativeClientLocation;
 import org.jkiss.dbeaver.registry.DataSourceProviderDescriptor;
@@ -173,30 +174,36 @@ public class DriverDescriptorSerializerLegacy extends DriverDescriptorSerializer
                         }
                     }
 
-                    List<DriverDescriptor.DriverFileInfo> files = driver.getResolvedFiles().get(lib);
-                    if (files != null) {
-                        for (DriverDescriptor.DriverFileInfo file : files) {
-                            try (XMLBuilder.Element e2 = xml.startElement(RegistryConstants.TAG_FILE)) {
-                                if (file.getFile() == null) {
-                                    log.warn("File missing in " + file.getId());
-                                    continue;
-                                }
-                                xml.addAttribute(RegistryConstants.ATTR_ID, file.getId());
-                                // check if we need to store local file in storage
+                    for (DBPDriverLoader driverLoader : driver.getAllDriverLoaders()) {
+                        if (!(driverLoader instanceof DriverLoaderDescriptor dld)) {
+                            continue;
+                        }
+                        List<DriverFileInfo> files = dld.getResolvedFiles().get(lib);
+                        if (files != null) {
+                            for (DriverFileInfo file : files) {
+                                try (XMLBuilder.Element e2 = xml.startElement(RegistryConstants.TAG_FILE)) {
+                                    if (file.getFile() == null) {
+                                        log.warn("File missing in " + file.getId());
+                                        continue;
+                                    }
+                                    xml.addAttribute(RegistryConstants.ATTR_ID, file.getId());
+                                    // check if we need to store local file in storage
 
-                                if (!CommonUtils.isEmpty(file.getVersion())) {
-                                    xml.addAttribute(RegistryConstants.ATTR_VERSION, file.getVersion());
-                                }
-                                String normalizedFilePath = file.getFile().toString();
-                                if (isDistributed) {
-                                    // we need to relativize path and exclude path variables in config file
-                                    normalizedFilePath = DriverUtils.getDistributedLibraryPath(file.getFile()).replace('\\', '/');
-                                }
-                                xml.addAttribute(
-                                    RegistryConstants.ATTR_PATH,
-                                    substitutePathVariables(pathSubstitutions, normalizedFilePath));
-                                if (file.getFileCRC() != 0) {
-                                    xml.addAttribute("crc", Long.toHexString(file.getFileCRC()));
+                                    if (!CommonUtils.isEmpty(file.getVersion())) {
+                                        xml.addAttribute(RegistryConstants.ATTR_VERSION, file.getVersion());
+                                    }
+                                    String normalizedFilePath = file.getFile().toString();
+                                    if (isDistributed) {
+                                        // we need to relativize path and exclude path variables in config file
+                                        normalizedFilePath = DriverUtils.getDistributedLibraryPath(file.getFile()).replace('\\', '/');
+                                    }
+                                    xml.addAttribute(
+                                        RegistryConstants.ATTR_PATH,
+                                        substitutePathVariables(pathSubstitutions, normalizedFilePath)
+                                    );
+                                    if (file.getFileCRC() != 0) {
+                                        xml.addAttribute("crc", Long.toHexString(file.getFileCRC()));
+                                    }
                                 }
                             }
                         }
@@ -412,7 +419,7 @@ public class DriverDescriptorSerializerLegacy extends DriverDescriptorSerializer
                             if (CommonUtils.isEmpty(path)) {
                                 log.warn("Empty path for library file");
                             } else {
-                                DriverDescriptor.DriverFileInfo info = new DriverDescriptor.DriverFileInfo(
+                                DriverFileInfo info = new DriverFileInfo(
                                         atts.getValue(CommonUtils.notEmpty(RegistryConstants.ATTR_ID)),
                                         atts.getValue(CommonUtils.notEmpty(RegistryConstants.ATTR_VERSION)),
                                         curLibrary.getType(),
@@ -424,7 +431,7 @@ public class DriverDescriptorSerializerLegacy extends DriverDescriptorSerializer
                                         info.setFileCRC(crc);
                                     }
                                 }
-                                curDriver.addLibraryFile(curLibrary, info);
+                                curDriver.getDefaultDriverLoader().addLibraryFile(curLibrary, info);
                             }
                         }
                     }

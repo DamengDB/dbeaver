@@ -20,6 +20,7 @@ import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.Platform;
 import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
+import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.ModelPreferences;
 import org.jkiss.dbeaver.model.*;
@@ -33,6 +34,7 @@ import org.jkiss.dbeaver.model.meta.PropertyLength;
 import org.jkiss.dbeaver.model.navigator.meta.DBXTreeNode;
 import org.jkiss.dbeaver.model.preferences.DBPPreferenceStore;
 import org.jkiss.dbeaver.model.preferences.DBPPropertyDescriptor;
+import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 import org.jkiss.dbeaver.model.runtime.LoggingProgressMonitor;
 import org.jkiss.dbeaver.model.runtime.OSDescriptor;
 import org.jkiss.dbeaver.model.sql.SQLDialectMetadata;
@@ -79,6 +81,10 @@ public class DriverDescriptor extends AbstractDescriptor implements DBPDriver {
             this.providerId = providerId;
             this.driverId = driverId;
         }
+    }
+
+    private static class DriverLoaderConfig {
+        String authModelId;
     }
 
     private final DataSourceProviderDescriptor providerDescriptor;
@@ -136,7 +142,7 @@ public class DriverDescriptor extends AbstractDescriptor implements DBPDriver {
     private final List<DBPNativeClientLocation> nativeClientHomes = new ArrayList<>();
     private final List<DriverFileSource> fileSources = new ArrayList<>();
     private final List<DBPDriverLibrary> libraries = new ArrayList<>();
-    private final List<DBPDriverLibrary> origFiles = new ArrayList<>();
+    private final List<DBPDriverLibrary> origLibraries = new ArrayList<>();
     private final List<ProviderPropertyDescriptor> mainPropertyDescriptors = new ArrayList<>();
     private final Set<ProviderPropertyDescriptor> providerPropertyDescriptors = new LinkedHashSet<>();
     private final List<OSDescriptor> supportedSystems = new ArrayList<>();
@@ -153,6 +159,8 @@ public class DriverDescriptor extends AbstractDescriptor implements DBPDriver {
     private final Map<String, Object> defaultConnectionProperties = new HashMap<>();
     private final Map<String, Object> customConnectionProperties = new HashMap<>();
     private final Map<String, Object> originalConnectionProperties = new HashMap<>();
+
+    private final Map<DriverLoaderConfig, DriverLoaderDescriptor> driverLoaders = new LinkedHashMap<>();
 
     static {
         Path driversHome = DriverDescriptor.getCustomDriversHome();
@@ -316,7 +324,7 @@ public class DriverDescriptor extends AbstractDescriptor implements DBPDriver {
                 this.libraries.add(library);
             }
         }
-        this.origFiles.addAll(this.libraries);
+        this.origLibraries.addAll(this.libraries);
 
         String[] supportedConfigurationTypes = CommonUtils.split(
             config.getAttribute(RegistryConstants.ATTR_SUPPORTED_CONFIGURATION_TYPES), ",");
@@ -981,21 +989,6 @@ public class DriverDescriptor extends AbstractDescriptor implements DBPDriver {
         return null;
     }
 
-    /**
-     * Removes all resolved files associated with the given driver library.
-     * This effectively resets the library's file list to an empty state.
-     *
-     * @param library the driver library whose associated files should be removed
-     */
-    public void removeLibraryFiles(DBPDriverLibrary library) {
-        resolvedFiles.put(library, new ArrayList<>());
-    }
-
-    public void addLibraryFile(DBPDriverLibrary library, DriverLoaderDescriptor.DriverFileInfo fileInfo) {
-        List<DriverLoaderDescriptor.DriverFileInfo> files = resolvedFiles.computeIfAbsent(library, k -> new ArrayList<>());
-        files.add(fileInfo);
-    }
-
     public DBPDriverLibrary addDriverLibrary(String path, DBPDriverLibrary.FileType fileType) {
         for (DBPDriverLibrary lib : libraries) {
             if (lib.getPath().equals(path)) {
@@ -1033,13 +1026,33 @@ public class DriverDescriptor extends AbstractDescriptor implements DBPDriver {
     @NotNull
     @Override
     public DriverLoaderDescriptor getDefaultDriverLoader() {
-        return null;
+        throw new IllegalStateException();
     }
 
     @NotNull
     @Override
     public DBPDriverLoader getDriverLoader(@NotNull DBPDataSourceContainer dataSourceContainer) {
-        return null;
+        throw new IllegalStateException();
+    }
+
+    @Override
+    public List<DBPDriverLoader> getAllDriverLoaders() {
+        return new ArrayList<>(driverLoaders.values());
+    }
+
+    @Override
+    public void validateFilesPresence(
+        @NotNull DBRProgressMonitor monitor,
+        @NotNull DBPDataSourceContainer dataSourceContainer
+    ) throws DBException {
+        getDriverLoader(dataSourceContainer).validateFilesPresence(monitor);
+    }
+
+    @Override
+    public void resetDriverInstance() {
+        for (DriverLoaderDescriptor dld : driverLoaders.values()) {
+            dld.resetDriverInstance();
+        }
     }
 
     @NotNull
@@ -1184,7 +1197,7 @@ public class DriverDescriptor extends AbstractDescriptor implements DBPDriver {
     @Override
     public DBPDriver createOriginalCopy() {
         DriverDescriptor driverCopy = getProviderDescriptor().createDriver(this);
-        for (DBPDriverLibrary lib : this.origFiles) {
+        for (DBPDriverLibrary lib : this.origLibraries) {
             if (lib instanceof DriverLibraryLocal && !lib.isCustom()) {
                 DBPDriverLibrary libCopy = ((DriverLibraryLocal) lib).copyLibrary(this);
                 libCopy.setDisabled(false);
@@ -1279,8 +1292,8 @@ public class DriverDescriptor extends AbstractDescriptor implements DBPDriver {
         return origInstantiable;
     }
 
-    public List<DBPDriverLibrary> getOrigFiles() {
-        return origFiles;
+    public List<DBPDriverLibrary> getOrigLibraries() {
+        return origLibraries;
     }
 
     @NotNull
@@ -1307,11 +1320,6 @@ public class DriverDescriptor extends AbstractDescriptor implements DBPDriver {
             return clientManager.getDefaultLocalClientLocation();
         }
         return null;
-    }
-
-    public void deleteDriverLibrary(DBPDriverLibrary library) {
-        resolvedFiles.remove(library);
-        libraries.remove(library);
     }
 
     @Override
@@ -1432,4 +1440,5 @@ public class DriverDescriptor extends AbstractDescriptor implements DBPDriver {
         }
         return false;
     }
+
 }

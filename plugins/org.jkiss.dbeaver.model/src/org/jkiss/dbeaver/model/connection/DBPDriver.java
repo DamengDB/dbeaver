@@ -19,12 +19,14 @@ package org.jkiss.dbeaver.model.connection;
 
 import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
+import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.model.DBPDataSourceContainer;
 import org.jkiss.dbeaver.model.DBPDataSourceProvider;
 import org.jkiss.dbeaver.model.DBPImage;
 import org.jkiss.dbeaver.model.DBPNamedObject;
 import org.jkiss.dbeaver.model.navigator.meta.DBXTreeNode;
 import org.jkiss.dbeaver.model.preferences.DBPPropertyDescriptor;
+import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 import org.jkiss.dbeaver.model.sql.SQLDialectMetadata;
 import org.jkiss.utils.Pair;
 
@@ -203,6 +205,15 @@ public interface DBPDriver extends DBPNamedObject, DBPDriverLibraryProvider {
     @NotNull
     DBPDriverLoader getDriverLoader(@NotNull DBPDataSourceContainer dataSourceContainer);
 
+    List<DBPDriverLoader> getAllDriverLoaders();
+
+    void validateFilesPresence(
+        @NotNull DBRProgressMonitor monitor,
+        @NotNull DBPDataSourceContainer dataSourceContainer
+    ) throws DBException;
+
+    void resetDriverInstance();
+
     @Nullable
     String getConnectionURL(DBPConnectionConfiguration configuration);
 
@@ -236,4 +247,5 @@ public interface DBPDriver extends DBPNamedObject, DBPDriverLibraryProvider {
      * Compare driverId to this driver and its replacements
      */
     boolean matchesId(@NotNull String driverId);
+
 }

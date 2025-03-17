@@ -55,65 +55,6 @@ import java.util.stream.Stream;
  */
 public abstract class DriverLoaderDescriptor implements DBPDriverLoader {
 
-    public static class DriverFileInfo {
-        private final String id;
-        private final String version;
-        private final DBPDriverLibrary.FileType type;
-        private final Path file;
-        private final String fileLocation;
-        private long fileCRC;
-
-        public DriverFileInfo(String id, String version, DBPDriverLibrary.FileType type, Path file, String fileLocation) {
-            this.id = id;
-            this.version = version;
-            this.file = file;
-            this.type = type;
-            this.fileLocation = fileLocation;
-        }
-
-        DriverFileInfo(DBPDriverLibrary library) {
-            this.id = library.getId();
-            this.version = library.getVersion();
-            this.file = library.getLocalFile();
-            this.type = library.getType();
-            this.fileLocation = library.getLocalFile() != null ? library.getLocalFile().toString() : library.getPath();
-            this.fileCRC = library.getFileCRC();
-        }
-
-        public Path getFile() {
-            return file;
-        }
-
-        public String getFileLocation() {
-            return fileLocation;
-        }
-
-        public String getId() {
-            return id;
-        }
-
-        public String getVersion() {
-            return version;
-        }
-
-        public DBPDriverLibrary.FileType getType() {
-            return type;
-        }
-
-        public long getFileCRC() {
-            return fileCRC;
-        }
-
-        public void setFileCRC(long fileCRC) {
-            this.fileCRC = fileCRC;
-        }
-
-        @Override
-        public String toString() {
-            return file != null ? file.getFileName().toString() : this.id;
-        }
-    }
-
     private static final Log log = Log.getLog(DriverLoaderDescriptor.class);
 
     private final DriverDescriptor driver;
@@ -134,6 +75,10 @@ public abstract class DriverLoaderDescriptor implements DBPDriverLoader {
 
     protected DriverLoaderDescriptor(DriverDescriptor driver) {
         this.driver = driver;
+    }
+
+    public DriverDescriptor getDriver() {
+        return driver;
     }
 
     public boolean isLoaded() {
@@ -340,8 +285,8 @@ public abstract class DriverLoaderDescriptor implements DBPDriverLoader {
                 List<DriverFileInfo> files = resolvedFiles.get(library);
                 if (files != null) {
                     for (DriverFileInfo file : files) {
-                        if (file.file != null && !result.contains(file.file)) {
-                            result.add(file.file);
+                        if (file.getFile() != null && !result.contains(file.getFile())) {
+                            result.add(file.getFile());
                         }
                     }
                 }
@@ -481,7 +426,7 @@ public abstract class DriverLoaderDescriptor implements DBPDriverLoader {
                             break;
                         }
                         for (DriverFileInfo file : files) {
-                            if (file.file == null || !Files.exists(getDriverFilePath(file))) {
+                            if (file.getFile() == null || !Files.exists(getDriverFilePath(file))) {
                                 allExists = false;
                                 break;
                             }
@@ -509,7 +454,7 @@ public abstract class DriverLoaderDescriptor implements DBPDriverLoader {
                 return false;
             } else {
                 for (DriverFileInfo file : files) {
-                    if (file.file == null || !Files.exists(getDriverFilePath(file))) {
+                    if (file.getFile() == null || !Files.exists(getDriverFilePath(file))) {
                         return false;
                     }
                 }
@@ -523,13 +468,13 @@ public abstract class DriverLoaderDescriptor implements DBPDriverLoader {
 
     private Path getDriverFilePath(DriverFileInfo file) {
         if (DBWorkbench.isDistributed()) {
-            return DriverDescriptor.getWorkspaceDriversStorageFolder().resolve(file.file);
+            return DriverDescriptor.getWorkspaceDriversStorageFolder().resolve(file.getFile());
         }
-        return file.file;
+        return file.getFile();
     }
 
 
-    Map<DBPDriverLibrary, List<DriverFileInfo>> getResolvedFiles() {
+    public Map<DBPDriverLibrary, List<DriverFileInfo>> getResolvedFiles() {
         return resolvedFiles;
     }
 
@@ -634,7 +579,7 @@ public abstract class DriverLoaderDescriptor implements DBPDriverLoader {
                             Files.createDirectories(localDriverFile.getParent());
                         }
 
-                        monitor.subTask("Load driver file '" + fileInfo.id + "'");
+                        monitor.subTask("Load driver file '" + fileInfo.getId() + "'");
                         byte[] fileData = fileController.loadFileData(
                             DBFileController.TYPE_DATABASE_DRIVER,
                             DriverUtils.getDistributedLibraryPath(fileInfo.getFile())
@@ -698,8 +643,24 @@ public abstract class DriverLoaderDescriptor implements DBPDriverLoader {
 
 
     /**
+     * Removes all resolved files associated with the given driver library.
+     * This effectively resets the library's file list to an empty state.
+     *
+     * @param library the driver library whose associated files should be removed
+     */
+    public void removeLibraryFiles(DBPDriverLibrary library) {
+        resolvedFiles.put(library, new ArrayList<>());
+    }
+
+    public void addLibraryFile(DBPDriverLibrary library, DriverFileInfo fileInfo) {
+        List<DriverFileInfo> files = resolvedFiles.computeIfAbsent(library, k -> new ArrayList<>());
+        files.add(fileInfo);
+    }
+
+    /**
      * Add resolved files to all libraries
      */
+    @Override
     public boolean resolveDriverFiles(Path targetFileLocation) {
         List<? extends DBPDriverLibrary> libraries = driver.getDriverLibraries();
         if (libraries.isEmpty()) {
@@ -837,7 +798,7 @@ public abstract class DriverLoaderDescriptor implements DBPDriverLoader {
         Path relPath = targetFileLocation.relativize(trgLocalFile);
         DriverFileInfo info = new DriverFileInfo(trgLocalFile.getFileName().toString(), null, library.getType(),
             relPath, trgLocalFile.toString());
-        info.fileCRC = DriverUtils.calculateFileCRC(srcLocalFile);
+        info.setFileCRC(DriverUtils.calculateFileCRC(srcLocalFile));
         return info;
     }
 
