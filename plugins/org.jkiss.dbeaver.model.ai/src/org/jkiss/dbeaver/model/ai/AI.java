@@ -51,6 +51,7 @@ public class AI {
      *
      * @param monitor the progress monitor
      * @param chatCompletionRequest the chat completion request
+     * @throws DBException if an error occurs
      */
     public Flow.Publisher<DAICompletionChunk> chat(
         @NotNull DBRProgressMonitor monitor,
@@ -84,6 +85,7 @@ public class AI {
      * Translate the specified text to SQL.
      *
      * @param monitor the progress monitor
+     * @param request the translate request
      * @return the translated SQL
      * @throws DBException if an error occurs
      */
@@ -127,6 +129,7 @@ public class AI {
      * Translate the specified user command to SQL.
      *
      * @param monitor the progress monitor
+     * @param request the command request
      * @return the command result
      * @throws DBException if an error occurs
      */

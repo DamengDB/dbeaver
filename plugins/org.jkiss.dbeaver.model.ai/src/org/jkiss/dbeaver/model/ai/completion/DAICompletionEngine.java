@@ -43,11 +43,27 @@ public interface DAICompletionEngine extends AISettingsEventListener {
      */
     int getContextWindowSize(@NotNull DBRProgressMonitor monitor);
 
+    /**
+     * Chat with the completion engine.
+     *
+     * @param monitor the progress monitor
+     * @param request the completion request
+     * @return the completion response
+     * @throws DBException if an error occurs
+     */
     DAICompletionResponse chat(
         @NotNull DBRProgressMonitor monitor,
         @NotNull DAICompletionRequest request
     ) throws DBException;
 
+    /**
+     * Chat with the completion engine and return a stream of completion chunks.
+     *
+     * @param monitor the progress monitor
+     * @param request the completion request
+     * @return the stream of completion chunks
+     * @throws DBException if an error occurs
+     */
     default Flow.Publisher<DAICompletionChunk> chatStream(
         @NotNull DBRProgressMonitor monitor,
         @NotNull DAICompletionRequest request
