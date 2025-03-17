@@ -39,7 +39,6 @@ import org.jkiss.dbeaver.model.impl.jdbc.exec.JDBCConnectionImpl;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 import org.jkiss.dbeaver.model.sql.DBSQLException;
 import org.jkiss.dbeaver.model.sql.SQLQuery;
-import org.jkiss.dbeaver.model.sql.SQLUtils;
 import org.jkiss.dbeaver.model.struct.rdb.DBSCatalog;
 import org.jkiss.dbeaver.model.struct.rdb.DBSForeignKeyModifyRule;
 import org.jkiss.dbeaver.model.struct.rdb.DBSTable;
@@ -324,7 +323,7 @@ public class SQLServerUtils {
         @NotNull SQLServerDataSource dataSource,
         @NotNull String ddl
     ) {
-        String firstKeyword = SQLUtils.getFirstKeyword(dataSource.getSQLDialect(), ddl);
+        String firstKeyword = getFirstDeclarationKeyWord(ddl);
         String replacement = dataSource.isAtLeastV16() ? "CREATE OR ALTER" : "ALTER";
         if ("CREATE".equalsIgnoreCase(firstKeyword)) {
             return ddl.replaceFirst(firstKeyword, replacement);
@@ -429,5 +428,19 @@ public class SQLServerUtils {
         }
 
         return e;
+    }
+
+    private static String getFirstDeclarationKeyWord(@NotNull String query) {
+        query = query.replaceAll("(?s)/\\*.*?\\*/", " ");
+        query = query.replaceAll("--.*", " ");
+        query = query.trim();
+
+        Pattern pattern = Pattern.compile("(?i)^(CREATE\\s+OR\\s+ALTER|\\w+)");
+        Matcher matcher = pattern.matcher(query);
+        if (matcher.find()) {
+            return matcher.group(1).toUpperCase();
+        }
+
+        return "";
     }
 }
