@@ -83,6 +83,7 @@ import org.jkiss.dbeaver.ui.data.IValueController;
 import org.jkiss.dbeaver.ui.data.managers.BaseValueManager;
 import org.jkiss.dbeaver.ui.editors.MultiPageAbstractEditor;
 import org.jkiss.dbeaver.ui.editors.TextEditorUtils;
+import org.jkiss.dbeaver.ui.internal.UIMessages;
 import org.jkiss.dbeaver.utils.GeneralUtils;
 import org.jkiss.utils.CommonUtils;
 import org.jkiss.utils.Pair;
@@ -420,8 +421,8 @@ public class ResultSetHandlerMain extends AbstractHandler implements IElementUpd
                 if (ApplicationPolicyProvider.getInstance().isPolicyEnabled(ApplicationPolicyProvider.POLICY_DATA_COPY)) {
                     UIUtils.showMessageBox(
                         HandlerUtil.getActiveShell(event),
-                        ResultSetMessages.dialog_policy_data_copy_title,
-                        ResultSetMessages.dialog_policy_data_copy_msg,
+                        UIMessages.dialog_policy_data_copy_title,
+                        UIMessages.dialog_policy_data_copy_msg,
                         SWT.ICON_WARNING
                     );
                 } else {
@@ -559,8 +560,8 @@ public class ResultSetHandlerMain extends AbstractHandler implements IElementUpd
             case CMD_EXPORT: {
                 if (ApplicationPolicyProvider.getInstance().isPolicyEnabled(ApplicationPolicyProvider.POLICY_DATA_EXPORT)) {
                     UIUtils.showMessageBox(HandlerUtil.getActiveShell(event),
-                        ResultSetMessages.dialog_policy_data_export_title,
-                        ResultSetMessages.dialog_policy_data_export_msg,
+                        UIMessages.dialog_policy_data_export_title,
+                        UIMessages.dialog_policy_data_export_msg,
                         SWT.ICON_WARNING);
                 } else {
                     if (event.getParameter(PARAM_EXPORT_WITH_PARAM) != null) {

@@ -24,6 +24,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.action.*;
 import org.eclipse.jface.dialogs.IDialogSettings;
+import org.eclipse.swt.SWT;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.actions.CompoundContributionItem;
 import org.eclipse.ui.commands.ICommandService;
@@ -59,6 +60,7 @@ import org.jkiss.dbeaver.ui.DBeaverIcons;
 import org.jkiss.dbeaver.ui.ShellUtils;
 import org.jkiss.dbeaver.ui.UIUtils;
 import org.jkiss.dbeaver.ui.controls.resultset.*;
+import org.jkiss.dbeaver.ui.internal.UIMessages;
 import org.jkiss.utils.CommonUtils;
 
 import java.nio.file.Path;
@@ -79,8 +81,16 @@ public class ResultSetHandlerOpenWith extends AbstractHandler implements IElemen
     public static final String PREF_OPEN_WITH_DEFAULT_PROCESSOR = "org.jkiss.dbeaver.core.resultset.openWith.defaultprocessor";
 
     @Override
-    public Object execute(ExecutionEvent event) throws ExecutionException
-    {
+    public Object execute(ExecutionEvent event) throws ExecutionException {
+        if (ApplicationPolicyProvider.getInstance().isPolicyEnabled(ApplicationPolicyProvider.POLICY_DATA_EXPORT)) {
+            UIUtils.showMessageBox(HandlerUtil.getActiveShell(event),
+                UIMessages.dialog_policy_data_export_title,
+                UIMessages.dialog_policy_data_export_msg,
+                SWT.ICON_WARNING
+            );
+            return null;
+        }
+
         IResultSetController resultSet = ResultSetHandlerMain.getActiveResultSet(HandlerUtil.getActivePart(event));
         if (resultSet == null) {
             return null;

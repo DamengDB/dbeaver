@@ -25,10 +25,10 @@ import org.jkiss.dbeaver.model.impl.DataSourceContextProvider;
 import org.jkiss.dbeaver.model.sql.SQLScriptContext;
 import org.jkiss.dbeaver.registry.ApplicationPolicyProvider;
 import org.jkiss.dbeaver.ui.UIUtils;
-import org.jkiss.dbeaver.ui.controls.resultset.internal.ResultSetMessages;
 import org.jkiss.dbeaver.ui.editors.EditorUtils;
 import org.jkiss.dbeaver.ui.editors.sql.SQLEditor;
 import org.jkiss.dbeaver.ui.editors.sql.SQLEditorParametersProvider;
+import org.jkiss.dbeaver.ui.internal.UIMessages;
 import org.jkiss.dbeaver.utils.RuntimeUtils;
 
 import java.io.StringWriter;
@@ -39,8 +39,8 @@ public class SQLEditorHandlerExportData extends AbstractHandler {
     public Object execute(ExecutionEvent event) throws ExecutionException {
         if (ApplicationPolicyProvider.getInstance().isPolicyEnabled(ApplicationPolicyProvider.POLICY_DATA_EXPORT)) {
             UIUtils.showMessageBox(HandlerUtil.getActiveShell(event),
-                ResultSetMessages.dialog_policy_data_export_title,
-                ResultSetMessages.dialog_policy_data_export_msg,
+                UIMessages.dialog_policy_data_export_title,
+                UIMessages.dialog_policy_data_export_msg,
                 SWT.ICON_WARNING);
             return null;
         }
