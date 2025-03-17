@@ -205,6 +205,7 @@ public interface DBPDriver extends DBPNamedObject, DBPDriverLibraryProvider {
     @NotNull
     DBPDriverLoader getDriverLoader(@NotNull DBPDataSourceContainer dataSourceContainer);
 
+    @NotNull
     List<DBPDriverLoader> getAllDriverLoaders();
 
     void validateFilesPresence(

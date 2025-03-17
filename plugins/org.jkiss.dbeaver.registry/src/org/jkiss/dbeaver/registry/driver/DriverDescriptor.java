@@ -160,7 +160,9 @@ public class DriverDescriptor extends AbstractDescriptor implements DBPDriver {
     private final Map<String, Object> customConnectionProperties = new HashMap<>();
     private final Map<String, Object> originalConnectionProperties = new HashMap<>();
 
-    private final Map<DriverLoaderConfig, DriverLoaderDescriptor> driverLoaders = new LinkedHashMap<>();
+    // Map of driver loaders. Key=auth model ID
+    private final Map<String, DriverLoaderDescriptor> driverLoaders = new LinkedHashMap<>();
+    private volatile DriverLoaderDescriptor defaultDriverLoader;
 
     static {
         Path driversHome = DriverDescriptor.getCustomDriversHome();
@@ -1025,19 +1027,37 @@ public class DriverDescriptor extends AbstractDescriptor implements DBPDriver {
 
     @NotNull
     @Override
-    public DriverLoaderDescriptor getDefaultDriverLoader() {
-        throw new IllegalStateException();
+    public synchronized DriverLoaderDescriptor getDefaultDriverLoader() {
+        if (defaultDriverLoader == null) {
+            defaultDriverLoader = new DriverLoaderDescriptor(this);
+        }
+        return defaultDriverLoader;
     }
 
     @NotNull
     @Override
     public DBPDriverLoader getDriverLoader(@NotNull DBPDataSourceContainer dataSourceContainer) {
-        throw new IllegalStateException();
+        DBPAuthModelDescriptor authModel = dataSourceContainer.getConnectionConfiguration().getAuthModelDescriptor();
+        DriverLoaderDescriptor loader = driverLoaders.get(authModel.getId());
+        if (loader != null) {
+            return loader;
+        }
+        if (authModel.getInstance() instanceof DBPDriverLibraryProvider amlp) {
+            if (!CommonUtils.isEmpty(amlp.getDriverLibraries())) {
+                DriverLoaderDescriptor dld = new DriverLoaderDescriptor(this);
+                dld.addLibraryProvider(amlp);
+            }
+        }
+        return getDefaultDriverLoader();
     }
 
+    @NotNull
     @Override
     public List<DBPDriverLoader> getAllDriverLoaders() {
-        return new ArrayList<>(driverLoaders.values());
+        ArrayList<DBPDriverLoader> loaders = new ArrayList<>();
+        loaders.add(getDefaultDriverLoader());
+        loaders.addAll(driverLoaders.values());
+        return loaders;
     }
 
     @Override

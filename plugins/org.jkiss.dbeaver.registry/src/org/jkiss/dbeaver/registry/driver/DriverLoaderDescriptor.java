@@ -27,6 +27,7 @@ import org.jkiss.dbeaver.model.DBPDataSourceProvider;
 import org.jkiss.dbeaver.model.app.DBPApplication;
 import org.jkiss.dbeaver.model.connection.DBPDriverDependencies;
 import org.jkiss.dbeaver.model.connection.DBPDriverLibrary;
+import org.jkiss.dbeaver.model.connection.DBPDriverLibraryProvider;
 import org.jkiss.dbeaver.model.connection.DBPDriverLoader;
 import org.jkiss.dbeaver.model.dpi.DBPApplicationDPI;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
@@ -53,11 +54,12 @@ import java.util.stream.Stream;
 /**
  * DriverLoaderDescriptor
  */
-public abstract class DriverLoaderDescriptor implements DBPDriverLoader {
+public class DriverLoaderDescriptor implements DBPDriverLoader {
 
     private static final Log log = Log.getLog(DriverLoaderDescriptor.class);
 
     private final DriverDescriptor driver;
+    private final List<DBPDriverLibraryProvider> libraryProviders = new ArrayList<>();
     private final Map<DBPDriverLibrary, List<DriverFileInfo>> resolvedFiles = new HashMap<>();
 
     /**
@@ -110,6 +112,10 @@ public abstract class DriverLoaderDescriptor implements DBPDriverLoader {
         this.isLoaded = false;
 
         this.resolvedFiles.clear();
+    }
+
+    public void addLibraryProvider(DBPDriverLibraryProvider libraryProvider) {
+        libraryProviders.add(libraryProvider);
     }
 
     private Object createDriverInstance()
@@ -244,7 +250,7 @@ public abstract class DriverLoaderDescriptor implements DBPDriverLoader {
 
     @Override
     public boolean needsExternalDependencies() {
-        for (DBPDriverLibrary library : driver.getDriverLibraries()) {
+        for (DBPDriverLibrary library : getAllLibraries()) {
             if (library.isDisabled() || library.isOptional() || !library.matchesCurrentPlatform()) {
                 continue;
             }
@@ -276,7 +282,7 @@ public abstract class DriverLoaderDescriptor implements DBPDriverLoader {
 
         List<Path> result = new ArrayList<>();
 
-        for (DBPDriverLibrary library : driver.getDriverLibraries()) {
+        for (DBPDriverLibrary library : getAllLibraries()) {
             if (library.isDisabled() || !library.matchesCurrentPlatform()) {
                 // Wrong OS or architecture
                 continue;
@@ -355,6 +361,16 @@ public abstract class DriverLoaderDescriptor implements DBPDriverLoader {
         return DriverUtils.extractZipArchives(result);
     }
 
+    private List<DBPDriverLibrary> getAllLibraries() {
+        List<DBPDriverLibrary> libraries = new ArrayList<>(driver.getDriverLibraries());
+        if (!libraryProviders.isEmpty()) {
+            for (DBPDriverLibraryProvider dlp : libraryProviders) {
+                libraries.addAll(dlp.getDriverLibraries());
+            }
+        }
+        return libraries;
+    }
+
     @Override
     public boolean downloadDriverLibraries(@NotNull DBRProgressMonitor monitor, boolean resetVersions) {
         final DriverDependencies dependencies = getDriverDependencies(resetVersions, false);
@@ -400,7 +416,7 @@ public abstract class DriverLoaderDescriptor implements DBPDriverLoader {
     public DriverDependencies getDriverDependencies(boolean resetVersions, boolean skipLicense) {
         boolean localLibsExists = false;
         final List<DBPDriverLibrary> downloadCandidates = new ArrayList<>();
-        for (DBPDriverLibrary library : driver.getDriverLibraries()) {
+        for (DBPDriverLibrary library : getAllLibraries()) {
             if (library.isDisabled()) {
                 // Nothing we can do about it
                 continue;
@@ -522,7 +538,7 @@ public abstract class DriverLoaderDescriptor implements DBPDriverLoader {
 
         final Map<DBPDriverLibrary, List<DriverFileInfo>> downloadCandidates = new LinkedHashMap<>();
         Path driverFolder = DriverDescriptor.getExternalDriversStorageFolder();
-        for (DBPDriverLibrary library : driver.getDriverLibraries()) {
+        for (DBPDriverLibrary library : getAllLibraries()) {
             if (monitor.isCanceled()) {
                 break;
             }
@@ -610,7 +626,7 @@ public abstract class DriverLoaderDescriptor implements DBPDriverLoader {
     }
 
     private void checkDriverVersion(DBRProgressMonitor monitor) throws IOException {
-        for (DBPDriverLibrary library : driver.getDriverLibraries()) {
+        for (DBPDriverLibrary library : getAllLibraries()) {
             final Collection<String> availableVersions = library.getAvailableVersions(monitor);
             if (!CommonUtils.isEmpty(availableVersions)) {
                 final String curVersion = library.getVersion();
@@ -662,7 +678,7 @@ public abstract class DriverLoaderDescriptor implements DBPDriverLoader {
      */
     @Override
     public boolean resolveDriverFiles(Path targetFileLocation) {
-        List<? extends DBPDriverLibrary> libraries = driver.getDriverLibraries();
+        List<? extends DBPDriverLibrary> libraries = getAllLibraries();
         if (libraries.isEmpty()) {
             return false;
         }
