@@ -322,6 +322,7 @@ public class CustomFormEditor {
                 editButton.setImage(DBeaverIcons.getImage(UIIcon.DOTS_BUTTON));
                 GridData gd = new GridData(SWT.END, SWT.NONE, false, true);
                 editButton.setLayoutData(gd);
+                editButton.setToolTipText(UIMessages.text_with_open_dialog_edit_text);
                 editButton.addSelectionListener(new SelectionAdapter() {
                     @Override
                     public void widgetSelected(SelectionEvent e) {
@@ -343,7 +344,6 @@ public class CustomFormEditor {
                         }
                     }
                 });
-                editButton.setToolTipText(UIMessages.text_with_open_dialog_edit_text);
                 GridData gdComposite = new GridData(SWT.FILL, SWT.TOP, true, false);
                 gdComposite.heightHint = textHeight + 6;
                 composite.setLayoutData(gdComposite);
