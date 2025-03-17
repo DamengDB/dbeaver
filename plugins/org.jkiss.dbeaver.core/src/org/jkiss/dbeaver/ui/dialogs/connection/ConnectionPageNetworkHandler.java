@@ -80,9 +80,6 @@ public class ConnectionPageNetworkHandler extends ConnectionWizardPage {
             log.error("Can't create network configurator '" + handlerDescriptor.getId() + "'", e);
             return;
         }
-        DBPDataSourceContainer dataSource = site.getActiveDataSource();
-
-        loadHandlerConfiguration(dataSource);
 
         Composite composite = new Composite(parent, SWT.NONE);
         composite.setLayout(new GridLayout(1, false));
@@ -101,26 +98,6 @@ public class ConnectionPageNetworkHandler extends ConnectionWizardPage {
 
         setControl(composite);
         refreshConfiguration();
-    }
-
-    private void loadHandlerConfiguration(DBPDataSourceContainer dataSource) {
-        DBPConnectionConfiguration cfg = dataSource.getConnectionConfiguration();
-
-        if (!CommonUtils.isEmpty(cfg.getConfigProfileName())) {
-            // Update config from profile
-            DBWNetworkProfile profile = dataSource.getRegistry().getNetworkProfile(cfg.getConfigProfileSource(), cfg.getConfigProfileName());
-            if (profile != null) {
-                handlerConfiguration = profile.getConfiguration(handlerDescriptor);
-            }
-        }
-        if (handlerConfiguration == null) {
-            handlerConfiguration = cfg.getHandler(handlerDescriptor.getId());
-        }
-
-        if (handlerConfiguration == null) {
-            handlerConfiguration = new DBWHandlerConfiguration(handlerDescriptor, dataSource);
-            cfg.updateHandler(handlerConfiguration);
-        }
     }
 
     @Override
@@ -158,6 +135,26 @@ public class ConnectionPageNetworkHandler extends ConnectionWizardPage {
         }
     }
 
+    public void setHandlerEnabled(boolean enabled) {
+        var handlerConfig = handlerConfiguration;
+        if (handlerConfig == null) {
+            handlerConfig = site.getActiveDataSource().getConnectionConfiguration().getHandler(handlerDescriptor.getId());
+        }
+        if (handlerConfig != null) {
+            handlerConfig.setEnabled(enabled);
+        }
+        refreshConfiguration();
+    }
+
+    /**
+     * Refreshes the configuration for this page, reverting all modifications made after page is loaded.
+     * <p>
+     * If an active profile is set, then the page's controls are disabled,
+     * and configuration is loaded from that profile.
+     * <p>
+     * Otherwise, page's controls are enabled, and configuration is loaded
+     * from the connection configuration, if present.
+     */
     public void refreshConfiguration() {
         DBWNetworkProfile profile = getActiveProfile();
         DBWHandlerConfiguration profileConfiguration = profile != null ? profile.getConfiguration(handlerDescriptor) : null;
@@ -179,11 +176,11 @@ public class ConnectionPageNetworkHandler extends ConnectionWizardPage {
         if (profile != null) {
             // Use configuration from the profile
             if (profileConfiguration != null && profileConfiguration.isEnabled()) {
-                handlerConfiguration = profileConfiguration;
+                handlerConfiguration = new DBWHandlerConfiguration(profileConfiguration);
             } else {
                 throw new IllegalStateException("Attempt to configure a handler with an active profile set that doesn't provide it");
             }
-        } else if (handlerConfiguration == null) {
+        } else {
             // Use configuration from the connection
             DBPDataSourceContainer dataSource = site.getActiveDataSource();
             DBPConnectionConfiguration configuration = dataSource.getConnectionConfiguration();

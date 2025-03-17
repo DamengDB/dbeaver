@@ -473,20 +473,20 @@ class ConnectionPageSettings extends ActiveWizardPage<ConnectionWizard> implemen
         }
     }
 
-    private boolean unselectProfile() {
-        Set<DBWHandlerDescriptor> handlers = new HashSet<>();
+    private boolean unselectProfile(boolean resultOfHandlerRemoval) {
+        Set<DBWHandlerDescriptor> handlerstoRemove = new HashSet<>();
         for (CTabItem item : tabFolder.getItems()) {
             if (item.getData() instanceof ConnectionPageNetworkHandler page) {
-                handlers.add(page.getHandlerDescriptor());
+                handlerstoRemove.add(page.getHandlerDescriptor());
             }
         }
 
-        if (!handlers.isEmpty()) {
+        if (handlerstoRemove.size() > (resultOfHandlerRemoval ? 1 : 0)) {
             Reply reply = MessageBoxBuilder.builder()
                 .setTitle("Change profile")
                 .setMessage(NLS.bind(
                     "Do you want to keep {0} after unselecting the active profile?",
-                    handlers.stream().map(DBWHandlerDescriptor::getCodeName).collect(Collectors.joining(", "))
+                    handlerstoRemove.stream().map(DBWHandlerDescriptor::getCodeName).collect(Collectors.joining(", "))
                 ))
                 .setPrimaryImage(DBIcon.STATUS_QUESTION)
                 .setReplies(REPLY_KEEP, REPLY_REMOVE, Reply.CANCEL)
@@ -494,15 +494,17 @@ class ConnectionPageSettings extends ActiveWizardPage<ConnectionWizard> implemen
                 .showMessageBox();
 
             if (reply == REPLY_KEEP) {
-                // do nothing
+                handlerstoRemove.clear();
             } else if (reply == REPLY_REMOVE) {
-                handlers.forEach(this::disableHandler);
+                // do nothing
             } else {
                 return false;
             }
         }
 
         selectProfile0(null);
+        handlerstoRemove.forEach(this::disableHandler);
+
         return true;
     }
 
@@ -570,23 +572,14 @@ class ConnectionPageSettings extends ActiveWizardPage<ConnectionWizard> implemen
             return;
         }
 
-        var dataSource = getActiveDataSource();
-        var configuration = dataSource.getConnectionConfiguration();
-        var handler = configuration.getHandler(descriptor.getId());
-
-        if (handler == null) {
-            handler = new DBWHandlerConfiguration(descriptor, dataSource);
-            configuration.updateHandler(handler);
-        }
-
-        handler.setEnabled(true);
-
-        var handlerIndex = Math.min(tabFolder.getItemCount(), ArrayUtils.indexOf(subPages, page) + 1 /* main tab */);
-        var handlerItem = createPageTab(page, handlerIndex);
+        var index = Math.min(tabFolder.getItemCount(), ArrayUtils.indexOf(subPages, page) + 1 /* main tab */);
+        var item = createPageTab(page, index);
 
         // TODO: Stop activating pages
-        tabFolder.setSelection(handlerItem);
+        tabFolder.setSelection(item);
         activateCurrentItem();
+
+        page.setHandlerEnabled(true);
     }
 
     private void disableHandler(@NotNull DBWHandlerDescriptor descriptor) {
@@ -597,13 +590,11 @@ class ConnectionPageSettings extends ActiveWizardPage<ConnectionWizard> implemen
             return;
         }
 
-        var handlerPage = (ConnectionPageNetworkHandler) item.getData();
-        var handlerDescriptor = handlerPage.getHandlerDescriptor();
-        var handlerConfig = getActiveDataSource().getConnectionConfiguration().getHandler(handlerDescriptor.getId());
+        tabFolder.setSelection(item);
+        activateCurrentItem();
 
-        if (handlerConfig != null) {
-            handlerConfig.setEnabled(false);
-        }
+        var page = (ConnectionPageNetworkHandler) item.getData();
+        page.setHandlerEnabled(false);
 
         item.dispose();
     }
@@ -635,7 +626,7 @@ class ConnectionPageSettings extends ActiveWizardPage<ConnectionWizard> implemen
         if (item.getShowClose() && tabFolder.getSelection() == item && confirmTabClose(item)) {
             var page = (ConnectionPageNetworkHandler) item.getData();
             var descriptor = page.getHandlerDescriptor();
-            if (unselectProfile()) {
+            if (unselectProfile(true)) {
                 disableHandler(descriptor);
                 return true;
             }
@@ -1015,7 +1006,7 @@ class ConnectionPageSettings extends ActiveWizardPage<ConnectionWizard> implemen
 
         @Override
         public void run() {
-            if (unselectProfile()) {
+            if (unselectProfile(false)) {
                 enableHandler(descriptor);
             }
         }
@@ -1050,7 +1041,7 @@ class ConnectionPageSettings extends ActiveWizardPage<ConnectionWizard> implemen
             if (profile != null) {
                 selectProfile(profile);
             } else {
-                unselectProfile();
+                unselectProfile(false);
             }
         }
 
