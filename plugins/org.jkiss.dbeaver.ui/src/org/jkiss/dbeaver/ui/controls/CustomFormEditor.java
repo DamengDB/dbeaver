@@ -343,6 +343,7 @@ public class CustomFormEditor {
                         }
                     }
                 });
+                editButton.setToolTipText(UIMessages.text_with_open_dialog_edit_text);
                 GridData gdComposite = new GridData(SWT.FILL, SWT.TOP, true, false);
                 gdComposite.heightHint = textHeight + 6;
                 composite.setLayoutData(gdComposite);
