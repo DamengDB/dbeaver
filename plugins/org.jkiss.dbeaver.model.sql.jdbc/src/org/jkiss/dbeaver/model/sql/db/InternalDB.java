@@ -54,7 +54,6 @@ public abstract class InternalDB<T extends InternalDatabaseConfig> {
     protected InternalDB(@NotNull String name, @NotNull T databaseConfig, @NotNull List<SQLSchemaConfig> configList) {
         this.databaseConfig = databaseConfig;
         this.name = name;
-        //fixme
         this.schemaConfigList = configList;
     }
 
