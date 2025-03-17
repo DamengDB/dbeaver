@@ -14,14 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jkiss.dbeaver.model.ai.utils;
+package org.jkiss.dbeaver.model.ai.completion;
 
-public final class AIPrompt {
-    public static final String SYSTEM_PROMPT = """
-        You are SQL assistant. You must produce SQL code for given prompt.
-        You must produce valid SQL statement enclosed with Markdown code block and terminated with semicolon.
-        All database object names should be properly escaped according to the SQL dialect.
-        All comments MUST be placed before query outside markdown code block.
-        Be polite.
-        """;
+public record DAITranslateRequest(
+    String text,
+    DAICompletionContext context
+) {
 }

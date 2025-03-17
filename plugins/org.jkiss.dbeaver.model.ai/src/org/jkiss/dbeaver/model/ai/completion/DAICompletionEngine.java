@@ -19,12 +19,10 @@ package org.jkiss.dbeaver.model.ai.completion;
 
 import org.jkiss.code.NotNull;
 import org.jkiss.dbeaver.DBException;
-import org.jkiss.dbeaver.model.ai.AIDescribeRequest;
 import org.jkiss.dbeaver.model.ai.AISettingsEventListener;
-import org.jkiss.dbeaver.model.ai.AIStreamingResponseHandler;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 
-import java.util.List;
+import java.util.concurrent.Flow;
 
 /**
  * Completion engine
@@ -45,65 +43,36 @@ public interface DAICompletionEngine extends AISettingsEventListener {
      */
     int getContextWindowSize(@NotNull DBRProgressMonitor monitor);
 
-    /**
-     * Sends a chat request to the completion engine.
-     *
-     * @param monitor  progress monitor
-     * @param context  completion context
-     * @param messages chat messages
-     * @param handler  response handler
-     */
-    void chat(
+    DAICompletionResponse chat(
         @NotNull DBRProgressMonitor monitor,
-        @NotNull DAICompletionContext context,
-        @NotNull List<DAIChatMessage> messages,
-        @NotNull AIStreamingResponseHandler handler
-    );
-
-    /**
-     * Sends a describe request to the completion engine.
-     *
-     * @param monitor         progress monitor
-     * @param context         completion context
-     * @param describeRequest describe request
-     * @param handler         response handler
-     */
-    void describe(
-        @NotNull DBRProgressMonitor monitor,
-        @NotNull DAICompletionContext context,
-        @NotNull AIDescribeRequest describeRequest,
-        @NotNull AIStreamingResponseHandler handler
-    );
-
-    /**
-     * Translates text to SQL.
-     *
-     * @param monitor progress monitor
-     * @param context completion context
-     * @param text    text to translate
-     * @return translated SQL
-     */
-    @NotNull
-    String translateTextToSql(
-        @NotNull DBRProgressMonitor monitor,
-        @NotNull DAICompletionContext context,
-        @NotNull String text
+        @NotNull DAICompletionRequest request
     ) throws DBException;
 
-    /**
-     * Translates a user command to SQL.
-     *
-     * @param monitor progress monitor
-     * @param context completion context
-     * @param text    command text
-     * @return command response
-     */
-    @NotNull
-    String command(
+    default Flow.Publisher<DAICompletionChunk> chatStream(
         @NotNull DBRProgressMonitor monitor,
-        @NotNull DAICompletionContext context,
-        @NotNull String text
-    ) throws DBException;
+        @NotNull DAICompletionRequest request
+    ) throws DBException {
+        DAICompletionResponse completionResponse = chat(monitor, request);
+        return subscriber -> {
+            subscriber.onSubscribe(new Flow.Subscription() {
+                private boolean isCompleted = false;
+
+                @Override
+                public void request(long n) {
+                    if (!isCompleted && n > 0) {
+                        subscriber.onNext(new DAICompletionChunk(completionResponse.text()));
+                        subscriber.onComplete();
+                        isCompleted = true;
+                    }
+                }
+
+                @Override
+                public void cancel() {
+                    // No action needed
+                }
+            });
+        };
+    }
 
     /**
      * Checks if the completion engine has a valid configuration.

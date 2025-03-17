@@ -25,21 +25,14 @@ import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.HttpException;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.model.ai.AIConstants;
-import org.jkiss.dbeaver.model.ai.AIDescribeRequest;
 import org.jkiss.dbeaver.model.ai.AISettingsRegistry;
-import org.jkiss.dbeaver.model.ai.AIStreamingResponseHandler;
-import org.jkiss.dbeaver.model.ai.completion.DAIChatMessage;
-import org.jkiss.dbeaver.model.ai.completion.DAIChatRole;
-import org.jkiss.dbeaver.model.ai.completion.DAICompletionContext;
-import org.jkiss.dbeaver.model.ai.completion.DAICompletionEngine;
-import org.jkiss.dbeaver.model.ai.utils.AIPrompt;
+import org.jkiss.dbeaver.model.ai.completion.*;
 import org.jkiss.dbeaver.model.ai.utils.AIUtils;
 import org.jkiss.dbeaver.model.ai.utils.DisposableLazyValue;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 
 import java.time.Duration;
 import java.util.List;
-import java.util.stream.Stream;
 
 public class OpenAICompletionEngine implements DAICompletionEngine {
     private static final Log log = Log.getLog(OpenAICompletionEngine.class);
@@ -69,17 +62,12 @@ public class OpenAICompletionEngine implements DAICompletionEngine {
     }
 
     @Override
-    public void chat(
+    public DAICompletionResponse chat(
         @NotNull DBRProgressMonitor monitor,
-        @NotNull DAICompletionContext context,
-        @NotNull List<DAIChatMessage> messages,
-        @NotNull AIStreamingResponseHandler handler
-    ) {
-        try {
-            doChat(monitor, context, messages, handler);
-        } catch (Exception e) {
-            handler.onError(e);
-        }
+        @NotNull DAICompletionRequest request
+    ) throws DBException {
+        ChatCompletionResult completionResult = complete(monitor, request.messages(), AIConstants.MAX_RESPONSE_TOKENS);
+        return new DAICompletionResponse(completionResult.getChoices().get(0).getMessage().getContent());
     }
 
     @Override
@@ -89,80 +77,6 @@ public class OpenAICompletionEngine implements DAICompletionEngine {
         } catch (DBException e) {
             log.error("Error disposing OpenAI service", e);
         }
-    }
-
-    private void doChat(
-        @NotNull DBRProgressMonitor monitor,
-        DAICompletionContext context,
-        List<DAIChatMessage> messages,
-        AIStreamingResponseHandler handler
-    ) throws DBException {
-        List<DAIChatMessage> chatMessages = Stream.concat(
-            Stream.of(
-                DAIChatMessage.systemMessage(AIPrompt.SYSTEM_PROMPT),
-                context.asSystemMessage(monitor, getContextWindowSize(monitor))
-            ),
-            messages.stream()
-        ).toList();
-
-        ChatCompletionResult completionResult = complete(
-            monitor,
-            chatMessages,
-            AIConstants.MAX_RESPONSE_TOKENS
-        );
-
-        handler.onNext(completionResult.getChoices().get(0).getMessage().getContent());
-        handler.onComplete();
-    }
-
-    @Override
-    public void describe(
-        @NotNull DBRProgressMonitor monitor,
-        @NotNull DAICompletionContext context,
-        @NotNull AIDescribeRequest describeRequest,
-        @NotNull AIStreamingResponseHandler handler
-    ) {
-
-    }
-
-    @NotNull
-    @Override
-    public String translateTextToSql(@NotNull DBRProgressMonitor monitor, @NotNull DAICompletionContext context, @NotNull String text) throws DBException {
-        List<DAIChatMessage> chatMessages = Stream.of(
-            DAIChatMessage.systemMessage(AIPrompt.SYSTEM_PROMPT),
-            context.asSystemMessage(monitor, getContextWindowSize(monitor)),
-            new DAIChatMessage(DAIChatRole.USER, text)
-        ).toList();
-
-        ChatCompletionResult completionResult = complete(
-            monitor,
-            chatMessages,
-            AIConstants.MAX_RESPONSE_TOKENS
-        );
-
-        return completionResult.getChoices().get(0).getMessage().getContent();
-    }
-
-    @NotNull
-    @Override
-    public String command(
-        @NotNull DBRProgressMonitor monitor,
-        @NotNull DAICompletionContext context,
-        @NotNull String text
-    ) throws DBException {
-        List<DAIChatMessage> chatMessages = Stream.of(
-            DAIChatMessage.systemMessage(AIPrompt.SYSTEM_PROMPT),
-            context.asSystemMessage(monitor, getContextWindowSize(monitor)),
-            new DAIChatMessage(DAIChatRole.USER, text)
-        ).toList();
-
-        ChatCompletionResult completionResult = complete(
-            monitor,
-            chatMessages,
-            AIConstants.MAX_RESPONSE_TOKENS
-        );
-
-        return completionResult.getChoices().get(0).getMessage().getContent();
     }
 
     @Override
@@ -176,8 +90,13 @@ public class OpenAICompletionEngine implements DAICompletionEngine {
         List<DAIChatMessage> messages,
         int maxTokens
     ) throws DBException {
-        List<DAIChatMessage> truncatedMessages = AIUtils.truncateMessages(true, messages, getContextWindowSize(monitor));
-        ChatCompletionRequest request = ChatCompletionRequest.builder()
+        List<DAIChatMessage> truncatedMessages = AIUtils.truncateMessages(
+            true,
+            messages,
+            getContextWindowSize(monitor)
+        );
+
+        ChatCompletionRequest completionRequest = ChatCompletionRequest.builder()
             .messages(fromMessages(truncatedMessages))
             .temperature(OpenAISettings.INSTANCE.temperature())
             .frequencyPenalty(0.0)
@@ -187,7 +106,7 @@ public class OpenAICompletionEngine implements DAICompletionEngine {
             .model(OpenAISettings.INSTANCE.model().getName())
             .build();
 
-        return openAiService.evaluate().createChatCompletion(monitor, request);
+        return openAiService.evaluate().createChatCompletion(monitor, completionRequest);
     }
 
     private static List<ChatMessage> fromMessages(List<DAIChatMessage> messages) {

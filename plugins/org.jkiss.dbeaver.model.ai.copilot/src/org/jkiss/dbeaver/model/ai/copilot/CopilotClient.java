@@ -19,6 +19,7 @@ package org.jkiss.dbeaver.model.ai.copilot;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.Strictness;
+import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.HttpException;
 import org.jkiss.dbeaver.model.ai.copilot.dto.CopilotChatRequest;
 import org.jkiss.dbeaver.model.ai.copilot.dto.CopilotChatResponse;
@@ -26,10 +27,13 @@ import org.jkiss.dbeaver.model.ai.copilot.dto.CopilotSessionToken;
 import org.jkiss.dbeaver.model.ai.utils.HttpUtils;
 import org.jkiss.dbeaver.model.ai.utils.MonitoredHttpClient;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
+import org.jkiss.utils.CommonUtils;
 
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.time.Duration;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class CopilotClient implements AutoCloseable {
     private static final Duration TIMEOUT = Duration.ofSeconds(30);
@@ -44,8 +48,59 @@ public class CopilotClient implements AutoCloseable {
     private static final String EDITOR_PLUGIN_VERSION = "copilot.vim/1.16.0"; // TODO replace after partnership
     private static final String USER_AGENT = "GithubCopilot/1.155.0";
     private static final String CHAT_EDITOR_VERSION = "vscode/1.80.1"; // TODO replace after partnership
+    private static final String DBEAVER_OAUTH_APP = "Iv1.b507a08c87ecfe98";
 
     private final MonitoredHttpClient client = new MonitoredHttpClient(HttpClient.newBuilder().build());
+
+    public ResponseDataDTO requestAuth(
+        DBRProgressMonitor monitor
+    ) throws DBException {
+        RequestAccessContentDTO requestAccessContent = new RequestAccessContentDTO(DBEAVER_OAUTH_APP, "read:user");
+        HttpRequest post = HttpRequest.newBuilder()
+            .uri(HttpUtils.resolve("https://github.com/login/device/code"))
+            .header("accept", "application/json")
+            .header("content-type", "application/json")
+            .header("accept-encoding", "deflate")
+            .timeout(java.time.Duration.ofSeconds(10)) // Set timeout
+            .POST(HttpRequest.BodyPublishers.ofString(GSON.toJson(requestAccessContent)))
+            .build();
+
+        return client.send(monitor, post, ResponseDataDTO.class);
+    }
+
+    public String requestAccessToken(
+        String deviceCode,
+        DBRProgressMonitor monitor
+    ) throws InterruptedException, TimeoutException, DBException {
+        String accessToken;
+        long duration = System.currentTimeMillis();
+        long timeoutValue = duration + 100000;
+        while (duration < timeoutValue) {
+            AccessTokenRequestBodyDTO requestAccessToken = new AccessTokenRequestBodyDTO(
+                DBEAVER_OAUTH_APP,
+                deviceCode,
+                "urn:ietf:params:oauth:grant-type:device_code"
+            );
+            HttpRequest post = HttpRequest.newBuilder()
+                .uri(HttpUtils.resolve("https://github.com/login/oauth/access_token"))
+                .header("accept", "application/json")
+                .header("content-type", "application/json")
+                .header("accept-encoding", "deflate")
+                .timeout(java.time.Duration.ofSeconds(10)) // Set timeout
+                .POST(HttpRequest.BodyPublishers.ofString(GSON.toJson(requestAccessToken)))
+                .build();
+
+            GithubAccessTokenDataDTO githubAccessTokenData = client.send(monitor, post, GithubAccessTokenDataDTO.class);
+
+            if (!CommonUtils.isEmpty(githubAccessTokenData.access_token())) {
+                accessToken = githubAccessTokenData.access_token;
+                return accessToken;
+            }
+            TimeUnit.MILLISECONDS.sleep(10000);
+            duration = System.currentTimeMillis();
+        }
+        throw new TimeoutException("OAuth");
+    }
 
     public CopilotSessionToken sessionToken(
         DBRProgressMonitor monitor,
@@ -84,5 +139,27 @@ public class CopilotClient implements AutoCloseable {
     @Override
     public void close() {
         client.close();
+    }
+
+    @SuppressWarnings("checkstyle:RecordComponentName")
+    public record ResponseDataDTO(String device_code, String user_code, String verification_uri) {
+    }
+
+    @SuppressWarnings("checkstyle:RecordComponentName")
+    protected record RequestAccessContentDTO(String client_id, String scope) {
+
+    }
+
+    @SuppressWarnings("checkstyle:RecordComponentName")
+    protected record AccessTokenRequestBodyDTO(String client_id, String device_code, String grant_type) {
+    }
+
+    @SuppressWarnings("checkstyle:RecordComponentName")
+    protected record GithubAccessTokenDataDTO(String access_token) {
+    }
+
+    @SuppressWarnings("checkstyle:RecordComponentName")
+    protected record CopilotSessionTokenDTO(String token) {
+
     }
 }

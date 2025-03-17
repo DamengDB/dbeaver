@@ -21,6 +21,7 @@ import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.model.DBPDataSource;
 import org.jkiss.dbeaver.model.DBPDataSourceContainer;
 import org.jkiss.dbeaver.model.ai.*;
+import org.jkiss.dbeaver.model.ai.completion.DAICommandRequest;
 import org.jkiss.dbeaver.model.ai.completion.DAICompletionContext;
 import org.jkiss.dbeaver.model.ai.completion.DAICompletionScope;
 import org.jkiss.dbeaver.model.ai.completion.DAICompletionSettings;
@@ -103,7 +104,7 @@ public class SQLCommandAI implements SQLControlCommandHandler {
         }
         final DAICompletionContext aiContext = contextBuilder.build();
 
-        CommandResult result = ai.command(monitor, aiContext, prompt);
+        CommandResult result = ai.command(monitor, new DAICommandRequest(prompt, aiContext));
 
         if (result.sql() == null && result.message() != null) {
             throw new DBException(result.message());

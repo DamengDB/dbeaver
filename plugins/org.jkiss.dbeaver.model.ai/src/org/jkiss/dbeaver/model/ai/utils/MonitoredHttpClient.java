@@ -88,6 +88,7 @@ public class MonitoredHttpClient implements AutoCloseable {
 
     @Override
     public void close() {
-        client.close();
+        //TODO should be uncommented when transition to java 21 is complete
+        //client.close();
     }
 }

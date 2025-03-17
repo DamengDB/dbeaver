@@ -34,6 +34,7 @@ import org.jkiss.dbeaver.model.DBPDataSourceContainer;
 import org.jkiss.dbeaver.model.ai.*;
 import org.jkiss.dbeaver.model.ai.completion.DAICompletionContext;
 import org.jkiss.dbeaver.model.ai.completion.DAICompletionSettings;
+import org.jkiss.dbeaver.model.ai.completion.DAITranslateRequest;
 import org.jkiss.dbeaver.model.ai.utils.InMemoryHistoryManager;
 import org.jkiss.dbeaver.model.exec.DBCExecutionContext;
 import org.jkiss.dbeaver.model.exec.DBCExecutionContextDefaults;
@@ -201,7 +202,7 @@ public class AITranslateHandler extends AbstractHandler {
                     .setFormatter(AIFormatterRegistry.getInstance().getFormatter(AIConstants.CORE_FORMATTER))
                     .build();
 
-                sql.set(ai.translateTextToSql(monitor, context, userInput));
+                sql.set(ai.translateTextToSql(monitor, new DAITranslateRequest(userInput, context)));
             } catch (Exception e) {
                 throw new InvocationTargetException(e);
             }

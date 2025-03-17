@@ -19,23 +19,20 @@ package org.jkiss.dbeaver.model.ai.copilot;
 import org.jkiss.code.NotNull;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
-import org.jkiss.dbeaver.model.ai.AIDescribeRequest;
 import org.jkiss.dbeaver.model.ai.AISettingsRegistry;
-import org.jkiss.dbeaver.model.ai.AIStreamingResponseHandler;
 import org.jkiss.dbeaver.model.ai.completion.DAIChatMessage;
-import org.jkiss.dbeaver.model.ai.completion.DAIChatRole;
-import org.jkiss.dbeaver.model.ai.completion.DAICompletionContext;
 import org.jkiss.dbeaver.model.ai.completion.DAICompletionEngine;
+import org.jkiss.dbeaver.model.ai.completion.DAICompletionRequest;
+import org.jkiss.dbeaver.model.ai.completion.DAICompletionResponse;
 import org.jkiss.dbeaver.model.ai.copilot.dto.CopilotChatRequest;
 import org.jkiss.dbeaver.model.ai.copilot.dto.CopilotChatResponse;
 import org.jkiss.dbeaver.model.ai.copilot.dto.CopilotMessage;
 import org.jkiss.dbeaver.model.ai.copilot.dto.CopilotSessionToken;
 import org.jkiss.dbeaver.model.ai.openai.OpenAIModel;
-import org.jkiss.dbeaver.model.ai.utils.AIPrompt;
+import org.jkiss.dbeaver.model.ai.utils.AIUtils;
 import org.jkiss.dbeaver.model.ai.utils.DisposableLazyValue;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class CopilotCompletionEngine implements DAICompletionEngine {
@@ -66,88 +63,28 @@ public class CopilotCompletionEngine implements DAICompletionEngine {
     }
 
     @Override
-    public void chat(
+    public DAICompletionResponse chat(
         @NotNull DBRProgressMonitor monitor,
-        @NotNull DAICompletionContext context,
-        @NotNull List<DAIChatMessage> messages,
-        @NotNull AIStreamingResponseHandler handler
-    ) {
-        try {
-            List<DAIChatMessage> chatMessages = new ArrayList<>();
-            chatMessages.add(new DAIChatMessage(DAIChatRole.SYSTEM, AIPrompt.SYSTEM_PROMPT));
-            chatMessages.add(context.asSystemMessage(monitor, getContextWindowSize(monitor)));
-            chatMessages.addAll(messages);
-
-            CopilotChatResponse chatResponse = requestChatCompletion(monitor, chatMessages);
-
-            String completion = chatResponse.choices().stream()
-                .findFirst().orElseThrow()
-                .message()
-                .content();
-
-            handler.onNext(completion);
-            handler.onComplete();
-        } catch (Exception e) {
-            handler.onError(e);
-        }
-    }
-
-    @Override
-    public void describe(
-        @NotNull DBRProgressMonitor monitor,
-        @NotNull DAICompletionContext context,
-        @NotNull AIDescribeRequest describeRequest,
-        @NotNull AIStreamingResponseHandler handler
-    ) {
-
-    }
-
-    @NotNull
-    @Override
-    public String translateTextToSql(
-        @NotNull DBRProgressMonitor monitor,
-        @NotNull DAICompletionContext context,
-        @NotNull String text
+        @NotNull DAICompletionRequest request
     ) throws DBException {
-        List<DAIChatMessage> chatMessages = new ArrayList<>();
-        chatMessages.add(new DAIChatMessage(DAIChatRole.SYSTEM, AIPrompt.SYSTEM_PROMPT));
-        chatMessages.add(context.asSystemMessage(monitor, getContextWindowSize(monitor)));
-        chatMessages.add(new DAIChatMessage(DAIChatRole.USER, text));
-
-
-        CopilotChatResponse chatResponse = requestChatCompletion(
-            monitor,
-            chatMessages
+        List<DAIChatMessage> messages = AIUtils.truncateMessages(
+            true,
+            request.messages(),
+            getContextWindowSize(monitor)
         );
 
-        return chatResponse.choices().stream()
-            .findFirst().orElseThrow()
-            .message()
-            .content();
-    }
+        CopilotChatRequest chatRequest = CopilotChatRequest.builder()
+            .withModel(CopilotSettings.INSTANCE.modelName())
+            .withMessages(messages.stream().map(CopilotMessage::from).toList())
+            .withTemperature(CopilotSettings.INSTANCE.temperature())
+            .withStream(false)
+            .withIntent(false)
+            .withTopP(1)
+            .withN(1)
+            .build();
 
-    @NotNull
-    @Override
-    public String command(
-        @NotNull DBRProgressMonitor monitor,
-        @NotNull DAICompletionContext context,
-        @NotNull String text
-    ) throws DBException {
-        List<DAIChatMessage> chatMessages = new ArrayList<>();
-        chatMessages.add(new DAIChatMessage(DAIChatRole.SYSTEM, AIPrompt.SYSTEM_PROMPT));
-        chatMessages.add(context.asSystemMessage(monitor, getContextWindowSize(monitor)));
-        chatMessages.add(new DAIChatMessage(DAIChatRole.USER, text));
-
-
-        CopilotChatResponse chatResponse = requestChatCompletion(
-            monitor,
-            chatMessages
-        );
-
-        return chatResponse.choices().stream()
-            .findFirst().orElseThrow()
-            .message()
-            .content();
+        CopilotChatResponse chatResponse = client.evaluate().chat(monitor, requestSessionToken(monitor).token(), chatRequest);
+        return new DAICompletionResponse(chatResponse.choices().get(0).message().content());
     }
 
     @Override
@@ -167,23 +104,6 @@ public class CopilotCompletionEngine implements DAICompletionEngine {
         synchronized (this) {
             sessionToken = null;
         }
-    }
-
-    private CopilotChatResponse requestChatCompletion(
-        @NotNull DBRProgressMonitor monitor,
-        List<DAIChatMessage> messages
-    ) throws DBException {
-        CopilotChatRequest chatRequest = CopilotChatRequest.builder()
-            .withModel(CopilotSettings.INSTANCE.modelName())
-            .withMessages(messages.stream().map(CopilotMessage::from).toList())
-            .withTemperature(CopilotSettings.INSTANCE.temperature())
-            .withStream(false)
-            .withIntent(false)
-            .withTopP(1)
-            .withN(1)
-            .build();
-
-        return client.evaluate().chat(monitor, requestSessionToken(monitor).token(), chatRequest);
     }
 
     private CopilotSessionToken requestSessionToken(@NotNull DBRProgressMonitor monitor) throws DBException {
