@@ -316,18 +316,8 @@ public class SQLServerUtils {
     }
 
     /**
-     * Modifies the provided DDL statement by replacing the first occurrence of the "CREATE" keyword with
-     * an appropriate alternative based on the SQL Server version.
-     * <p>
      * If the data source indicates that it is running on SQL Server 2016 SP1 or later (i.e. version 16 or above),
      * the "CREATE" keyword is replaced with "CREATE OR ALTER". Otherwise, it is replaced with "ALTER".
-     * <p>
-     * This method uses the SQL dialect provided by the {@link SQLServerDataSource#getSQLDialect()} method
-     * to correctly determine the first keyword in the DDL statement.
-     *
-     * @param dataSource the SQL Server data source, used to determine the SQL dialect and version
-     * @param ddl        the DDL statement in which the keyword replacement is to be performed
-     * @return the modified DDL statement if the first keyword was "CREATE", otherwise returns the original DDL statement
      */
     @NotNull
     public static String changeCreateToAlterDDL(
