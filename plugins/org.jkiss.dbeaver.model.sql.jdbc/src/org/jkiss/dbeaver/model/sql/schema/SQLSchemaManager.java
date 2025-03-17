@@ -167,6 +167,13 @@ public final class SQLSchemaManager {
         try (Reader ddlStream = scriptSource.openSchemaCreateScript(monitor)) {
             executeScript(monitor, connection, ddlStream, false);
         }
+        // Update schema version
+        versionManager.updateCurrentSchemaVersion(
+            monitor,
+            connection,
+            databaseConfig.getSchema(),
+            versionManager.getLatestSchemaVersion()
+        );
         internalDb.fillInitialSchemaData(monitor, connection);
     }
 
