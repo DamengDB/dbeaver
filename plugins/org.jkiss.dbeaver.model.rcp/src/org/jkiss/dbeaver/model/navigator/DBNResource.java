@@ -425,6 +425,7 @@ public class DBNResource extends DBNNode implements DBNStreamData, DBNNodeWithCa
                     return adapter.cast(file.getContents());
                 } catch (CoreException e) {
                     log.error("Error get file content");
+                    throw new RuntimeException(e);
                 }
             }
         }

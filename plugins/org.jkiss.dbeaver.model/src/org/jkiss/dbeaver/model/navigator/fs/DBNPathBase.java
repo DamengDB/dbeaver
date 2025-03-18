@@ -288,14 +288,19 @@ public abstract class DBNPathBase extends DBNNode implements DBNLazyNode {
                 }
                 Path resource = node.getAdapter(Path.class);
                 if (resource == null) {
-                    InputStream adapter = node.getAdapter(InputStream.class);
-                    if (adapter != null) {
-                        String fileName = node.getNodeDisplayName();
-                        copyInputStream(adapter, folder, fileName);
-                        continue;
+                    monitor.subTask("Copy file");
+                    try {
+                        InputStream adapter = node.getAdapter(InputStream.class);
+                        if (adapter != null) {
+                            String fileName = node.getNodeDisplayName();
+                            copyInputStream(adapter, folder, fileName);
+                        }
+                    } finally {
+                        monitor.worked(1);
                     }
+                    continue;
                 }
-                if (resource == null || !Files.exists(resource)) {
+                if (Files.notExists(resource)) {
                     log.debug("Resource " + resource + " doesn't not exists");
                     continue;
                 }
