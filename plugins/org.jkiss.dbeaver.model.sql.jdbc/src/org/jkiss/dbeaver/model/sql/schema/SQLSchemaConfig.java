@@ -24,6 +24,7 @@ public record SQLSchemaConfig(
     @NotNull String updateScriptPrefix,
     int schemaVersionActual,
     int schemaVersionObsolete,
-    @NotNull SQLSchemaVersionManager versionManager
+    @NotNull SQLSchemaVersionManager versionManager,
+    @NotNull ClassLoader classLoader
 ) {
 }

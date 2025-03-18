@@ -26,8 +26,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.net.URL;
-import java.util.Enumeration;
 
 /**
  * Script source which reads scripts from class loader
@@ -62,23 +60,11 @@ public class ClassLoaderScriptSource implements SQLSchemaScriptSource {
         @Nullable String specificPrefix
     ) throws IOException, DBException {
         String migrationFileNameWithSpecificPrefix = updateScriptPrefix + versionNumber + "_" + specificPrefix + ".sql";
-        verifySingleResource(migrationFileNameWithSpecificPrefix);
         String migrationFileName = updateScriptPrefix + versionNumber + ".sql";
-        verifySingleResource(migrationFileName);
         InputStream resource = classLoader.getResourceAsStream(migrationFileNameWithSpecificPrefix);
         if (resource == null) {
             resource = classLoader.getResourceAsStream(migrationFileName);
         }
         return resource == null ? null : new InputStreamReader(resource);
-    }
-
-    private void verifySingleResource(@NotNull String fileName) throws DBException, IOException {
-        Enumeration<URL> resources = classLoader.getResources(fileName);
-        if (resources.hasMoreElements()) {
-            resources.nextElement();
-            if (resources.hasMoreElements()) {
-                throw new DBException("Multiple migration files with name: " + fileName + " detected. Expected only one.");
-            }
-        }
     }
 }

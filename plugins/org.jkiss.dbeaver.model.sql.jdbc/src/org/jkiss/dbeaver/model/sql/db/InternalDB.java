@@ -34,13 +34,13 @@ import org.jkiss.dbeaver.model.sql.schema.SQLSchemaConfig;
 import org.jkiss.dbeaver.model.sql.schema.SQLSchemaManager;
 import org.jkiss.utils.CommonUtils;
 
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.Driver;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Properties;
+import javax.sql.DataSource;
 
 public abstract class InternalDB<T extends InternalDatabaseConfig> {
     private static final Log log = Log.getLog(InternalDB.class);
@@ -122,8 +122,7 @@ public abstract class InternalDB<T extends InternalDatabaseConfig> {
 
     protected void updateSchema(
         @NotNull DBRProgressMonitor monitor,
-        @NotNull Connection connection,
-        @NotNull ClassLoader classLoader
+        @NotNull Connection connection
     ) throws DBException {
 
         List<SQLSchemaConfig> schemaConfigList = getSchemaConfigList();
@@ -132,7 +131,7 @@ public abstract class InternalDB<T extends InternalDatabaseConfig> {
             SQLSchemaManager schemaManager = new SQLSchemaManager(
                 schemaConfig.schemaId(),
                 new ClassLoaderScriptSource(
-                    classLoader,
+                    schemaConfig.classLoader(),
                     schemaConfig.createScriptPath(),
                     schemaConfig.updateScriptPrefix()
                 ),
@@ -208,6 +207,9 @@ public abstract class InternalDB<T extends InternalDatabaseConfig> {
         return schemaConfigList;
     }
 
+    /**
+     * Fill initial schema data after schema creation
+     */
     public void fillInitialSchemaData(DBRProgressMonitor monitor, Connection connection) throws DBException, SQLException {
     }
 }
