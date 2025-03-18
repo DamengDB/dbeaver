@@ -38,7 +38,9 @@ import org.jkiss.dbeaver.model.impl.jdbc.JDBCUtils;
 import org.jkiss.dbeaver.model.impl.jdbc.exec.JDBCConnectionImpl;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 import org.jkiss.dbeaver.model.sql.DBSQLException;
+import org.jkiss.dbeaver.model.sql.SQLDialect;
 import org.jkiss.dbeaver.model.sql.SQLQuery;
+import org.jkiss.dbeaver.model.sql.SQLUtils;
 import org.jkiss.dbeaver.model.struct.rdb.DBSCatalog;
 import org.jkiss.dbeaver.model.struct.rdb.DBSForeignKeyModifyRule;
 import org.jkiss.dbeaver.model.struct.rdb.DBSTable;
@@ -323,12 +325,24 @@ public class SQLServerUtils {
         @NotNull SQLServerDataSource dataSource,
         @NotNull String ddl
     ) {
-        String firstKeyword = getFirstDeclarationKeyWord(ddl);
-        String replacement = dataSource.isAtLeastV16() ? "CREATE OR ALTER" : "ALTER";
-        if ("CREATE".equalsIgnoreCase(firstKeyword)) {
+        var sqlDialect = dataSource.getSQLDialect();
+        var firstKeyword = SQLUtils.getFirstKeyword(sqlDialect, ddl);
+        var replacement = dataSource.isAtLeastV16() ? "CREATE OR ALTER" : "ALTER";
+        var strippedQuery = SQLUtils.stripComments(sqlDialect, ddl);
+        var fullDeclarationFirstKeyWord = getFullDeclarationFirstKeyWord(strippedQuery);
+        if ("CREATE".equalsIgnoreCase(firstKeyword) && !"CREATE OR ALTER".equalsIgnoreCase(fullDeclarationFirstKeyWord)) {
             return ddl.replaceFirst(firstKeyword, replacement);
         }
         return ddl;
+    }
+
+    private static String getFullDeclarationFirstKeyWord(@NotNull String ddl) {
+        var pattern = Pattern.compile("(CREATE\\s+OR\\s+ALTER|\\w+)");
+        var matcher = pattern.matcher(ddl);
+        if (matcher.find()) {
+            return matcher.group(1).toUpperCase();
+        }
+        return "";
     }
 
     /**
@@ -428,19 +442,5 @@ public class SQLServerUtils {
         }
 
         return e;
-    }
-
-    private static String getFirstDeclarationKeyWord(@NotNull String query) {
-        query = query.replaceAll("(?s)/\\*.*?\\*/", " ");
-        query = query.replaceAll("--.*", " ");
-        query = query.trim();
-
-        Pattern pattern = Pattern.compile("(?i)^(CREATE\\s+OR\\s+ALTER|\\w+)");
-        Matcher matcher = pattern.matcher(query);
-        if (matcher.find()) {
-            return matcher.group(1).toUpperCase();
-        }
-
-        return "";
     }
 }
