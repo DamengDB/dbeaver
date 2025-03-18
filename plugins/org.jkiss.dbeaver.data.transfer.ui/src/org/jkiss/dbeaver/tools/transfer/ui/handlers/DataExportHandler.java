@@ -26,6 +26,7 @@ import org.jkiss.dbeaver.tools.transfer.IDataTransferNode;
 import org.jkiss.dbeaver.tools.transfer.database.DatabaseTransferProducer;
 import org.jkiss.dbeaver.tools.transfer.ui.internal.DTUIMessages;
 import org.jkiss.dbeaver.ui.UIUtils;
+import org.jkiss.dbeaver.ui.internal.UIMessages;
 import org.jkiss.dbeaver.utils.RuntimeUtils;
 
 public class DataExportHandler extends DataTransferHandler {
@@ -45,8 +46,8 @@ public class DataExportHandler extends DataTransferHandler {
         if (ApplicationPolicyProvider.getInstance().isPolicyEnabled(ApplicationPolicyProvider.POLICY_DATA_EXPORT)) {
             UIUtils.showMessageBox(
                 HandlerUtil.getActiveShell(event),
-                DTUIMessages.dialog_policy_data_export_title,
-                DTUIMessages.dialog_policy_data_export_msg,
+                UIMessages.dialog_policy_data_export_title,
+                UIMessages.dialog_policy_data_export_msg,
                 SWT.ICON_WARNING);
             return null;
         }
