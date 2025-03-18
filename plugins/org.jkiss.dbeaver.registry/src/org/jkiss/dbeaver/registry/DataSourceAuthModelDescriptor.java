@@ -25,7 +25,10 @@ import org.jkiss.dbeaver.model.DBPDataSourceContainer;
 import org.jkiss.dbeaver.model.DBPImage;
 import org.jkiss.dbeaver.model.access.DBAAuthCredentials;
 import org.jkiss.dbeaver.model.access.DBAAuthModel;
-import org.jkiss.dbeaver.model.connection.*;
+import org.jkiss.dbeaver.model.connection.DBPAuthModelDescriptor;
+import org.jkiss.dbeaver.model.connection.DBPConnectionConfiguration;
+import org.jkiss.dbeaver.model.connection.DBPDriver;
+import org.jkiss.dbeaver.model.connection.DBPDriverLibrary;
 import org.jkiss.dbeaver.model.preferences.DBPPropertySource;
 import org.jkiss.dbeaver.registry.driver.DriverLibraryAbstract;
 import org.jkiss.dbeaver.runtime.properties.PropertyCollector;
@@ -37,8 +40,7 @@ import java.util.*;
 /**
  * Auth model descriptor
  */
-public class DataSourceAuthModelDescriptor extends DataSourceBindingDescriptor
-    implements DBPAuthModelDescriptor, DBPDriverLibraryProvider {
+public class DataSourceAuthModelDescriptor extends DataSourceBindingDescriptor implements DBPAuthModelDescriptor {
 
     public static final String EXTENSION_ID = "org.jkiss.dbeaver.dataSourceAuth"; //$NON-NLS-1$
 

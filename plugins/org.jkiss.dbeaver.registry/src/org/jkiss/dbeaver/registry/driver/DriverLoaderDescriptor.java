@@ -101,6 +101,12 @@ public class DriverLoaderDescriptor implements DBPDriverLoader {
         return loaderId;
     }
 
+    @NotNull
+    @Override
+    public List<DBPDriverLibraryProvider> getLibraryProviders() {
+        return libraryProviders;
+    }
+
     @Nullable
     @Override
     public DriverClassLoader getClassLoader() {

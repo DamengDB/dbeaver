@@ -23,6 +23,7 @@ import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 
 import java.nio.file.Path;
+import java.util.List;
 
 /**
  * Driver loader. Contains class loader which loads all necessary dependencies.
@@ -34,6 +35,9 @@ public interface DBPDriverLoader {
 
     @NotNull
     String getLoaderId();
+
+    @NotNull
+    List<DBPDriverLibraryProvider> getLibraryProviders();
 
     @Nullable
     ClassLoader getClassLoader();

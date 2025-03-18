@@ -159,6 +159,7 @@ public class DriverDescriptor extends AbstractDescriptor implements DBPDriver {
 
     // Map of driver loaders. Key=auth model ID
     private volatile Map<String, DriverLoaderDescriptor> driverLoaders;
+    private volatile boolean loadersInitialized = false;
     private volatile DriverLoaderDescriptor defaultDriverLoader;
 
     static {
@@ -1044,21 +1045,37 @@ public class DriverDescriptor extends AbstractDescriptor implements DBPDriver {
         return getDefaultDriverLoader();
     }
 
+    /**
+     * For internal use only.
+     */
+    @Nullable
+    public DriverLoaderDescriptor preCreateDriverLoader(String loaderId) {
+        if (driverLoaders == null) {
+            driverLoaders = new LinkedHashMap<>();
+        }
+        DriverLoaderDescriptor loader = driverLoaders.get(loaderId);
+        if (loader == null) {
+            loader = new DriverLoaderDescriptor(loaderId, this);
+            driverLoaders.put(loaderId, loader);
+        }
+        return loader;
+    }
+
     @NotNull
     @Override
     public List<DBPDriverLoader> getAllDriverLoaders() {
-        if (driverLoaders == null) {
+        if (!loadersInitialized) {
             synchronized (this) {
-                if (driverLoaders == null) {
-                    driverLoaders = new LinkedHashMap<>();
+                if (!loadersInitialized) {
+                    if (driverLoaders == null) {
+                        driverLoaders = new LinkedHashMap<>();
+                    }
                     for (DBPAuthModelDescriptor authModel : DataSourceProviderRegistry.getInstance().getApplicableAuthModels(this)) {
-                        if (authModel instanceof DBPDriverLibraryProvider dlp) {
-                            List<? extends DBPDriverLibrary> driverLibraries = dlp.getDriverLibraries();
-                            if (!CommonUtils.isEmpty(driverLibraries)) {
-                                DriverLoaderDescriptor loader = new DriverLoaderDescriptor(authModel.getId(), this);
-                                loader.addLibraryProvider(dlp);
-                                driverLoaders.put(authModel.getId(), loader);
-                            }
+                        List<? extends DBPDriverLibrary> driverLibraries = authModel.getDriverLibraries();
+                        if (!CommonUtils.isEmpty(driverLibraries) && !driverLoaders.containsKey(authModel.getId())) {
+                            DriverLoaderDescriptor loader = new DriverLoaderDescriptor(authModel.getId(), this);
+                            loader.addLibraryProvider(authModel);
+                            driverLoaders.put(authModel.getId(), loader);
                         }
                     }
                 }
