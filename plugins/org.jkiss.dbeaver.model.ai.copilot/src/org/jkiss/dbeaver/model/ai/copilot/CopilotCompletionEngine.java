@@ -63,7 +63,7 @@ public class CopilotCompletionEngine implements DAICompletionEngine {
     }
 
     @Override
-    public DAICompletionResponse chat(
+    public DAICompletionResponse requestCompletion(
         @NotNull DBRProgressMonitor monitor,
         @NotNull DAICompletionRequest request
     ) throws DBException {

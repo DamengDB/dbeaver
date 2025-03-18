@@ -19,7 +19,7 @@ package org.jkiss.dbeaver.model.ai.utils;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.Strictness;
-import org.jkiss.dbeaver.HttpException;
+import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 
 import java.net.http.HttpClient;
@@ -45,18 +45,13 @@ public class MonitoredHttpClient implements AutoCloseable {
      * Send an HTTP request and return the response body as an object.
      * The request is sent asynchronously and the method will block until the response is received.
      * The method will also check if the progress monitor is cancelled and cancel the request if it is.
-     *
-     * @param monitor  the progress monitor
-     * @param request  the HTTP request
-     * @param bodyType the type of the response body
-     * @return the response body as an object
      */
-    public <T> T send(
+    public <T> HttpResponse<T> send(
         DBRProgressMonitor monitor,
         HttpRequest request,
-        Class<T> bodyType
-    ) throws HttpException {
-        CompletableFuture<HttpResponse<String>> responseCompletableFuture = client.sendAsync(request, HttpResponse.BodyHandlers.ofString());
+        HttpResponse.BodyHandler<T> responseBodyHandler
+    ) throws DBException {
+        CompletableFuture<HttpResponse<T>> responseCompletableFuture = client.sendAsync(request, responseBodyHandler);
 
         try {
             while (true) {
@@ -72,16 +67,11 @@ public class MonitoredHttpClient implements AutoCloseable {
                 TimeUnit.MILLISECONDS.sleep(100);
             }
 
-            HttpResponse<String> response = responseCompletableFuture.get();
-            if (response.statusCode() == 200) {
-                return GSON.fromJson(response.body(), bodyType);
-            } else {
-                throw new HttpException("Request failed", response.statusCode(), response.body());
-            }
+            return responseCompletableFuture.get();
         } catch (InterruptedException e) {
-            throw new HttpException("Request was cancelled", e);
+            throw new DBException("Request was cancelled", e);
         } catch (ExecutionException e) {
-            throw new HttpException("Request failed", e);
+            throw new DBException("Request failed", e);
         }
     }
 

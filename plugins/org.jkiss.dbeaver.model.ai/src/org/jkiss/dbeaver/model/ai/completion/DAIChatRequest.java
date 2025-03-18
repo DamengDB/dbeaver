@@ -18,8 +18,10 @@ package org.jkiss.dbeaver.model.ai.completion;
 
 import org.jkiss.code.NotNull;
 
+import java.util.List;
+
 public record DAIChatRequest(
     @NotNull DAICompletionContext context,
-    @NotNull DAICompletionSession session
+    @NotNull List<DAIChatMessage> messages
 ) {
 }

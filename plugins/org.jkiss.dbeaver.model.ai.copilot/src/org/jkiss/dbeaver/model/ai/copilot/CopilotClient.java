@@ -20,7 +20,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.Strictness;
 import org.jkiss.dbeaver.DBException;
-import org.jkiss.dbeaver.HttpException;
 import org.jkiss.dbeaver.model.ai.copilot.dto.CopilotChatRequest;
 import org.jkiss.dbeaver.model.ai.copilot.dto.CopilotChatResponse;
 import org.jkiss.dbeaver.model.ai.copilot.dto.CopilotSessionToken;
@@ -31,6 +30,7 @@ import org.jkiss.utils.CommonUtils;
 
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -55,10 +55,10 @@ public class CopilotClient implements AutoCloseable {
     /**
      * Request access to the user's account
      */
-    public ResponseDataDTO requestAuth(
+    public ResponseData requestAuth(
         DBRProgressMonitor monitor
     ) throws DBException {
-        RequestAccessContentDTO requestAccessContent = new RequestAccessContentDTO(DBEAVER_OAUTH_APP, "read:user");
+        RequestAccessContent requestAccessContent = new RequestAccessContent(DBEAVER_OAUTH_APP, "read:user");
         HttpRequest post = HttpRequest.newBuilder()
             .uri(HttpUtils.resolve("https://github.com/login/device/code"))
             .header("accept", "application/json")
@@ -68,7 +68,12 @@ public class CopilotClient implements AutoCloseable {
             .POST(HttpRequest.BodyPublishers.ofString(GSON.toJson(requestAccessContent)))
             .build();
 
-        return client.send(monitor, post, ResponseDataDTO.class);
+        HttpResponse<String> response = client.send(monitor, post, HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() == 200) {
+            return GSON.fromJson(response.body(), ResponseData.class);
+        } else {
+            throw mapHttpError(response);
+        }
     }
 
     /**
@@ -82,7 +87,7 @@ public class CopilotClient implements AutoCloseable {
         long duration = System.currentTimeMillis();
         long timeoutValue = duration + 100000;
         while (duration < timeoutValue) {
-            AccessTokenRequestBodyDTO requestAccessToken = new AccessTokenRequestBodyDTO(
+            AccessTokenRequestBody requestAccessToken = new AccessTokenRequestBody(
                 DBEAVER_OAUTH_APP,
                 deviceCode,
                 "urn:ietf:params:oauth:grant-type:device_code"
@@ -96,12 +101,15 @@ public class CopilotClient implements AutoCloseable {
                 .POST(HttpRequest.BodyPublishers.ofString(GSON.toJson(requestAccessToken)))
                 .build();
 
-            GithubAccessTokenDataDTO githubAccessTokenData = client.send(monitor, post, GithubAccessTokenDataDTO.class);
-
-            if (!CommonUtils.isEmpty(githubAccessTokenData.access_token())) {
-                accessToken = githubAccessTokenData.access_token;
-                return accessToken;
+            HttpResponse<String> response = client.send(monitor, post, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() == 200) {
+                GithubAccessTokenData githubAccessTokenData = GSON.fromJson(response.body(), GithubAccessTokenData.class);
+                if (!CommonUtils.isEmpty(githubAccessTokenData.access_token())) {
+                    accessToken = githubAccessTokenData.access_token;
+                    return accessToken;
+                }
             }
+
             TimeUnit.MILLISECONDS.sleep(10000);
             duration = System.currentTimeMillis();
         }
@@ -114,7 +122,7 @@ public class CopilotClient implements AutoCloseable {
     public CopilotSessionToken sessionToken(
         DBRProgressMonitor monitor,
         String accessToken
-    ) throws HttpException {
+    ) throws DBException {
         HttpRequest request = HttpRequest.newBuilder()
             .uri(HttpUtils.resolve(COPILOT_SESSION_TOKEN_URL))
             .header("authorization", "token " + accessToken)
@@ -125,7 +133,12 @@ public class CopilotClient implements AutoCloseable {
             .timeout(TIMEOUT)
             .build();
 
-        return client.send(monitor, request, CopilotSessionToken.class);
+        HttpResponse<String> response = client.send(monitor, request, HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() == 200) {
+            return GSON.fromJson(response.body(), CopilotSessionToken.class);
+        } else {
+            throw mapHttpError(response);
+        }
     }
 
     /**
@@ -135,7 +148,7 @@ public class CopilotClient implements AutoCloseable {
         DBRProgressMonitor monitor,
         String token,
         CopilotChatRequest chatRequest
-    ) throws HttpException {
+    ) throws DBException {
         HttpRequest request = HttpRequest.newBuilder()
             .header("Content-type", "application/json")
             .uri(HttpUtils.resolve(CHAT_REQUEST_URL))
@@ -145,7 +158,12 @@ public class CopilotClient implements AutoCloseable {
             .timeout(TIMEOUT)
             .build();
 
-        return client.send(monitor, request, CopilotChatResponse.class);
+        HttpResponse<String> response = client.send(monitor, request, HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() == 200) {
+            return GSON.fromJson(response.body(), CopilotChatResponse.class);
+        } else {
+            throw mapHttpError(response);
+        }
     }
 
     @Override
@@ -154,24 +172,23 @@ public class CopilotClient implements AutoCloseable {
     }
 
     @SuppressWarnings("checkstyle:RecordComponentName")
-    public record ResponseDataDTO(String device_code, String user_code, String verification_uri) {
+    public record ResponseData(String device_code, String user_code, String verification_uri) {
     }
 
     @SuppressWarnings("checkstyle:RecordComponentName")
-    protected record RequestAccessContentDTO(String client_id, String scope) {
+    protected record RequestAccessContent(String client_id, String scope) {
 
     }
 
     @SuppressWarnings("checkstyle:RecordComponentName")
-    protected record AccessTokenRequestBodyDTO(String client_id, String device_code, String grant_type) {
+    protected record AccessTokenRequestBody(String client_id, String device_code, String grant_type) {
     }
 
     @SuppressWarnings("checkstyle:RecordComponentName")
-    protected record GithubAccessTokenDataDTO(String access_token) {
+    protected record GithubAccessTokenData(String access_token) {
     }
 
-    @SuppressWarnings("checkstyle:RecordComponentName")
-    protected record CopilotSessionTokenDTO(String token) {
-
+    private static DBException mapHttpError(HttpResponse<String> response) {
+        return new DBException("HTTP error: " + response.statusCode() + " " + response.body());
     }
 }

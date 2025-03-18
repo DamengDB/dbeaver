@@ -16,12 +16,11 @@
  */
 package org.jkiss.dbeaver.model.ai;
 
-import org.jkiss.dbeaver.model.data.DBDObject;
+import java.util.Map;
 
-import java.util.List;
-
-public record AIDescribeRequest(
-    List<DBDObject> objects,
-    String userText
+public record AIAssistantSettings(
+    boolean aiDisabled,
+    String activeEngine,
+    Map<String, AIEngineSettings> engineConfigurations
 ) {
 }

@@ -20,6 +20,7 @@ package org.jkiss.dbeaver.model.ai.completion;
 import org.jkiss.code.NotNull;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.model.ai.AISettingsEventListener;
+import org.jkiss.dbeaver.model.ai.TooManyRequestsException;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 
 import java.util.concurrent.Flow;
@@ -30,12 +31,6 @@ import java.util.concurrent.Flow;
 public interface DAICompletionEngine extends AISettingsEventListener {
 
     /**
-     * Completion engine name
-     */
-    @NotNull
-    String getEngineName();
-
-    /**
      * Returns the context window size for the completion engine.
      *
      * @param monitor progress monitor
@@ -44,31 +39,33 @@ public interface DAICompletionEngine extends AISettingsEventListener {
     int getContextWindowSize(@NotNull DBRProgressMonitor monitor);
 
     /**
-     * Chat with the completion engine.
+     * Requests completions from the completion engine.
      *
      * @param monitor the progress monitor
      * @param request the completion request
      * @return the completion response
+     * @throws TooManyRequestsException if the request limit is exceeded and the request can be retried
      * @throws DBException if an error occurs
      */
-    DAICompletionResponse chat(
+    DAICompletionResponse requestCompletion(
         @NotNull DBRProgressMonitor monitor,
         @NotNull DAICompletionRequest request
     ) throws DBException;
 
     /**
-     * Chat with the completion engine and return a stream of completion chunks.
+     * Requests a stream of completion chunks from the completion engine.
      *
      * @param monitor the progress monitor
      * @param request the completion request
      * @return the stream of completion chunks
+     * @throws TooManyRequestsException if the request limit is exceeded and the request can be retried
      * @throws DBException if an error occurs
      */
-    default Flow.Publisher<DAICompletionChunk> chatStream(
+    default Flow.Publisher<DAICompletionChunk> requestCompletionStream(
         @NotNull DBRProgressMonitor monitor,
         @NotNull DAICompletionRequest request
     ) throws DBException {
-        DAICompletionResponse completionResponse = chat(monitor, request);
+        DAICompletionResponse completionResponse = requestCompletion(monitor, request);
         return subscriber -> {
             subscriber.onSubscribe(new Flow.Subscription() {
                 private boolean isCompleted = false;

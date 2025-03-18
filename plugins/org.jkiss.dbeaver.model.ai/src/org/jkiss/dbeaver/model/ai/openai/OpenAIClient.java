@@ -19,15 +19,21 @@ package org.jkiss.dbeaver.model.ai.openai;
 import com.theokanning.openai.completion.chat.ChatCompletionRequest;
 import com.theokanning.openai.completion.chat.ChatCompletionResult;
 import org.jkiss.code.NotNull;
-import org.jkiss.dbeaver.HttpException;
+import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 
-interface OpenAIClient extends AutoCloseable {
+/**
+ * Client adapter for Azure AI service.
+ */
+public interface OpenAIClient extends AutoCloseable {
+    /**
+     * Create a chat completion.
+     */
     @NotNull
     ChatCompletionResult createChatCompletion(
         @NotNull DBRProgressMonitor monitor,
         ChatCompletionRequest request
-    ) throws HttpException;
+    ) throws DBException;
 
     @Override
     void close();

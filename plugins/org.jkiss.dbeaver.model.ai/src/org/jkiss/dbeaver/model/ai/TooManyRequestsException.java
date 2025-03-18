@@ -16,7 +16,9 @@
  */
 package org.jkiss.dbeaver.model.ai;
 
-public class TooManyRequestsException extends AIException {
+import org.jkiss.dbeaver.model.exec.DBCException;
+
+public class TooManyRequestsException extends DBCException {
     public TooManyRequestsException(String message) {
         super(message);
     }

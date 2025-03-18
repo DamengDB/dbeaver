@@ -16,7 +16,7 @@
  */
 package org.jkiss.dbeaver.model.ai.utils;
 
-import org.jkiss.dbeaver.HttpException;
+import org.jkiss.dbeaver.DBException;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -28,13 +28,8 @@ public final class HttpUtils {
 
     /**
      * Resolves URI from base and paths
-     *
-     * @param base  base URI
-     * @param paths paths to resolve
-     * @return resolved URI
-     * @throws HttpException if URI is incorrect
      */
-    public static URI resolve(String base, String... paths) throws HttpException {
+    public static URI resolve(String base, String... paths) throws DBException {
         try {
             URI uri = new URI(base);
             for (String path : paths) {
@@ -42,7 +37,7 @@ public final class HttpUtils {
             }
             return uri;
         } catch (URISyntaxException e) {
-            throw new HttpException("Incorrect URI", e);
+            throw new DBException("Incorrect URI", e);
         }
     }
 }

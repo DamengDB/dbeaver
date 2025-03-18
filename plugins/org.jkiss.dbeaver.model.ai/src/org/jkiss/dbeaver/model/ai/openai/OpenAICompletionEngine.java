@@ -22,10 +22,10 @@ import com.theokanning.openai.completion.chat.ChatMessage;
 import com.theokanning.openai.service.OpenAiService;
 import org.jkiss.code.NotNull;
 import org.jkiss.dbeaver.DBException;
-import org.jkiss.dbeaver.HttpException;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.model.ai.AIConstants;
 import org.jkiss.dbeaver.model.ai.AISettingsRegistry;
+import org.jkiss.dbeaver.model.ai.TooManyRequestsException;
 import org.jkiss.dbeaver.model.ai.completion.*;
 import org.jkiss.dbeaver.model.ai.utils.AIUtils;
 import org.jkiss.dbeaver.model.ai.utils.DisposableLazyValue;
@@ -132,11 +132,11 @@ public class OpenAICompletionEngine implements DAICompletionEngine {
             public ChatCompletionResult createChatCompletion(
                 @NotNull DBRProgressMonitor monitor,
                 ChatCompletionRequest request
-            ) throws HttpException {
+            ) throws DBException {
                 try {
                     return aiService.createChatCompletion(request);
                 } catch (retrofit2.HttpException e) {
-                    throw new HttpException("Error executing OpenAI request", e);
+                    throw mapHttpException(e);
                 }
             }
 
@@ -145,5 +145,13 @@ public class OpenAICompletionEngine implements DAICompletionEngine {
                 aiService.shutdownExecutor();
             }
         };
+    }
+
+    private DBException mapHttpException(retrofit2.HttpException e) {
+        if (e.code() == 429) {
+            return new TooManyRequestsException("OpenAI rate limit exceeded", e);
+        } else {
+            return new DBException("Error executing OpenAI request", e);
+        }
     }
 }

@@ -16,14 +16,17 @@
  */
 package org.jkiss.dbeaver.model.ai;
 
-import org.jkiss.dbeaver.DBException;
+public class AIAssistantRegistry {
+    private static final AIAssistantRegistry INSTANCE = new AIAssistantRegistry();
 
-public class AIException extends DBException {
-    public AIException(String message) {
-        super(message);
+    public static AIAssistantRegistry getInstance() {
+        return INSTANCE;
     }
 
-    public AIException(String message, Throwable cause) {
-        super(message, cause);
+    private AIAssistantRegistry() {
+    }
+
+    public AIAssistant getAssistant() {
+        return new AIAssistantImpl();
     }
 }

@@ -58,7 +58,6 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class AITranslateHandler extends AbstractHandler {
-    private final AI ai = AI.INSTANCE;
 
     public AITranslateHandler() throws DBException {
     }
@@ -78,8 +77,10 @@ public class AITranslateHandler extends AbstractHandler {
             return null;
         }
 
+        AIAssistant aiAssistant = AIAssistantRegistry.getInstance().getAssistant();
+
         try {
-            if (!ai.hasValidConfiguration()) {
+            if (!aiAssistant.hasValidConfiguration()) {
                 UIUtils.showPreferencesFor(editor.getSite().getShell(), null, AIPreferencePage.PAGE_ID);
                 return null;
             }
@@ -126,7 +127,7 @@ public class AITranslateHandler extends AbstractHandler {
         );
         if (aiCompletionPopup.open() == IDialogConstants.OK_ID) {
             try {
-                if (!ai.hasValidConfiguration()) {
+                if (!aiAssistant.hasValidConfiguration()) {
                     DBWorkbench.getPlatformUI()
                         .showError("Bad AI engine configuration", "You must specify OpenAI API token in preferences");
                     return null;
@@ -202,7 +203,9 @@ public class AITranslateHandler extends AbstractHandler {
                     .setFormatter(AIFormatterRegistry.getInstance().getFormatter(AIConstants.CORE_FORMATTER))
                     .build();
 
-                sql.set(ai.translateTextToSql(monitor, new DAITranslateRequest(userInput, context)));
+                DAITranslateRequest daiTranslateRequest = new DAITranslateRequest(userInput, context);
+                AIAssistant aiAssistant = AIAssistantRegistry.getInstance().getAssistant();
+                sql.set(aiAssistant.translateTextToSql(monitor, daiTranslateRequest));
             } catch (Exception e) {
                 throw new InvocationTargetException(e);
             }

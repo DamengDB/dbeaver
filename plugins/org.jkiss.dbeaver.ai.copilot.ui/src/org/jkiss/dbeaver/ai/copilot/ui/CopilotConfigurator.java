@@ -131,7 +131,7 @@ public class CopilotConfigurator extends OpenAiConfigurator {
                     @Override
                     protected IStatus run(DBRProgressMonitor monitor) {
                         try (var copilotClient = new CopilotClient()) {
-                            CopilotClient.ResponseDataDTO responseData = copilotClient.requestAuth(monitor);
+                            CopilotClient.ResponseData responseData = copilotClient.requestAuth(monitor);
                             AtomicReference<BrowserPopup> popupOauth = new AtomicReference<>();
                             UIUtils.asyncExec(() -> {
                                 CopyDeviceDialog copyYourCode = new CopyDeviceDialog(

@@ -25,8 +25,6 @@ import org.jkiss.dbeaver.model.ai.completion.DAICommandRequest;
 import org.jkiss.dbeaver.model.ai.completion.DAICompletionContext;
 import org.jkiss.dbeaver.model.ai.completion.DAICompletionScope;
 import org.jkiss.dbeaver.model.ai.completion.DAICompletionSettings;
-import org.jkiss.dbeaver.model.ai.AI;
-import org.jkiss.dbeaver.model.ai.CommandResult;
 import org.jkiss.dbeaver.model.exec.output.DBCOutputSeverity;
 import org.jkiss.dbeaver.model.logical.DBSLogicalDataSource;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
@@ -53,8 +51,6 @@ public class SQLCommandAI implements SQLControlCommandHandler {
             return true;
         }
     };
-
-    private final AI ai = AI.INSTANCE;
 
     @NotNull
     @Override
@@ -104,7 +100,9 @@ public class SQLCommandAI implements SQLControlCommandHandler {
         }
         final DAICompletionContext aiContext = contextBuilder.build();
 
-        CommandResult result = ai.command(monitor, new DAICommandRequest(prompt, aiContext));
+        CommandResult result = AIAssistantRegistry.getInstance()
+            .getAssistant()
+            .command(monitor, new DAICommandRequest(prompt, aiContext));
 
         if (result.sql() == null && result.message() != null) {
             throw new DBException(result.message());

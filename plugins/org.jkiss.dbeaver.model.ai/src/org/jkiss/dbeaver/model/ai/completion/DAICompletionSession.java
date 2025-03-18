@@ -19,6 +19,7 @@ package org.jkiss.dbeaver.model.ai.completion;
 import org.jkiss.code.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -45,6 +46,6 @@ public class DAICompletionSession {
 
     @NotNull
     public List<DAIChatMessage> getMessages() {
-        return messages;
+        return List.copyOf(messages);
     }
 }

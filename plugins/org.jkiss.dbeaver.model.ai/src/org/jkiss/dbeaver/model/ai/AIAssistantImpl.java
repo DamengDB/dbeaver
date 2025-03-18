@@ -18,7 +18,6 @@ package org.jkiss.dbeaver.model.ai;
 
 import org.jkiss.code.NotNull;
 import org.jkiss.dbeaver.DBException;
-import org.jkiss.dbeaver.HttpException;
 import org.jkiss.dbeaver.model.ai.completion.*;
 import org.jkiss.dbeaver.model.ai.utils.AIUtils;
 import org.jkiss.dbeaver.model.ai.utils.ThrowableSupplier;
@@ -29,22 +28,12 @@ import java.util.List;
 import java.util.concurrent.Flow;
 import java.util.stream.Stream;
 
-public class AI {
-    public static final AI INSTANCE = new AI();
+public class AIAssistantImpl implements AIAssistant {
 
     private static final int MAX_RETRIES = 3;
-    private static final String SYSTEM_PROMPT = """
-        You are SQL assistant. You must produce SQL code for given prompt.
-        You must produce valid SQL statement enclosed with Markdown code block and terminated with semicolon.
-        All database object names should be properly escaped according to the SQL dialect.
-        All comments MUST be placed before query outside markdown code block.
-        Be polite.
-        """;
 
+    private final AISettingsRegistry settingsRegistry = AISettingsRegistry.getInstance();
     private final AIEngineRegistry engineRegistry = AIEngineRegistry.getInstance();
-
-    private AI() {
-    }
 
     /**
      * Chat with the AI assistant.
@@ -53,27 +42,36 @@ public class AI {
      * @param chatCompletionRequest the chat completion request
      * @throws DBException if an error occurs
      */
+    @NotNull
+    @Override
     public Flow.Publisher<DAICompletionChunk> chat(
         @NotNull DBRProgressMonitor monitor,
         @NotNull DAIChatRequest chatCompletionRequest
     ) throws DBException {
-        DAICompletionEngine activeEngine = getActiveEngine();
+        return chat(monitor, chatCompletionRequest, getActiveEngine());
+    }
 
+    @Override
+    public Flow.Publisher<DAICompletionChunk> chat(
+        @NotNull DBRProgressMonitor monitor,
+        @NotNull DAIChatRequest chatCompletionRequest,
+        @NotNull DAICompletionEngine engine
+    ) throws DBException {
         List<DAIChatMessage> chatMessages = Stream.concat(
             Stream.of(
-                DAIChatMessage.systemMessage(SYSTEM_PROMPT),
-                chatCompletionRequest.context().asSystemMessage(monitor, activeEngine.getContextWindowSize(monitor))
+                DAIChatMessage.systemMessage(getSystemPrompt()),
+                chatCompletionRequest.context().asSystemMessage(monitor, engine.getContextWindowSize(monitor))
             ),
-            chatCompletionRequest.session().getMessages().stream()
+            chatCompletionRequest.messages().stream()
         ).toList();
 
         List<DAIChatMessage> truncatedMessages = AIUtils.truncateMessages(
             true,
             chatMessages,
-            activeEngine.getContextWindowSize(monitor)
+            engine.getContextWindowSize(monitor)
         );
 
-        return callWithRetry(() -> activeEngine.chatStream(
+        return callWithRetry(() -> engine.requestCompletionStream(
             monitor,
             new DAICompletionRequest(
                 truncatedMessages
@@ -90,24 +88,34 @@ public class AI {
      * @throws DBException if an error occurs
      */
     @NotNull
+    @Override
     public String translateTextToSql(
         @NotNull DBRProgressMonitor monitor,
         @NotNull DAITranslateRequest request
     ) throws DBException {
-        DAICompletionEngine activeEngine = getActiveEngine();
+        return translateTextToSql(monitor, request, getActiveEngine());
+    }
+
+    @NotNull
+    @Override
+    public String translateTextToSql(
+        @NotNull DBRProgressMonitor monitor,
+        @NotNull DAITranslateRequest request,
+        @NotNull DAICompletionEngine engine
+    ) throws DBException {
         DAIChatMessage userMessage = new DAIChatMessage(DAIChatRole.USER, request.text());
 
         List<DAIChatMessage> chatMessages = List.of(
-            DAIChatMessage.systemMessage(SYSTEM_PROMPT),
-            request.context().asSystemMessage(monitor, activeEngine.getContextWindowSize(monitor)),
+            DAIChatMessage.systemMessage(getSystemPrompt()),
+            request.context().asSystemMessage(monitor, engine.getContextWindowSize(monitor)),
             userMessage
         );
 
         DAICompletionRequest completionRequest = new DAICompletionRequest(
-            AIUtils.truncateMessages(true, chatMessages, activeEngine.getContextWindowSize(monitor))
+            AIUtils.truncateMessages(true, chatMessages, engine.getContextWindowSize(monitor))
         );
 
-        DAICompletionResponse completionResponse = callWithRetry(() -> activeEngine.chat(
+        DAICompletionResponse completionResponse = callWithRetry(() -> engine.requestCompletion(
             monitor,
             completionRequest
         ));
@@ -134,23 +142,32 @@ public class AI {
      * @throws DBException if an error occurs
      */
     @NotNull
+    @Override
     public CommandResult command(
         @NotNull DBRProgressMonitor monitor,
         @NotNull DAICommandRequest request
     ) throws DBException {
-        DAICompletionEngine activeEngine = getActiveEngine();
+        return command(monitor, request, getActiveEngine());
+    }
 
+    @NotNull
+    @Override
+    public CommandResult command(
+        @NotNull DBRProgressMonitor monitor,
+        @NotNull DAICommandRequest request,
+        @NotNull DAICompletionEngine engine
+    ) throws DBException {
         List<DAIChatMessage> chatMessages = List.of(
-            DAIChatMessage.systemMessage(SYSTEM_PROMPT),
-            request.context().asSystemMessage(monitor, activeEngine.getContextWindowSize(monitor)),
+            DAIChatMessage.systemMessage(getSystemPrompt()),
+            request.context().asSystemMessage(monitor, engine.getContextWindowSize(monitor)),
             DAIChatMessage.userMessage(request.text())
         );
 
         DAICompletionRequest completionRequest = new DAICompletionRequest(
-            AIUtils.truncateMessages(true, chatMessages, activeEngine.getContextWindowSize(monitor))
+            AIUtils.truncateMessages(true, chatMessages, engine.getContextWindowSize(monitor))
         );
 
-        DAICompletionResponse completionResponse = callWithRetry(() -> activeEngine.chat(
+        DAICompletionResponse completionResponse = callWithRetry(() -> engine.requestCompletion(
             monitor,
             completionRequest
         ));
@@ -175,6 +192,7 @@ public class AI {
      * @return true if the AI assistant has valid configuration, false otherwise
      * @throws DBException if an error occurs
      */
+    @Override
     public boolean hasValidConfiguration() throws DBException {
         return getActiveEngine().hasValidConfiguration();
     }
@@ -203,19 +221,24 @@ public class AI {
         while (retry < MAX_RETRIES) {
             try {
                 return supplier.get();
-            } catch (HttpException e) {
-                if (e.statusCode() == 429) {
-                    retry++;
-                } else {
-                    throw e;
-                }
+            } catch (TooManyRequestsException e) {
+                retry++;
             }
         }
         throw new DBException("Request failed after " + MAX_RETRIES + " attempts");
     }
 
     private DAICompletionEngine getActiveEngine() throws DBException {
-        String activeEngine = AISettingsRegistry.getInstance().getSettings().getActiveEngine();
-        return engineRegistry.getCompletionEngine(activeEngine);
+        return engineRegistry.getCompletionEngine(settingsRegistry.getSettings().getActiveEngine());
+    }
+
+    protected String getSystemPrompt() {
+        return """
+            You are SQL assistant. You must produce SQL code for given prompt.
+            You must produce valid SQL statement enclosed with Markdown code block and terminated with semicolon.
+            All database object names should be properly escaped according to the SQL dialect.
+            All comments MUST be placed before query outside markdown code block.
+            Be polite.
+            """;
     }
 }
