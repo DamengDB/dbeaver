@@ -52,17 +52,12 @@ public class OpenAICompletionEngine implements DAICompletionEngine {
     };
 
     @Override
-    public @NotNull String getEngineName() {
-        return "OpenAI GPT";
-    }
-
-    @Override
     public int getContextWindowSize(@NotNull DBRProgressMonitor monitor) {
         return OpenAISettings.INSTANCE.model().getMaxTokens();
     }
 
     @Override
-    public DAICompletionResponse chat(
+    public DAICompletionResponse requestCompletion(
         @NotNull DBRProgressMonitor monitor,
         @NotNull DAICompletionRequest request
     ) throws DBException {

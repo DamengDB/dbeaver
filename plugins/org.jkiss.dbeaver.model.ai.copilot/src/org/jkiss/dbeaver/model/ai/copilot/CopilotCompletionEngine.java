@@ -53,11 +53,6 @@ public class CopilotCompletionEngine implements DAICompletionEngine {
     private volatile CopilotSessionToken sessionToken;
 
     @Override
-    public @NotNull String getEngineName() {
-        return CopilotConstants.COPILOT_ENGINE;
-    }
-
-    @Override
     public int getContextWindowSize(@NotNull DBRProgressMonitor monitor) {
         return OpenAIModel.getByName(CopilotSettings.INSTANCE.modelName()).getMaxTokens();
     }
