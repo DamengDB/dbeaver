@@ -309,7 +309,8 @@ public class CustomFormEditor {
                 Label label = UIUtils.createControlLabel(parent, propertyDisplayName);
                 label.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_BEGINNING));
                 Composite composite = UIUtils.createComposite(parent, 2);
-                Text editor = new Text(composite, SWT.MULTI | SWT.WRAP | SWT.BORDER | (readOnly ? SWT.READ_ONLY : SWT.NONE));
+                Text editor = new Text(composite, SWT.MULTI | SWT.WRAP | SWT.BORDER | SWT.V_SCROLL
+                    | (readOnly ? SWT.READ_ONLY : SWT.NONE));
                 editor.setLayoutData(new GridData(GridData.FILL_BOTH));
                 editor.setText(objectValueToString(value));
 
