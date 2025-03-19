@@ -55,8 +55,9 @@ public class DriverLibraryBundle extends DriverLibraryAbstract {
         super(driverDescriptor, copyFrom);
     }
 
+    @NotNull
     @Override
-    public DBPDriverLibrary copyLibrary(DriverDescriptor driverDescriptor) {
+    public DBPDriverLibrary copyLibrary(@NotNull DriverDescriptor driverDescriptor) {
         return new DriverLibraryBundle(driverDescriptor, this);
     }
 
