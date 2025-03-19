@@ -53,7 +53,7 @@ public class CopilotCompletionEngine implements DAICompletionEngine {
     private volatile CopilotSessionToken sessionToken;
 
     @Override
-    public int getContextWindowSize(@NotNull DBRProgressMonitor monitor) {
+    public int getMaxContextSize(@NotNull DBRProgressMonitor monitor) {
         return OpenAIModel.getByName(CopilotSettings.INSTANCE.modelName()).getMaxTokens();
     }
 
@@ -65,7 +65,7 @@ public class CopilotCompletionEngine implements DAICompletionEngine {
         List<DAIChatMessage> messages = AIUtils.truncateMessages(
             true,
             request.messages(),
-            getContextWindowSize(monitor)
+            getMaxContextSize(monitor)
         );
 
         CopilotChatRequest chatRequest = CopilotChatRequest.builder()

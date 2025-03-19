@@ -60,7 +60,7 @@ public class AIAssistantImpl implements AIAssistant {
         List<DAIChatMessage> chatMessages = Stream.concat(
             Stream.of(
                 DAIChatMessage.systemMessage(getSystemPrompt()),
-                chatCompletionRequest.context().asSystemMessage(monitor, engine.getContextWindowSize(monitor))
+                chatCompletionRequest.context().asSystemMessage(monitor, engine.getMaxContextSize(monitor))
             ),
             chatCompletionRequest.messages().stream()
         ).toList();
@@ -68,7 +68,7 @@ public class AIAssistantImpl implements AIAssistant {
         List<DAIChatMessage> truncatedMessages = AIUtils.truncateMessages(
             true,
             chatMessages,
-            engine.getContextWindowSize(monitor)
+            engine.getMaxContextSize(monitor)
         );
 
         return callWithRetry(() -> engine.requestCompletionStream(
@@ -107,12 +107,12 @@ public class AIAssistantImpl implements AIAssistant {
 
         List<DAIChatMessage> chatMessages = List.of(
             DAIChatMessage.systemMessage(getSystemPrompt()),
-            request.context().asSystemMessage(monitor, engine.getContextWindowSize(monitor)),
+            request.context().asSystemMessage(monitor, engine.getMaxContextSize(monitor)),
             userMessage
         );
 
         DAICompletionRequest completionRequest = new DAICompletionRequest(
-            AIUtils.truncateMessages(true, chatMessages, engine.getContextWindowSize(monitor))
+            AIUtils.truncateMessages(true, chatMessages, engine.getMaxContextSize(monitor))
         );
 
         DAICompletionResponse completionResponse = callWithRetry(() -> engine.requestCompletion(
@@ -159,12 +159,12 @@ public class AIAssistantImpl implements AIAssistant {
     ) throws DBException {
         List<DAIChatMessage> chatMessages = List.of(
             DAIChatMessage.systemMessage(getSystemPrompt()),
-            request.context().asSystemMessage(monitor, engine.getContextWindowSize(monitor)),
+            request.context().asSystemMessage(monitor, engine.getMaxContextSize(monitor)),
             DAIChatMessage.userMessage(request.text())
         );
 
         DAICompletionRequest completionRequest = new DAICompletionRequest(
-            AIUtils.truncateMessages(true, chatMessages, engine.getContextWindowSize(monitor))
+            AIUtils.truncateMessages(true, chatMessages, engine.getMaxContextSize(monitor))
         );
 
         DAICompletionResponse completionResponse = callWithRetry(() -> engine.requestCompletion(

@@ -52,7 +52,7 @@ public class OpenAICompletionEngine implements DAICompletionEngine {
     };
 
     @Override
-    public int getContextWindowSize(@NotNull DBRProgressMonitor monitor) {
+    public int getMaxContextSize(@NotNull DBRProgressMonitor monitor) {
         return OpenAISettings.INSTANCE.model().getMaxTokens();
     }
 
@@ -88,7 +88,7 @@ public class OpenAICompletionEngine implements DAICompletionEngine {
         List<DAIChatMessage> truncatedMessages = AIUtils.truncateMessages(
             true,
             messages,
-            getContextWindowSize(monitor)
+            getMaxContextSize(monitor)
         );
 
         ChatCompletionRequest completionRequest = ChatCompletionRequest.builder()

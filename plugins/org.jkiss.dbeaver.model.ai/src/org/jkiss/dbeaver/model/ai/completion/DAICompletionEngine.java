@@ -31,12 +31,12 @@ import java.util.concurrent.Flow;
 public interface DAICompletionEngine extends AISettingsEventListener {
 
     /**
-     * Returns the context window size for the completion engine.
+     * Returns the context size for the completion engine.
      *
      * @param monitor progress monitor
      * @return the context window size
      */
-    int getContextWindowSize(@NotNull DBRProgressMonitor monitor);
+    int getMaxContextSize(@NotNull DBRProgressMonitor monitor);
 
     /**
      * Requests completions from the completion engine.
