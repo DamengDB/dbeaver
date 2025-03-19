@@ -26,7 +26,6 @@ import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.widgets.*;
 import org.eclipse.ui.INewWizard;
 import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
@@ -34,6 +33,7 @@ import org.jkiss.dbeaver.DBeaverPreferences;
 import org.jkiss.dbeaver.ModelPreferences;
 import org.jkiss.dbeaver.ModelPreferences.SeparateConnectionBehavior;
 import org.jkiss.dbeaver.core.CoreMessages;
+import org.jkiss.dbeaver.model.DBUtils;
 import org.jkiss.dbeaver.model.app.DBPDataSourceRegistry;
 import org.jkiss.dbeaver.model.app.DBPProject;
 import org.jkiss.dbeaver.model.connection.*;
@@ -57,7 +57,6 @@ import org.jkiss.utils.ArrayUtils;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
-import java.util.List;
 
 /**
  * Abstract connection wizard
@@ -235,12 +234,9 @@ public abstract class ConnectionWizard extends ActiveWizard implements IConnecti
                         throw new InterruptedException("cancel");
                     }
                 });
-                var activeShell = UIUtils.getActiveShell();
-                if (activeShell != null) {
-                    var userPassword = targetDataSource.getActualConnectionConfiguration().getUserPassword();
-                    if (userPassword != null) {
-                        updatePasswordInComposite(activeShell, userPassword);
-                    }
+                var changedUserPassword = targetDataSource.getActualConnectionConfiguration().getUserPassword();
+                if (changedUserPassword != null) {
+                    DBUtils.firePasswordUpdate(activeDataSource, changedUserPassword);
                 }
 
                 new ConnectionTestDialog(
@@ -271,21 +267,6 @@ public abstract class ConnectionWizard extends ActiveWizard implements IConnecti
         } finally {
             if (activeDataSource != targetDataSource) {
                 targetDataSource.dispose();
-            }
-        }
-    }
-
-    private void updatePasswordInComposite(
-        Composite parent,
-        String newPassword
-    ) {
-        for (var child : parent.getChildren()) {
-            if (child instanceof Text passwordText && ((child.getStyle() & SWT.PASSWORD) != 0)) {
-                passwordText.setText(newPassword);
-                return;
-            }
-            if (child instanceof Composite innerComposite) {
-                updatePasswordInComposite(innerComposite, newPassword);
             }
         }
     }
