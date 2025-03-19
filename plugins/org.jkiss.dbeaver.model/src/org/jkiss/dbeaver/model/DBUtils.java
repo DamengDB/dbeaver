@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1410,6 +1410,17 @@ public final class DBUtils {
         if (container != null) {
             DBPEvent event = new DBPEvent(DBPEvent.Action.OBJECT_UPDATE, object, data);
             event.setOptions(options);
+            container.fireEvent(event);
+        }
+    }
+
+    /**
+     * Send event for reset datasource password
+     */
+    public static void firePasswordUpdate(DBSObject object, Object data) {
+        final DBPDataSourceContainer container = getContainer(object);
+        if (container != null) {
+            DBPEvent event = new DBPEvent(DBPEvent.Action.PASSWORD_UPDATE, object, data);
             container.fireEvent(event);
         }
     }
