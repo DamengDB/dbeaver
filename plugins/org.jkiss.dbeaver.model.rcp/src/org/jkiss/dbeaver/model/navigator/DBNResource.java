@@ -35,7 +35,7 @@ import org.jkiss.utils.CommonUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.*;
+import java.nio.file.Path;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
@@ -424,7 +424,7 @@ public class DBNResource extends DBNNode implements DBNStreamData, DBNNodeWithCa
                 try {
                     return adapter.cast(file.getContents());
                 } catch (CoreException e) {
-                    log.error("Error get file content", e);
+                    log.error("Error getting file contents", e);
                 }
             }
         }

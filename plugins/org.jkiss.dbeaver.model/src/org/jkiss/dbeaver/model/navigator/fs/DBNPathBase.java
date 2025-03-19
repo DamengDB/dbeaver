@@ -36,7 +36,10 @@ import org.jkiss.utils.ByteNumberFormat;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.*;
+import java.nio.file.CopyOption;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.FileTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -289,11 +292,9 @@ public abstract class DBNPathBase extends DBNNode implements DBNLazyNode {
                 Path resource = node.getAdapter(Path.class);
                 if (resource == null) {
                     monitor.subTask("Copy file");
-                    try {
-                        InputStream adapter = node.getAdapter(InputStream.class);
-                        if (adapter != null) {
-                            String fileName = node.getNodeDisplayName();
-                            copyInputStream(adapter, folder, fileName);
+                    try (InputStream inputStream = node.getAdapter(InputStream.class)) {
+                        if (inputStream != null) {
+                            Files.copy(inputStream, folder.resolve(node.getNodeDisplayName()), StandardCopyOption.REPLACE_EXISTING);
                         }
                     } finally {
                         monitor.worked(1);
@@ -358,15 +359,6 @@ public abstract class DBNPathBase extends DBNNode implements DBNLazyNode {
         } finally {
             monitor.done();
         }
-    }
-
-    private void copyInputStream(InputStream inputStream, Path folder, String str) throws IOException {
-        Path targetFile = folder.resolve(str);
-        CopyOption[] options = new CopyOption[0];
-        if (Files.exists(targetFile)) {
-            options = new CopyOption[] {StandardCopyOption.REPLACE_EXISTING};
-        }
-        Files.copy(inputStream, targetFile, options);
     }
 
     protected boolean isTheSameFileSystem(DBNNode node) {
