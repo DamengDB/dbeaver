@@ -1415,12 +1415,15 @@ public final class DBUtils {
     }
 
     /**
-     * Send event for reset datasource password
+     * Fires a PASSWORD_UPDATE event for the given DBSObject with the new user password.
+     *
+     * @param object the data source the password is updated of
+     * @param newUserPassword the new user password to send with the event
      */
-    public static void firePasswordUpdate(DBSObject object, Object data) {
-        final DBPDataSourceContainer container = getContainer(object);
+    public static void firePasswordUpdate(DBSObject object, String newUserPassword) {
+        DBPDataSourceContainer container = getContainer(object);
         if (container != null) {
-            DBPEvent event = new DBPEvent(DBPEvent.Action.PASSWORD_UPDATE, object, data);
+            DBPEvent event = new DBPEvent(DBPEvent.Action.PASSWORD_UPDATE, object, newUserPassword);
             container.fireEvent(event);
         }
     }
