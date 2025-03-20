@@ -156,9 +156,14 @@ public @interface Property
     boolean required() default false;
 
     /**
-     * Expression for checking visibility of a property.
+     * Expression for determining the visibility of a property.
      */
     String visibleExpr() default "";
+
+    /**
+     * Expression for determining the activity of a property.
+     */
+    String activeExpr() default "";
 
     int order() default Integer.MAX_VALUE;
 

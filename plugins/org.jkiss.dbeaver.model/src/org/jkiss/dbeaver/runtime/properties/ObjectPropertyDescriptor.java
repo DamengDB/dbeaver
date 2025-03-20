@@ -20,6 +20,7 @@ import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.model.DBConstants;
+import org.jkiss.dbeaver.model.DBPConditionalProperty;
 import org.jkiss.dbeaver.model.DBPPersistedObject;
 import org.jkiss.dbeaver.model.dpi.DPIClientObject;
 import org.jkiss.dbeaver.model.exec.DBExecUtils;
@@ -54,7 +55,8 @@ import java.util.stream.Collectors;
 /**
  * ObjectPropertyDescriptor
 */
-public class ObjectPropertyDescriptor extends ObjectAttributeDescriptor implements DBPPropertyDescriptor, IPropertyValueListProvider<Object>
+public class ObjectPropertyDescriptor extends ObjectAttributeDescriptor
+    implements DBPPropertyDescriptor, DBPConditionalProperty, IPropertyValueListProvider<Object>
 {
 
     private final Property propInfo;
@@ -690,8 +692,15 @@ public class ObjectPropertyDescriptor extends ObjectAttributeDescriptor implemen
     }
 
     @Nullable
-    public String getVisibleExpr() {
-        return CommonUtils.notEmpty(propInfo.visibleExpr());
+    @Override
+    public String getVisibleExpression() {
+        return CommonUtils.nullIfEmpty(propInfo.visibleExpr());
+    }
+
+    @Nullable
+    @Override
+    public String getActiveExpression() {
+        return CommonUtils.nullIfEmpty(propInfo.activeExpr());
     }
 
 }
