@@ -158,12 +158,12 @@ public @interface Property
     /**
      * Expression for determining the visibility of a property.
      */
-    String visibleExpr() default "";
+    String hideExpr() default "";
 
     /**
      * Expression for determining the activity of a property.
      */
-    String activeExpr() default "";
+    String readOnlyExpr() default "";
 
     int order() default Integer.MAX_VALUE;
 

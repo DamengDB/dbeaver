@@ -28,11 +28,11 @@ public interface DBPConditionalProperty {
      * JEXL expression for determining the visibility of a property.
      */
     @Nullable
-    String getVisibleExpression();
+    String getHideExpression();
 
     /**
      * JEXL expression for determining the activity of a property.
      */
     @Nullable
-    String getActiveExpression();
+    String getReadOnlyExpression();
 }

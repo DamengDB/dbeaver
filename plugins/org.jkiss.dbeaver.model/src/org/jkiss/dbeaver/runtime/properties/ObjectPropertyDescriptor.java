@@ -693,14 +693,14 @@ public class ObjectPropertyDescriptor extends ObjectAttributeDescriptor
 
     @Nullable
     @Override
-    public String getVisibleExpression() {
-        return CommonUtils.nullIfEmpty(propInfo.visibleExpr());
+    public String getHideExpression() {
+        return CommonUtils.nullIfEmpty(propInfo.hideExpr());
     }
 
     @Nullable
     @Override
-    public String getActiveExpression() {
-        return CommonUtils.nullIfEmpty(propInfo.activeExpr());
+    public String getReadOnlyExpression() {
+        return CommonUtils.nullIfEmpty(propInfo.readOnlyExpr());
     }
 
 }
