@@ -16,8 +16,12 @@
  */
 package org.jkiss.dbeaver.model.ai.completion;
 
+import org.jkiss.code.NotNull;
+import org.jkiss.code.Nullable;
+
 public record DAICommandRequest(
-    String text,
-    DAICompletionContext context
+    @NotNull String text,
+    @NotNull DAICompletionContext context,
+    @Nullable DAICompletionEngine engine
 ) {
 }

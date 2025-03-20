@@ -17,11 +17,16 @@
 package org.jkiss.dbeaver.model.ai.completion;
 
 import org.jkiss.code.NotNull;
+import org.jkiss.code.Nullable;
 
 import java.util.List;
 
 public record DAIChatRequest(
     @NotNull DAICompletionContext context,
-    @NotNull List<DAIChatMessage> messages
+    @NotNull List<DAIChatMessage> messages,
+    @Nullable DAICompletionEngine engine
 ) {
+    public DAIChatRequest(@NotNull DAICompletionContext context, @NotNull List<DAIChatMessage> messages) {
+        this(context, messages, null);
+    }
 }

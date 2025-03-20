@@ -48,15 +48,10 @@ public class AIAssistantImpl implements AIAssistant {
         @NotNull DBRProgressMonitor monitor,
         @NotNull DAIChatRequest chatCompletionRequest
     ) throws DBException {
-        return chat(monitor, chatCompletionRequest, getActiveEngine());
-    }
+        DAICompletionEngine engine = chatCompletionRequest.engine() != null ?
+            chatCompletionRequest.engine() :
+            getActiveEngine();
 
-    @Override
-    public Flow.Publisher<DAICompletionChunk> chat(
-        @NotNull DBRProgressMonitor monitor,
-        @NotNull DAIChatRequest chatCompletionRequest,
-        @NotNull DAICompletionEngine engine
-    ) throws DBException {
         List<DAIChatMessage> chatMessages = Stream.concat(
             Stream.of(
                 DAIChatMessage.systemMessage(getSystemPrompt()),
@@ -93,16 +88,10 @@ public class AIAssistantImpl implements AIAssistant {
         @NotNull DBRProgressMonitor monitor,
         @NotNull DAITranslateRequest request
     ) throws DBException {
-        return translateTextToSql(monitor, request, getActiveEngine());
-    }
+        DAICompletionEngine engine = request.engine() != null ?
+            request.engine() :
+            getActiveEngine();
 
-    @NotNull
-    @Override
-    public String translateTextToSql(
-        @NotNull DBRProgressMonitor monitor,
-        @NotNull DAITranslateRequest request,
-        @NotNull DAICompletionEngine engine
-    ) throws DBException {
         DAIChatMessage userMessage = new DAIChatMessage(DAIChatRole.USER, request.text());
 
         List<DAIChatMessage> chatMessages = List.of(
@@ -147,16 +136,10 @@ public class AIAssistantImpl implements AIAssistant {
         @NotNull DBRProgressMonitor monitor,
         @NotNull DAICommandRequest request
     ) throws DBException {
-        return command(monitor, request, getActiveEngine());
-    }
+        DAICompletionEngine engine = request.engine() != null ?
+            request.engine() :
+            getActiveEngine();
 
-    @NotNull
-    @Override
-    public CommandResult command(
-        @NotNull DBRProgressMonitor monitor,
-        @NotNull DAICommandRequest request,
-        @NotNull DAICompletionEngine engine
-    ) throws DBException {
         List<DAIChatMessage> chatMessages = List.of(
             DAIChatMessage.systemMessage(getSystemPrompt()),
             request.context().asSystemMessage(monitor, engine.getMaxContextSize(monitor)),
@@ -197,19 +180,20 @@ public class AIAssistantImpl implements AIAssistant {
         return getActiveEngine().hasValidConfiguration();
     }
 
-    private MessageChunk[] processAndSplitCompletion(
-        DBRProgressMonitor monitor,
-        DAICompletionContext context,
-        String completion
-    ) throws DBException {
-        String processedCompletion = callWithRetry(() -> AIUtils.processCompletion(
+    private static MessageChunk[] processAndSplitCompletion(
+        @NotNull DBRProgressMonitor monitor,
+        @NotNull DAICompletionContext context,
+        @NotNull String completion
+    ) {
+        String processedCompletion = AIUtils.processCompletion(
             monitor,
             context.getExecutionContext(),
             context.getScopeObject(),
             completion,
             context.getFormatter(),
             true
-        ));
+        );
+
         return AITextUtils.splitIntoChunks(
             SQLUtils.getDialectFromDataSource(context.getExecutionContext().getDataSource()),
             processedCompletion

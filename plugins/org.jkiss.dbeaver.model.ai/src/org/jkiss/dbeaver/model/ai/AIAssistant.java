@@ -29,7 +29,7 @@ import java.util.concurrent.Flow;
 public interface AIAssistant {
 
     /**
-     * Generates the next message in a chat conversation. The active completion engine is used.
+     * Generates the next message in a chat conversation.
      */
     @NotNull
     Flow.Publisher<DAICompletionChunk> chat(
@@ -38,31 +38,12 @@ public interface AIAssistant {
     ) throws DBException;
 
     /**
-     * Generates the next message in a chat conversation.
-     */
-    Flow.Publisher<DAICompletionChunk> chat(
-        @NotNull DBRProgressMonitor monitor,
-        @NotNull DAIChatRequest chatCompletionRequest,
-        @NotNull DAICompletionEngine engine
-    ) throws DBException;
-
-    /**
-     * Translates text to SQL. The active completion engine is used.
-     */
-    @NotNull
-    String translateTextToSql(
-        @NotNull DBRProgressMonitor monitor,
-        @NotNull DAITranslateRequest request
-    ) throws DBException;
-
-    /**
      * Translates text to SQL.
      */
     @NotNull
     String translateTextToSql(
         @NotNull DBRProgressMonitor monitor,
-        @NotNull DAITranslateRequest request,
-        @NotNull DAICompletionEngine engine
+        @NotNull DAITranslateRequest request
     ) throws DBException;
 
     /**
@@ -72,16 +53,6 @@ public interface AIAssistant {
     CommandResult command(
         @NotNull DBRProgressMonitor monitor,
         @NotNull DAICommandRequest request
-    ) throws DBException;
-
-    /**
-     * Translates a user command to SQL.
-     */
-    @NotNull
-    CommandResult command(
-        @NotNull DBRProgressMonitor monitor,
-        @NotNull DAICommandRequest request,
-        @NotNull DAICompletionEngine engine
     ) throws DBException;
 
     /**

@@ -17,7 +17,6 @@
 package org.jkiss.dbeaver.model.ai.utils;
 
 import org.jkiss.code.NotNull;
-import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.model.ai.completion.DAIChatMessage;
 import org.jkiss.dbeaver.model.ai.completion.DAIChatRole;
 import org.jkiss.dbeaver.model.ai.format.IAIFormatter;
@@ -123,17 +122,17 @@ public final class AIUtils {
     /**
      * Processes completion text.
      */
-    @Nullable
+    @NotNull
     public static String processCompletion(
         @NotNull DBRProgressMonitor monitor,
         @NotNull DBCExecutionContext executionContext,
         @NotNull DBSObjectContainer mainObject,
-        @Nullable String completionText,
+        @NotNull String completionText,
         @NotNull IAIFormatter formatter,
-        @NotNull boolean isChatAPI
+        boolean isChatAPI
     ) {
         if (CommonUtils.isEmpty(completionText)) {
-            return null;
+            return "";
         }
 
         if (!isChatAPI) {
