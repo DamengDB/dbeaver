@@ -88,7 +88,7 @@ public class OpenAICompletionEngine implements DAICompletionEngine {
         List<DAIChatMessage> truncatedMessages = AIUtils.truncateMessages(
             true,
             messages,
-            getMaxContextSize(monitor)
+            maxTokens
         );
 
         ChatCompletionRequest completionRequest = ChatCompletionRequest.builder()
