@@ -60,4 +60,11 @@ public class CopilotSettings {
     public double temperature() {
         return CommonUtils.toDouble(settings.getProperties().get(AIConstants.AI_TEMPERATURE), 0.0);
     }
+
+    /**
+     * Returns whether logging is enabled.
+     */
+    public boolean isLoggingEnabled() {
+        return CommonUtils.toBoolean(settings.getProperties().get(AIConstants.AI_LOG_QUERY));
+    }
 }

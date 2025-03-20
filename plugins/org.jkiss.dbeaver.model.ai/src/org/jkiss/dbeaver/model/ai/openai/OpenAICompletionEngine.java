@@ -79,6 +79,11 @@ public class OpenAICompletionEngine implements DAICompletionEngine {
         return OpenAISettings.INSTANCE.isValidConfiguration();
     }
 
+    @Override
+    public boolean isLoggingEnabled() {
+        return OpenAISettings.INSTANCE.isLoggingEnabled();
+    }
+
     @NotNull
     protected ChatCompletionResult complete(
         @NotNull DBRProgressMonitor monitor,
@@ -93,12 +98,12 @@ public class OpenAICompletionEngine implements DAICompletionEngine {
 
         ChatCompletionRequest completionRequest = ChatCompletionRequest.builder()
             .messages(fromMessages(truncatedMessages))
-            .temperature(OpenAISettings.INSTANCE.temperature())
+            .temperature(temperature())
             .frequencyPenalty(0.0)
             .presencePenalty(0.0)
             .maxTokens(maxTokens)
             .n(1)
-            .model(OpenAISettings.INSTANCE.model().getName())
+            .model(model())
             .build();
 
         return openAiService.evaluate().createChatCompletion(monitor, completionRequest);
@@ -140,6 +145,14 @@ public class OpenAICompletionEngine implements DAICompletionEngine {
                 aiService.shutdownExecutor();
             }
         };
+    }
+
+    protected String model() {
+        return OpenAISettings.INSTANCE.model().getName();
+    }
+
+    protected double temperature() {
+        return OpenAISettings.INSTANCE.temperature();
     }
 
     private DBException mapHttpException(retrofit2.HttpException e) {

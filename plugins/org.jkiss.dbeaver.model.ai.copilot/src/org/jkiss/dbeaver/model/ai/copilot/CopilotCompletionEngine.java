@@ -88,6 +88,11 @@ public class CopilotCompletionEngine implements DAICompletionEngine {
     }
 
     @Override
+    public boolean isLoggingEnabled() {
+        return CopilotSettings.INSTANCE.isLoggingEnabled();
+    }
+
+    @Override
     public void onSettingsUpdate(AISettingsRegistry registry) {
 
         try {

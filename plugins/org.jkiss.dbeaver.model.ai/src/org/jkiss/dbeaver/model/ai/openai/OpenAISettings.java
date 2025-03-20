@@ -63,6 +63,13 @@ public class OpenAISettings {
     }
 
     /**
+     * Returns whether logging is enabled.
+     */
+    public boolean isLoggingEnabled() {
+        return CommonUtils.toBoolean(settings.getProperties().get(AIConstants.AI_LOG_QUERY));
+    }
+
+    /**
      * Returns whether the current configuration is valid.
      */
     public boolean isValidConfiguration() {

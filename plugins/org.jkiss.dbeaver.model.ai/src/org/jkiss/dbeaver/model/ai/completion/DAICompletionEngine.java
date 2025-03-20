@@ -72,7 +72,11 @@ public interface DAICompletionEngine extends AISettingsEventListener {
 
                 @Override
                 public void request(long n) {
-                    if (!isCompleted && n > 0) {
+                    if (n <= 0) {
+                        subscriber.onError(new IllegalArgumentException("Invalid request size: " + n));
+                    } else if (isCompleted) {
+                        subscriber.onError(new IllegalStateException("Completion stream is already completed"));
+                    } else {
                         subscriber.onNext(new DAICompletionChunk(completionResponse.text()));
                         subscriber.onComplete();
                         isCompleted = true;
@@ -93,4 +97,6 @@ public interface DAICompletionEngine extends AISettingsEventListener {
      * @return true if the completion engine has a valid configuration
      */
     boolean hasValidConfiguration();
+
+    boolean isLoggingEnabled();
 }

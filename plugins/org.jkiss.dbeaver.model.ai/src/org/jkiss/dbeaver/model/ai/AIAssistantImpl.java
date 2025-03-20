@@ -18,6 +18,7 @@ package org.jkiss.dbeaver.model.ai;
 
 import org.jkiss.code.NotNull;
 import org.jkiss.dbeaver.DBException;
+import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.model.ai.completion.*;
 import org.jkiss.dbeaver.model.ai.utils.AIUtils;
 import org.jkiss.dbeaver.model.ai.utils.ThrowableSupplier;
@@ -29,6 +30,7 @@ import java.util.concurrent.Flow;
 import java.util.stream.Stream;
 
 public class AIAssistantImpl implements AIAssistant {
+    private static final Log log = Log.getLog(AIAssistantImpl.class);
 
     private static final int MAX_RETRIES = 3;
 
@@ -66,12 +68,13 @@ public class AIAssistantImpl implements AIAssistant {
             engine.getMaxContextSize(monitor)
         );
 
-        return callWithRetry(() -> engine.requestCompletionStream(
+        return requestCompletionStream(
+            engine,
             monitor,
             new DAICompletionRequest(
                 truncatedMessages
             )
-        ));
+        );
     }
 
     /**
@@ -104,10 +107,7 @@ public class AIAssistantImpl implements AIAssistant {
             AIUtils.truncateMessages(true, chatMessages, engine.getMaxContextSize(monitor))
         );
 
-        DAICompletionResponse completionResponse = callWithRetry(() -> engine.requestCompletion(
-            monitor,
-            completionRequest
-        ));
+        DAICompletionResponse completionResponse = requestCompletion(engine, monitor, completionRequest);
 
         MessageChunk[] messageChunks = processAndSplitCompletion(
             monitor,
@@ -150,10 +150,7 @@ public class AIAssistantImpl implements AIAssistant {
             AIUtils.truncateMessages(true, chatMessages, engine.getMaxContextSize(monitor))
         );
 
-        DAICompletionResponse completionResponse = callWithRetry(() -> engine.requestCompletion(
-            monitor,
-            completionRequest
-        ));
+        DAICompletionResponse completionResponse = requestCompletion(engine, monitor, completionRequest);
 
         MessageChunk[] messageChunks = processAndSplitCompletion(monitor, request.context(), completionResponse.text());
 
@@ -214,6 +211,61 @@ public class AIAssistantImpl implements AIAssistant {
 
     private DAICompletionEngine getActiveEngine() throws DBException {
         return engineRegistry.getCompletionEngine(settingsRegistry.getSettings().getActiveEngine());
+    }
+
+    private DAICompletionResponse requestCompletion(
+        @NotNull DAICompletionEngine engine,
+        @NotNull DBRProgressMonitor monitor,
+        @NotNull DAICompletionRequest request
+    ) throws DBException {
+        try {
+            if (engine.isLoggingEnabled()) {
+                log.debug("Requesting completion [request=" + request + "]");
+            }
+
+            DAICompletionResponse completionResponse = callWithRetry(() -> engine.requestCompletion(monitor, request));
+
+            if (engine.isLoggingEnabled()) {
+                log.debug("Received completion [response=" + completionResponse + "]");
+            }
+
+            return completionResponse;
+        } catch (Exception e) {
+            log.error("Error requesting completion", e);
+
+            if (e instanceof DBException) {
+                throw (DBException) e;
+            } else {
+                throw new DBException("Error requesting completion", e);
+            }
+        }
+    }
+
+    private Flow.Publisher<DAICompletionChunk> requestCompletionStream(
+        @NotNull DAICompletionEngine engine,
+        @NotNull DBRProgressMonitor monitor,
+        @NotNull DAICompletionRequest request
+    ) throws DBException {
+        try {
+            Flow.Publisher<DAICompletionChunk> publisher = callWithRetry(() -> engine.requestCompletionStream(monitor, request));
+
+            return subscriber -> {
+                if (engine.isLoggingEnabled()) {
+                    log.debug("Requesting completion stream [request=" + request + "]");
+                    publisher.subscribe(new LogSubscriber(log, subscriber));
+                } else {
+                    publisher.subscribe(subscriber);
+                }
+            };
+        } catch (Exception e) {
+            log.error("Error requesting completion stream", e);
+
+            if (e instanceof DBException) {
+                throw (DBException) e;
+            } else {
+                throw new DBException("Error requesting completion stream", e);
+            }
+        }
     }
 
     protected String getSystemPrompt() {
