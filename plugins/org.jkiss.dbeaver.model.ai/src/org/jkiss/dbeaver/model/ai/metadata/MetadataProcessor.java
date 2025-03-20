@@ -22,15 +22,16 @@ import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.model.DBPEvaluationContext;
 import org.jkiss.dbeaver.model.DBUtils;
+import org.jkiss.dbeaver.model.ai.completion.DAIChatMessage;
 import org.jkiss.dbeaver.model.ai.completion.DAIChatRole;
 import org.jkiss.dbeaver.model.ai.completion.DAICompletionContext;
-import org.jkiss.dbeaver.model.ai.completion.DAIChatMessage;
 import org.jkiss.dbeaver.model.ai.completion.DAICompletionScope;
 import org.jkiss.dbeaver.model.ai.format.IAIFormatter;
 import org.jkiss.dbeaver.model.exec.DBCExecutionContext;
 import org.jkiss.dbeaver.model.exec.DBCExecutionContextDefaults;
 import org.jkiss.dbeaver.model.navigator.DBNUtils;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
+import org.jkiss.dbeaver.model.sql.SQLDialect;
 import org.jkiss.dbeaver.model.struct.DBSEntity;
 import org.jkiss.dbeaver.model.struct.DBSEntityAttribute;
 import org.jkiss.dbeaver.model.struct.DBSObject;
@@ -125,7 +126,7 @@ public class MetadataProcessor {
             sb.append(", ").append(extraInstructions);
         }
 
-        sb.append("\nDialect is ").append(mainObject.getDataSource().getSQLDialect().getDialectName());
+        describeSQLDialect(mainObject.getDataSource().getSQLDialect(), sb);
 
         if (executionContext.getContextDefaults() != null) {
             final DBSSchema defaultSchema = executionContext.getContextDefaults().getDefaultSchema();
@@ -203,6 +204,18 @@ public class MetadataProcessor {
         DBCExecutionContextDefaults<?,?> contextDefaults = context.getContextDefaults();
         return parent != null && !(parent.equals(contextDefaults.getDefaultCatalog())
             || parent.equals(contextDefaults.getDefaultSchema()));
+    }
+
+    private static void describeSQLDialect(SQLDialect dialect, StringBuilder sb) {
+        sb.append("Dialect is ").append(dialect.getDialectName());
+
+        String[][] identifierQuoteStrings = dialect.getIdentifierQuoteStrings();
+        if (identifierQuoteStrings != null && identifierQuoteStrings.length > 0) {
+            sb.append("\nUse ").append(identifierQuoteStrings[0][0]).append(" to quote database object names");
+        }
+
+        String[][] stringQuoteStrings = dialect.getStringQuoteStrings();
+        sb.append("\nUse ").append(stringQuoteStrings[0][0]).append(" to quote string values");
     }
 
     private MetadataProcessor() {
