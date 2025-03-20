@@ -146,7 +146,7 @@ public class SQLQueryTranslator implements SQLTranslator {
             CreateTable createTable = (CreateTable) statement;
 
             if (extendedDialect != null && extendedDialect.supportsCreateIfExists()) {
-                createTable.setIfNotExists(true);
+                createTable.setIfNotExists(false);
                 defChanged = true;
             }
 
