@@ -24,4 +24,7 @@ public record DAICommandRequest(
     @NotNull DAICompletionContext context,
     @Nullable DAICompletionEngine engine
 ) {
+    public DAICommandRequest(@NotNull String text, @NotNull DAICompletionContext context) {
+        this(text, context, null);
+    }
 }
