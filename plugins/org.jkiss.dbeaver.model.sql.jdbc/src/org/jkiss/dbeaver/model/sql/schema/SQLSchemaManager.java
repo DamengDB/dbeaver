@@ -92,6 +92,15 @@ public final class SQLSchemaManager {
         this.internalDb = internalDb;
     }
 
+    /**
+     * Updates or creates the application schema. Returns {@link UpdateSchemaResult} CREATED or UPDATED depending on the result.
+     * Schema creation is only allowed if the previous migration completed with CREATED or if this is the first migration.
+     *
+     * @param monitor
+     * @param prevModuleMigrationResult the result of the previous migration
+     * @return
+     * @throws DBException
+     */
     public UpdateSchemaResult updateSchema(
         @NotNull DBRProgressMonitor monitor,
         @Nullable UpdateSchemaResult prevModuleMigrationResult
