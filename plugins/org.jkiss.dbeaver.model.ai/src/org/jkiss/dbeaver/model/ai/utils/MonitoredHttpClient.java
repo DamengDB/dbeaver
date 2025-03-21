@@ -43,11 +43,12 @@ public class MonitoredHttpClient implements AutoCloseable {
         HttpRequest request,
         HttpResponse.BodyHandler<T> responseBodyHandler
     ) throws DBException {
-        monitor.subTask("Sending request to " + request.uri());
+        monitor.beginTask("Request AI completion", 1);
 
         CompletableFuture<HttpResponse<T>> responseCompletableFuture = client.sendAsync(request, responseBodyHandler);
 
         try {
+            monitor.subTask("Sending request to " + request.uri());
             while (true) {
                 if (monitor.isCanceled()) {
                     responseCompletableFuture.cancel(true);

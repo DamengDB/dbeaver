@@ -27,7 +27,6 @@ import org.jkiss.dbeaver.model.ai.AIConstants;
 import org.jkiss.dbeaver.model.ai.AISettingsRegistry;
 import org.jkiss.dbeaver.model.ai.TooManyRequestsException;
 import org.jkiss.dbeaver.model.ai.completion.*;
-import org.jkiss.dbeaver.model.ai.utils.AIUtils;
 import org.jkiss.dbeaver.model.ai.utils.DisposableLazyValue;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 
@@ -90,14 +89,8 @@ public class OpenAICompletionEngine implements DAICompletionEngine {
         List<DAIChatMessage> messages,
         int maxTokens
     ) throws DBException {
-        List<DAIChatMessage> truncatedMessages = AIUtils.truncateMessages(
-            true,
-            messages,
-            maxTokens
-        );
-
         ChatCompletionRequest completionRequest = ChatCompletionRequest.builder()
-            .messages(fromMessages(truncatedMessages))
+            .messages(fromMessages(messages))
             .temperature(temperature())
             .frequencyPenalty(0.0)
             .presencePenalty(0.0)

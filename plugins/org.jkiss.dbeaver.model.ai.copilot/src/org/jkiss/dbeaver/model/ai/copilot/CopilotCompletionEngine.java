@@ -20,7 +20,6 @@ import org.jkiss.code.NotNull;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.model.ai.AISettingsRegistry;
-import org.jkiss.dbeaver.model.ai.completion.DAIChatMessage;
 import org.jkiss.dbeaver.model.ai.completion.DAICompletionEngine;
 import org.jkiss.dbeaver.model.ai.completion.DAICompletionRequest;
 import org.jkiss.dbeaver.model.ai.completion.DAICompletionResponse;
@@ -29,11 +28,8 @@ import org.jkiss.dbeaver.model.ai.copilot.dto.CopilotChatResponse;
 import org.jkiss.dbeaver.model.ai.copilot.dto.CopilotMessage;
 import org.jkiss.dbeaver.model.ai.copilot.dto.CopilotSessionToken;
 import org.jkiss.dbeaver.model.ai.openai.OpenAIModel;
-import org.jkiss.dbeaver.model.ai.utils.AIUtils;
 import org.jkiss.dbeaver.model.ai.utils.DisposableLazyValue;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
-
-import java.util.List;
 
 public class CopilotCompletionEngine implements DAICompletionEngine {
     private static final Log log = Log.getLog(CopilotCompletionEngine.class);
@@ -62,15 +58,9 @@ public class CopilotCompletionEngine implements DAICompletionEngine {
         @NotNull DBRProgressMonitor monitor,
         @NotNull DAICompletionRequest request
     ) throws DBException {
-        List<DAIChatMessage> messages = AIUtils.truncateMessages(
-            true,
-            request.messages(),
-            getMaxContextSize(monitor)
-        );
-
         CopilotChatRequest chatRequest = CopilotChatRequest.builder()
             .withModel(CopilotSettings.INSTANCE.modelName())
-            .withMessages(messages.stream().map(CopilotMessage::from).toList())
+            .withMessages(request.messages().stream().map(CopilotMessage::from).toList())
             .withTemperature(CopilotSettings.INSTANCE.temperature())
             .withStream(false)
             .withIntent(false)
