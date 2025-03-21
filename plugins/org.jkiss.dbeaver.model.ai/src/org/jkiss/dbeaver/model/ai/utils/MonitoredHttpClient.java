@@ -16,9 +16,6 @@
  */
 package org.jkiss.dbeaver.model.ai.utils;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.Strictness;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 
@@ -30,11 +27,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 public class MonitoredHttpClient implements AutoCloseable {
-    private static final Gson GSON = new GsonBuilder()
-        .setStrictness(Strictness.LENIENT)
-        .serializeNulls()
-        .create();
-
     private final HttpClient client;
 
     public MonitoredHttpClient(HttpClient client) {
@@ -51,6 +43,8 @@ public class MonitoredHttpClient implements AutoCloseable {
         HttpRequest request,
         HttpResponse.BodyHandler<T> responseBodyHandler
     ) throws DBException {
+        monitor.subTask("Sending request to " + request.uri());
+
         CompletableFuture<HttpResponse<T>> responseCompletableFuture = client.sendAsync(request, responseBodyHandler);
 
         try {
@@ -72,6 +66,8 @@ public class MonitoredHttpClient implements AutoCloseable {
             throw new DBException("Request was cancelled", e);
         } catch (ExecutionException e) {
             throw new DBException("Request failed", e);
+        } finally {
+            monitor.done();
         }
     }
 

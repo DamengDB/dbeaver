@@ -61,7 +61,7 @@ public class OpenAICompletionEngine implements DAICompletionEngine {
         @NotNull DBRProgressMonitor monitor,
         @NotNull DAICompletionRequest request
     ) throws DBException {
-        ChatCompletionResult completionResult = complete(monitor, request.messages(), AIConstants.MAX_RESPONSE_TOKENS);
+        ChatCompletionResult completionResult = complete(monitor, request.messages(), getMaxContextSize(monitor));
         return new DAICompletionResponse(completionResult.getChoices().get(0).getMessage().getContent());
     }
 
@@ -101,7 +101,7 @@ public class OpenAICompletionEngine implements DAICompletionEngine {
             .temperature(temperature())
             .frequencyPenalty(0.0)
             .presencePenalty(0.0)
-            .maxTokens(maxTokens)
+            .maxTokens(AIConstants.MAX_RESPONSE_TOKENS)
             .n(1)
             .model(model())
             .build();
