@@ -88,8 +88,7 @@ public class SQLCommandAI implements SQLControlCommandHandler {
         DAICompletionContext.Builder contextBuilder = new DAICompletionContext.Builder()
             .setScope(scope)
             .setDataSource(lDataSource)
-            .setExecutionContext(scriptContext.getExecutionContext())
-            .setFormatter(AIFormatterRegistry.getInstance().getFormatter(AIConstants.CORE_FORMATTER));
+            .setExecutionContext(scriptContext.getExecutionContext());
         if (scope == DAICompletionScope.CUSTOM) {
             contextBuilder.setCustomEntities(
                 AITextUtils.loadCustomEntities(

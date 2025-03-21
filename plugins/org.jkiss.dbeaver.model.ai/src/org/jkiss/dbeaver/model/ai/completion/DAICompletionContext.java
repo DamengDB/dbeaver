@@ -19,14 +19,10 @@ package org.jkiss.dbeaver.model.ai.completion;
 import org.eclipse.core.runtime.Assert;
 import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
-import org.jkiss.dbeaver.DBException;
-import org.jkiss.dbeaver.model.ai.AIConstants;
 import org.jkiss.dbeaver.model.ai.format.IAIFormatter;
-import org.jkiss.dbeaver.model.ai.metadata.MetadataProcessor;
 import org.jkiss.dbeaver.model.exec.DBCExecutionContext;
 import org.jkiss.dbeaver.model.exec.DBCExecutionContextDefaults;
 import org.jkiss.dbeaver.model.logical.DBSLogicalDataSource;
-import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 import org.jkiss.dbeaver.model.struct.DBSEntity;
 import org.jkiss.dbeaver.model.struct.DBSObjectContainer;
 
@@ -39,20 +35,17 @@ public class DAICompletionContext {
     private final List<DBSEntity> customEntities;
     private final DBSLogicalDataSource dataSource;
     private final DBCExecutionContext executionContext;
-    private final IAIFormatter formatter;
 
     private DAICompletionContext(
         @NotNull DAICompletionScope scope,
         @Nullable List<DBSEntity> customEntities,
         @NotNull DBSLogicalDataSource dataSource,
-        @NotNull DBCExecutionContext executionContext,
-        @NotNull IAIFormatter formatter
+        @NotNull DBCExecutionContext executionContext
     ) {
         this.scope = scope;
         this.customEntities = customEntities;
         this.dataSource = dataSource;
         this.executionContext = executionContext;
-        this.formatter = formatter;
     }
 
     @NotNull
@@ -75,17 +68,11 @@ public class DAICompletionContext {
         return executionContext;
     }
 
-    @NotNull
-    public IAIFormatter getFormatter() {
-        return formatter;
-    }
-
     public static class Builder {
         private DAICompletionScope scope;
         private List<DBSEntity> customEntities;
         private DBSLogicalDataSource dataSource;
         private DBCExecutionContext executionContext;
-        private IAIFormatter formatter;
 
         @NotNull
         public Builder setScope(@NotNull DAICompletionScope scope) {
@@ -112,12 +99,6 @@ public class DAICompletionContext {
         }
 
         @NotNull
-        public Builder setFormatter(@NotNull IAIFormatter formatter) {
-            this.formatter = formatter;
-            return this;
-        }
-
-        @NotNull
         public DAICompletionContext build() {
             Assert.isLegal(
                 scope != null,
@@ -135,26 +116,9 @@ public class DAICompletionContext {
                 executionContext != null,
                 "Execution context must be specified"
             );
-            Assert.isLegal(
-                formatter != null,
-                "Formatter must be specified"
-            );
 
-            return new DAICompletionContext(scope, customEntities, dataSource, executionContext, formatter);
+            return new DAICompletionContext(scope, customEntities, dataSource, executionContext);
         }
-    }
-
-    public DAIChatMessage asSystemMessage(
-        @NotNull DBRProgressMonitor monitor,
-        int maxTokens
-    ) throws DBException {
-        return MetadataProcessor.INSTANCE.createMetadataMessage(
-            monitor,
-            this,
-            getScopeObject(),
-            formatter,
-            maxTokens - AIConstants.MAX_RESPONSE_TOKENS
-        );
     }
 
     public DBSObjectContainer getScopeObject() {

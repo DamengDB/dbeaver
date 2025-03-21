@@ -108,13 +108,14 @@ public class MetadataProcessor {
      * Creates a new message containing completion metadata for the request
      */
     @NotNull
-    public DAIChatMessage createMetadataMessage(
+    public String describeContext(
         @NotNull DBRProgressMonitor monitor,
         @NotNull DAICompletionContext context,
-        @Nullable DBSObjectContainer mainObject,
         @NotNull IAIFormatter formatter,
         int maxRequestTokens
     ) throws DBException {
+        DBSObjectContainer mainObject = context.getScopeObject();
+
         if (mainObject == null || mainObject.getDataSource() == null) {
             throw new DBException("Invalid completion request");
         }
@@ -162,10 +163,7 @@ public class MetadataProcessor {
             ));
         }
 
-        return new DAIChatMessage(
-            DAIChatRole.SYSTEM,
-            sb.toString()
-        );
+        return sb.toString();
     }
 
     protected DBSEntityAttribute addPromptAttributes(

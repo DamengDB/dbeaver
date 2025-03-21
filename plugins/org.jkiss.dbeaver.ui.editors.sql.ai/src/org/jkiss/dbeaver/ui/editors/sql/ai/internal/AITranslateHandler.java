@@ -200,7 +200,6 @@ public class AITranslateHandler extends AbstractHandler {
                     .setCustomEntities(popup.getCustomEntities(monitor))
                     .setDataSource(dataSource)
                     .setExecutionContext(executionContext)
-                    .setFormatter(AIFormatterRegistry.getInstance().getFormatter(AIConstants.CORE_FORMATTER))
                     .build();
 
                 DAITranslateRequest daiTranslateRequest = new DAITranslateRequest(userInput, context);
