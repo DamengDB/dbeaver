@@ -96,7 +96,7 @@ public class DriverLibraryBundle extends DriverLibraryAbstract {
             int divPos = location.indexOf("file:");
             if (divPos != -1) {
                 String installPath = location.substring(divPos + 5);
-                return Path.of(Platform.getInstallLocation().getURL().toURI()).resolve(installPath);
+                return Path.of(Platform.getInstallLocation().getURL().toString()).resolve(installPath);
             }
         } catch (Exception e) {
             log.debug(e);
