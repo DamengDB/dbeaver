@@ -204,6 +204,9 @@ public class SQLQueryJob extends DataSourceJob
         RuntimeUtils.setThreadName("SQL script execution");
         statistics = new DBCStatistics();
         skipConfirmation = false;
+        if (queryNum == queries.size()) {
+            queryNum = 0;
+        }
         monitor.beginTask("Execute SQL script", queries.size());
         try {
             DBCExecutionContext context = getExecutionContext();
