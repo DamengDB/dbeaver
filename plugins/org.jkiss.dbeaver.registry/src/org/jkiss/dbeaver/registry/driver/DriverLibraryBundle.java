@@ -24,6 +24,7 @@ import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.model.DBIcon;
 import org.jkiss.dbeaver.model.connection.DBPDriverLibrary;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
+import org.jkiss.dbeaver.utils.RuntimeUtils;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
@@ -96,7 +97,7 @@ public class DriverLibraryBundle extends DriverLibraryAbstract {
             int divPos = location.indexOf("file:");
             if (divPos != -1) {
                 String installPath = location.substring(divPos + 5);
-                return Path.of(Platform.getInstallLocation().getURL().toString()).resolve(installPath);
+                return RuntimeUtils.getLocalPathFromURL(Platform.getInstallLocation().getURL()).resolve(installPath);
             }
         } catch (Exception e) {
             log.debug(e);
