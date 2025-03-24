@@ -117,6 +117,7 @@ public class SQLQueryJob extends DataSourceJob
     private int fetchResultSetNumber;
     private int resultSetNumber;
     private SQLScriptElement lastGoodQuery;
+    private int queryNum = 0;
 
     private boolean skipConfirmation;
     private int fetchSize;
@@ -232,7 +233,7 @@ public class SQLQueryJob extends DataSourceJob
                 }
 
                 resultSetNumber = 0;
-                for (int queryNum = 0; queryNum < queries.size(); ) {
+                while (queryNum < queries.size()) {
                     // Execute query
                     SQLScriptElement query = queries.get(queryNum);
 
