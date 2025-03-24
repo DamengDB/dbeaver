@@ -24,7 +24,7 @@ import org.jkiss.utils.CommonUtils;
 /**
  * Data source information
  */
-public class QMMConnectionInfo extends QMMObject {
+public class QMMConnectionInfo extends QMMObject implements QMMDataSourceInfo {
 
     @Include
     private final QMMProjectInfo projectInfo;
@@ -305,14 +305,17 @@ public class QMMConnectionInfo extends QMMObject {
         return projectInfo;
     }
 
+    @Override
     public String getContainerId() {
         return containerId;
     }
 
+    @Override
     public String getContainerName() {
         return containerName;
     }
 
+    @Override
     public String getDriverId() {
         return driverId;
     }
@@ -347,6 +350,7 @@ public class QMMConnectionInfo extends QMMObject {
         return connectionUserName;
     }
 
+    @Override
     public String getConnectionUrl() {
         return connectionUrl;
     }
