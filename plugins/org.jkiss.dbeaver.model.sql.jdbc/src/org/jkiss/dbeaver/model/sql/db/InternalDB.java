@@ -131,19 +131,19 @@ public abstract class InternalDB<T extends InternalDatabaseConfig> {
         for (int i = 0; i < schemaConfigList.size(); i++) {
             SQLSchemaConfig schemaConfig = schemaConfigList.get(i);
             SQLSchemaManager schemaManager = new SQLSchemaManager(
-                schemaConfig.schemaId(),
+                schemaConfig.getSchemaId(),
                 new ClassLoaderScriptSource(
-                    schemaConfig.classLoader(),
-                    schemaConfig.createScriptPath(),
-                    schemaConfig.updateScriptPrefix()
+                    schemaConfig.getClassLoader(),
+                    schemaConfig.getCreateScriptPath(),
+                    schemaConfig.getUpdateScriptPrefix()
                 ),
                 monitor1 -> connection,
-                schemaConfig.versionManager(),
+                schemaConfig.getVersionManager(),
                 dialect,
-                schemaConfig.schemaVersionActual(),
-                schemaConfig.schemaVersionObsolete(),
+                schemaConfig.getSchemaVersionActual(),
+                schemaConfig.getSchemaVersionObsolete(),
                 databaseConfig,
-                this
+                schemaConfig.getInitialSchemaFiller()
             );
             updateSchemaResult = schemaManager.updateSchema(monitor, updateSchemaResult);
         }
@@ -207,11 +207,5 @@ public abstract class InternalDB<T extends InternalDatabaseConfig> {
 
     protected List<SQLSchemaConfig> getSchemaConfigList() {
         return schemaConfigList;
-    }
-
-    /**
-     * Fill initial schema data after schema creation
-     */
-    public void fillInitialSchemaData(DBRProgressMonitor monitor, Connection connection) throws DBException, SQLException {
     }
 }

@@ -29,7 +29,6 @@ import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 import org.jkiss.dbeaver.model.sql.SQLDialect;
 import org.jkiss.dbeaver.model.sql.backup.JDBCDatabaseBackupDescriptor;
 import org.jkiss.dbeaver.model.sql.backup.JDBCDatabaseBackupRegistry;
-import org.jkiss.dbeaver.model.sql.db.InternalDB;
 import org.jkiss.dbeaver.model.sql.translate.SQLQueryTranslator;
 import org.jkiss.dbeaver.utils.ContentUtils;
 import org.jkiss.utils.CommonUtils;
@@ -65,8 +64,8 @@ public final class SQLSchemaManager {
     private final int schemaVersionObsolete;
     @NotNull
     private final InternalDatabaseConfig databaseConfig;
-    @NotNull
-    private final InternalDB<?> internalDb;
+    @Nullable
+    private final SQLInitialSchemaFiller sqlInitialSchemaFiller;
 
     public SQLSchemaManager(
         @NotNull String schemaId,
@@ -77,7 +76,7 @@ public final class SQLSchemaManager {
         int schemaVersionActual,
         int schemaVersionObsolete,
         @NotNull InternalDatabaseConfig databaseConfig,
-        @NotNull InternalDB<?> internalDb
+        @Nullable SQLInitialSchemaFiller sqlInitialSchemaFiller
     ) {
         this.schemaId = schemaId;
 
@@ -89,7 +88,7 @@ public final class SQLSchemaManager {
         this.schemaVersionActual = schemaVersionActual;
         this.schemaVersionObsolete = schemaVersionObsolete;
         this.databaseConfig = databaseConfig;
-        this.internalDb = internalDb;
+        this.sqlInitialSchemaFiller = sqlInitialSchemaFiller;
     }
 
     /**
@@ -205,7 +204,9 @@ public final class SQLSchemaManager {
         try (Reader ddlStream = scriptSource.openSchemaCreateScript(monitor)) {
             executeScript(monitor, connection, ddlStream, false);
         }
-        internalDb.fillInitialSchemaData(monitor, connection);
+        if (sqlInitialSchemaFiller != null) {
+            sqlInitialSchemaFiller.fillInitialSchemaData(monitor, connection);
+        }
     }
 
     private void dropSchema(
