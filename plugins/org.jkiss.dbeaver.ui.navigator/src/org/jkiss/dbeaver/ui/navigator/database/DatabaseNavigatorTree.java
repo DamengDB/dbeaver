@@ -56,7 +56,6 @@ import org.jkiss.dbeaver.registry.RuntimeProjectPropertiesConstant;
 import org.jkiss.dbeaver.runtime.DBWorkbench;
 import org.jkiss.dbeaver.ui.*;
 import org.jkiss.dbeaver.ui.controls.ProgressPainter;
-import org.jkiss.dbeaver.ui.internal.UINavigatorMessages;
 import org.jkiss.dbeaver.ui.navigator.INavigatorFilter;
 import org.jkiss.dbeaver.ui.navigator.INavigatorItemRenderer;
 import org.jkiss.dbeaver.ui.navigator.NavigatorPreferences;
@@ -88,7 +87,6 @@ public class DatabaseNavigatorTree extends Composite implements INavigatorListen
     private INavigatorItemRenderer itemRenderer;
 
     private boolean filterShowConnected = false;
-    private String filterPlaceholderText = UINavigatorMessages.actions_navigator_search_tip;
     private DatabaseNavigatorTreeFilterObjectType filterObjectType = DatabaseNavigatorTreeFilterObjectType.connection;
     private volatile ProgressPainter treeLoadingListener;
 
@@ -132,7 +130,6 @@ public class DatabaseNavigatorTree extends Composite implements INavigatorListen
         this.setLayout(new FillLayout());
         this.navigatorFilter = navigatorFilter;
         if (filterPlaceholderText != null) {
-            this.filterPlaceholderText = filterPlaceholderText;
         }
         this.model = DBWorkbench.getPlatform().getNavigatorModel();
         assert this.model != null;
@@ -145,6 +142,7 @@ public class DatabaseNavigatorTree extends Composite implements INavigatorListen
         });
 
         treeViewer = doCreateTreeViewer(this, style);
+        updateFilterMessage();
 
         Tree tree = treeViewer.getTree();
         tree.setCursor(getDisplay().getSystemCursor(SWT.CURSOR_ARROW));
@@ -231,12 +229,22 @@ public class DatabaseNavigatorTree extends Composite implements INavigatorListen
         this.filterShowConnected = filterShowConnected;
     }
 
+    @NotNull
     public DatabaseNavigatorTreeFilterObjectType getFilterObjectType() {
         return filterObjectType;
     }
 
-    public void setFilterObjectType(DatabaseNavigatorTreeFilterObjectType filterObjectType) {
-        this.filterObjectType = filterObjectType;
+    public void setFilterObjectType(@NotNull DatabaseNavigatorTreeFilterObjectType filterObjectType) {
+        if (this.filterObjectType != filterObjectType) {
+            this.filterObjectType = filterObjectType;
+            updateFilterMessage();
+        }
+    }
+
+    private void updateFilterMessage() {
+        if (filterControl != null) {
+            filterControl.setMessage(filterObjectType.getDescription());
+        }
     }
 
     public ILabelDecorator getLabelDecorator() {
@@ -958,8 +966,6 @@ public class DatabaseNavigatorTree extends Composite implements INavigatorListen
             } catch (Throwable e) {
                 // May happen in old Eclipse versions
             }
-
-            setInitialText(getFilterPlaceholderText());
             ((GridLayout) getLayout()).verticalSpacing = 0;
 
             UIUtils.addDefaultEditActionsSupport(UIUtils.getActiveWorkbenchWindow(), getFilterControl());
@@ -987,10 +993,6 @@ public class DatabaseNavigatorTree extends Composite implements INavigatorListen
             }
 
             return parent;
-        }
-
-        protected Text doCreateFilterText(Composite parent) {
-            return new Text(parent, SWT.SINGLE | SWT.BORDER | SWT.SEARCH | SWT.ICON_CANCEL);
         }
 
         @Override
@@ -1046,10 +1048,6 @@ public class DatabaseNavigatorTree extends Composite implements INavigatorListen
                 }
             };
         }
-    }
-
-    protected String getFilterPlaceholderText() {
-        return filterPlaceholderText;
     }
 
     // Called by filtering job

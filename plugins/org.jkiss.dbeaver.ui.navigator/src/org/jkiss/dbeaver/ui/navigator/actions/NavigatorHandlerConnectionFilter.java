@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ public class NavigatorHandlerConnectionFilter extends AbstractHandler implements
                 navigatorTree.getViewer().getControl().setRedraw(true);
             }
         }
-        ActionUtils.fireCommandRefresh(NavigatorCommands.CMD_FILTER_CONNECTIONS);
+        ActionUtils.fireCommandRefresh(NavigatorCommands.CMD_FILTER_CONNECTED);
         return null;
     }
 
@@ -74,8 +74,8 @@ public class NavigatorHandlerConnectionFilter extends AbstractHandler implements
                 navigatorTree.isFilterShowConnected() ? UIIcon.FILTER_RESET : UIIcon.FILTER_APPLY
             ));
             String actionName = navigatorTree.isFilterShowConnected()
-                ? UINavigatorMessages.navigator_handler_connections_filter_show_all_text
-                : UINavigatorMessages.navigator_handler_connections_filter_show_connected_text;
+                ? UINavigatorMessages.navigator_handler_connections_filter_show_connected_text
+                : UINavigatorMessages.navigator_handler_connections_filter_show_all_text;
             element.setText(actionName);
             element.setTooltip(actionName);
         }
