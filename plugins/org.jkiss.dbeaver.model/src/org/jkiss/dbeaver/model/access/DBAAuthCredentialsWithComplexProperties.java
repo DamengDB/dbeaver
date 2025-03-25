@@ -14,14 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jkiss.dbeaver.model.access;
 
-/**
- * Auth credentials.
- */
-public interface DBAAuthCredentials extends DBAAuthCredentialsForm {
+import org.jkiss.code.NotNull;
 
-    boolean isComplete();
+import java.util.Map;
 
+public interface DBAAuthCredentialsWithComplexProperties {
+
+    void updateCredentialsFromComplexProperties(@NotNull Map<String, ?> complexProperties);
 }
