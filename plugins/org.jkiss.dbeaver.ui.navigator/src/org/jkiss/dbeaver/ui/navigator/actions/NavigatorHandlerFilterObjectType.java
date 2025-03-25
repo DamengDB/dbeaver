@@ -19,20 +19,15 @@ package org.jkiss.dbeaver.ui.navigator.actions;
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.ui.IWorkbenchPart;
-import org.eclipse.ui.IWorkbenchPartSite;
 import org.eclipse.ui.commands.IElementUpdater;
-import org.eclipse.ui.handlers.HandlerUtil;
 import org.eclipse.ui.menus.UIElement;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.ui.ActionUtils;
 import org.jkiss.dbeaver.ui.DBeaverIcons;
-import org.jkiss.dbeaver.ui.UIUtils;
 import org.jkiss.dbeaver.ui.navigator.NavigatorCommands;
+import org.jkiss.dbeaver.ui.navigator.NavigatorUtils;
 import org.jkiss.dbeaver.ui.navigator.database.DatabaseNavigatorTree;
 import org.jkiss.dbeaver.ui.navigator.database.DatabaseNavigatorTreeFilterObjectType;
-import org.jkiss.dbeaver.ui.navigator.database.DatabaseNavigatorView;
 import org.jkiss.dbeaver.utils.NLS;
 import org.jkiss.utils.CommonUtils;
 
@@ -44,13 +39,7 @@ public class NavigatorHandlerFilterObjectType extends AbstractHandler implements
 
     @Override
     public Object execute(ExecutionEvent event) throws ExecutionException {
-        DatabaseNavigatorTree navigatorTree = DatabaseNavigatorTree.getFromShell(HandlerUtil.getActiveShell(event));
-        if (navigatorTree == null) {
-            IWorkbenchPart activePart = HandlerUtil.getActivePart(event);
-            if (activePart instanceof DatabaseNavigatorView) {
-                navigatorTree = ((DatabaseNavigatorView) activePart).getNavigatorTree();
-            }
-        }
+        DatabaseNavigatorTree navigatorTree = NavigatorUtils.getNavigatorTree(event);
         if (navigatorTree != null) {
             DatabaseNavigatorTreeFilterObjectType objectType = CommonUtils.valueOf(
                 DatabaseNavigatorTreeFilterObjectType.class,
@@ -84,13 +73,7 @@ public class NavigatorHandlerFilterObjectType extends AbstractHandler implements
 
     @Override
     public void updateElement(UIElement element, Map parameters) {
-        DatabaseNavigatorTree navigatorTree = DatabaseNavigatorTree.getFromShell(Display.getCurrent());
-        if (navigatorTree == null) {
-            IWorkbenchPartSite partSite = UIUtils.getWorkbenchPartSite(element.getServiceLocator());
-            if (partSite != null && partSite.getPart() instanceof DatabaseNavigatorView) {
-                navigatorTree = ((DatabaseNavigatorView) partSite.getPart()).getNavigatorTree();
-            }
-        }
+        DatabaseNavigatorTree navigatorTree = NavigatorUtils.getNavigatorTree(element.getServiceLocator());
         DatabaseNavigatorTreeFilterObjectType curObjectType = DatabaseNavigatorTreeFilterObjectType.connection;
         if (navigatorTree != null) {
             curObjectType = navigatorTree.getFilterObjectType();
