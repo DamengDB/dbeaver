@@ -27,6 +27,7 @@ import org.jkiss.dbeaver.model.sql.semantics.context.SQLQueryDataContext;
 import org.jkiss.dbeaver.model.sql.semantics.context.SQLQueryResultColumn;
 import org.jkiss.dbeaver.model.sql.semantics.context.SQLQueryResultPseudoColumn;
 import org.jkiss.dbeaver.model.sql.semantics.model.SQLQueryNodeModelVisitor;
+import org.jkiss.dbeaver.model.sql.semantics.model.SQLQueryTupleRefEntry;
 import org.jkiss.dbeaver.model.sql.semantics.model.expressions.SQLQueryValueExpression;
 import org.jkiss.dbeaver.model.sql.semantics.model.expressions.SQLQueryValueTupleReferenceExpression;
 import org.jkiss.dbeaver.model.stm.STMKnownRuleNames;
@@ -253,12 +254,15 @@ public class SQLQueryRowsProjectionModel extends SQLQueryRowsSourceModel {
             for (STMTreeNode selectSublist : selectSublists) {
                 STMTreeNode sublistNode = selectSublist.findFirstNonErrorChild();
                 if (sublistNode != null) {
-                    switch (sublistNode.getNodeKindId()) { // selectSublist: (Asterisk|derivedColumn|qualifier Period Asterisk
+                    switch (sublistNode.getNodeKindId()) { // selectSublist: (Asterisk|derivedColumn)? anyUnexpected??;
                         case SQLStandardParser.RULE_derivedColumn -> {
                             // derivedColumn: valueExpression (asClause)?; asClause: (AS)? columnName;
                             STMTreeNode exprNode = sublistNode.findFirstChildOfName(STMKnownRuleNames.valueExpression);
                             SQLQueryValueExpression expr = exprNode == null ? null : recognizer.collectValueExpression(exprNode);
                             if (expr instanceof SQLQueryValueTupleReferenceExpression tupleRef) {
+                                if (tupleRef.getTupleRefEntry() != null) {
+                                    recognizer.registerScopeItem(tupleRef.getTupleRefEntry());
+                                }
                                 resultModel.addTupleSpec(sublistNode, tupleRef);
                             } else {
                                 STMTreeNode asClauseNode = sublistNode.findLastChildOfName(STMKnownRuleNames.asClause);
@@ -278,7 +282,11 @@ public class SQLQueryRowsProjectionModel extends SQLQueryRowsSourceModel {
                             // error in query text, ignoring it
                         }
                         default -> {
-                            resultModel.addCompleteTupleSpec(sublistNode);
+                            if (STMKnownRuleNames.ASTERISK_TERM.equals(sublistNode.getNodeName())) {
+                                SQLQueryTupleRefEntry tupleRefEntry = new SQLQueryTupleRefEntry(sublistNode);
+                                recognizer.registerScopeItem(tupleRefEntry);
+                                resultModel.addCompleteTupleSpec(sublistNode, tupleRefEntry);
+                            }
                         }
                     }
                 }
