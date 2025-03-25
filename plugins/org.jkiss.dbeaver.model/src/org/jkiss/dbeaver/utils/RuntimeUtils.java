@@ -398,7 +398,7 @@ public final class RuntimeUtils {
      * @return true if running on Wayland, false otherwise
      */
     public static boolean isWayland() {
-        return isLinux() && CommonUtils.isNotEmpty(System.getProperty("WAYLAND_DISPLAY"));
+        return isLinux() && CommonUtils.isNotEmpty(System.getenv("WAYLAND_DISPLAY"));
     }
 
     /**
