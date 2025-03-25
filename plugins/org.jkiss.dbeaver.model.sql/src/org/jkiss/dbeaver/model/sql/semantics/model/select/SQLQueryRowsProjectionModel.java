@@ -340,8 +340,26 @@ public class SQLQueryRowsProjectionModel extends SQLQueryRowsSourceModel {
                 SQLQueryLexicalScope scope = scopes[i];
                 if (scope != null) {
                     tailScope = scope;
-                    // int from = prevScopes[i].getInterval().b;
-                    int from = findLeadingKeywordsInterval(i == 0 ? tableExpr.findFirstNonErrorChild() : filterNodes[i - 1]).b + 2;
+
+                    Interval leadingKeywordInterval = null;
+                    STMTreeNode leadingNode;
+                    if (i == 0) {
+                        leadingNode = tableExpr.findFirstNonErrorChild();
+                    } else {
+                        leadingNode = filterNodes[i - 1];
+                    }
+                    if (leadingNode != null) {
+                        leadingKeywordInterval = findLeadingKeywordsInterval(leadingNode);
+                    }
+
+                    int from;
+                    if (leadingKeywordInterval != null) {
+                        // interval end points to the last keyword character
+                        // so we need to assume this last character and space after to find next position
+                        from = leadingKeywordInterval.b + 2;
+                    } else {
+                        from = prevScopes[i].getInterval().b;
+                    }
                     int to = nextScopeNodes[i] != null ? nextScopeNodes[i].getRealInterval().a : Integer.MAX_VALUE;
                     scope.setInterval(Interval.of(from, to));
                 }
