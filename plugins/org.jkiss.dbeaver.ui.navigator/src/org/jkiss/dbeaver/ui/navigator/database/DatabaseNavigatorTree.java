@@ -129,8 +129,6 @@ public class DatabaseNavigatorTree extends Composite implements INavigatorListen
 
         this.setLayout(new FillLayout());
         this.navigatorFilter = navigatorFilter;
-        if (filterPlaceholderText != null) {
-        }
         this.model = DBWorkbench.getPlatform().getNavigatorModel();
         assert this.model != null;
         this.model.addListener(this);
