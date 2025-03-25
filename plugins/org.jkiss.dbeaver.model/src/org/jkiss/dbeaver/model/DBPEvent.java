@@ -37,7 +37,6 @@ public class DBPEvent
         OBJECT_SELECT,
         BEFORE_CONNECT,
         AFTER_CONNECT,
-        PASSWORD_UPDATE
     }
 
     public static final Object REORDER = new Object();
