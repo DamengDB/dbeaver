@@ -237,7 +237,7 @@ public abstract class ConnectionWizard extends ActiveWizard implements IConnecti
                 var oldUserPassword = activeDataSource.getActualConnectionConfiguration().getUserPassword();
                 var newUserPassword = targetDataSource.getActualConnectionConfiguration().getUserPassword();
                 if (newUserPassword != null && !newUserPassword.equals(oldUserPassword)) {
-                    DBUtils.firePasswordUpdate(activeDataSource, newUserPassword);
+                    DBUtils.fireObjectUpdate(activeDataSource, targetDataSource.getActualConnectionConfiguration());
                 }
 
                 new ConnectionTestDialog(

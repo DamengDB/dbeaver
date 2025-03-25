@@ -29,6 +29,7 @@ import org.jkiss.dbeaver.model.DBPEvent;
 import org.jkiss.dbeaver.model.DBPEventListener;
 import org.jkiss.dbeaver.model.access.DBAAuthModel;
 import org.jkiss.dbeaver.model.connection.DBPAuthModelDescriptor;
+import org.jkiss.dbeaver.model.connection.DBPConnectionConfiguration;
 import org.jkiss.dbeaver.registry.DataSourceDescriptor;
 import org.jkiss.dbeaver.registry.DataSourceProviderRegistry;
 import org.jkiss.dbeaver.registry.configurator.DBPConnectionEditIntention;
@@ -168,14 +169,19 @@ public class AuthModelSelector extends Composite implements DBPEventListener {
 
     @Override
     public void handleDataSourceEvent(DBPEvent event) {
-        if (event.getAction() == DBPEvent.Action.PASSWORD_UPDATE) {
+        if (event.getAction() == DBPEvent.Action.OBJECT_UPDATE) {
             UIUtils.asyncExec(() -> {
-                String newPassword = (String) event.getData();
-                activeDataSource.getConnectionConfiguration().setUserPassword(newPassword);
-                if (activeDataSource instanceof DataSourceDescriptor dsd) {
-                    dsd.resetAllSecrets();
+                if (event.getData() instanceof DBPConnectionConfiguration newConfig) {
+                    DBPConnectionConfiguration currentConfig = activeDataSource.getConnectionConfiguration();
+                    currentConfig.setUserName(newConfig.getUserName());
+                    currentConfig.setUserPassword(newConfig.getUserPassword());
+                    currentConfig.setUrl(newConfig.getUrl());
+
+                    if (activeDataSource instanceof DataSourceDescriptor dsd) {
+                        dsd.resetAllSecrets();
+                    }
+                    authModelConfigurator.loadSettings(activeDataSource);
                 }
-                authModelConfigurator.loadSettings(activeDataSource);
             });
         }
     }
