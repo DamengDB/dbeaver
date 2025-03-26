@@ -109,6 +109,7 @@ public final class SQLSchemaManager {
             Connection dbCon = connectionProvider.getDatabaseConnection(monitor);
             try (JDBCTransaction txn = new JDBCTransaction(dbCon)) {
                 try {
+                    //fixme чек на старой версии бд, и сначала выдать эксепшен на dc
                     int currentSchemaVersion = versionManager.getCurrentSchemaVersion(monitor, dbCon, databaseConfig.getSchema());
                     // Do rollback in case some error happened during version check (makes sense for PG)
                     txn.rollback();
@@ -134,7 +135,7 @@ public final class SQLSchemaManager {
                             databaseConfig.getSchema(),
                             versionManager.getLatestSchemaVersion()
                         );
-                        result = UpdateSchemaResult.CREATED;
+                        result = prevModuleMigrationResult != null ? prevModuleMigrationResult : UpdateSchemaResult.CREATED;
                     } else if (schemaVersionActual > currentSchemaVersion) {
                         doBackupDatabase(dbCon, currentSchemaVersion);
                         upgradeSchemaVersion(monitor, dbCon, txn, currentSchemaVersion);
@@ -148,7 +149,7 @@ public final class SQLSchemaManager {
                     throw e;
                 }
             }
-            return result;
+            return result != null ? result : UpdateSchemaResult.UPDATED;
         } catch (IOException | SQLException e) {
             throw new DBException("Error updating " + schemaId + " schema version", e);
         }
