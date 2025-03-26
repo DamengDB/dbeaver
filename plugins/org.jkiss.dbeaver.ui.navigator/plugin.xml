@@ -312,8 +312,8 @@
         <image commandId="org.jkiss.dbeaver.core.object.move.up" icon="platform:/plugin/org.jkiss.dbeaver.ui/icons/misc/arrow_up.png"/>
         <image commandId="org.jkiss.dbeaver.core.object.move.down" icon="platform:/plugin/org.jkiss.dbeaver.ui/icons/misc/arrow_down.png"/>
 
-        <image commandId="org.jkiss.dbeaver.navigator.filter.connected" icon="platform:/plugin/org.jkiss.dbeaver.ui/icons/misc/filter_apply.png"/>
-        <image commandId="org.jkiss.dbeaver.navigator.filter.object.type" icon="platform:/plugin/org.jkiss.dbeaver.ui/icons/misc/filter_apply.png"/>
+        <image commandId="org.jkiss.dbeaver.navigator.filter.connected" icon="platform:/plugin/org.jkiss.dbeaver.ui/icons/misc/filter.png"/>
+        <image commandId="org.jkiss.dbeaver.navigator.filter.object.type" icon="platform:/plugin/org.jkiss.dbeaver.ui/icons/misc/filter_config.png"/>
         <image commandId="org.jkiss.dbeaver.core.object.filter.config" icon="platform:/plugin/org.jkiss.dbeaver.ui/icons/misc/filter.png"/>
         <image commandId="org.jkiss.dbeaver.core.object.filter.add.exclude" icon="platform:/plugin/org.jkiss.dbeaver.ui/icons/misc/filter_add.png"/>
         <image commandId="org.jkiss.dbeaver.core.object.filter.add.include" icon="platform:/plugin/org.jkiss.dbeaver.ui/icons/misc/filter_add.png"/>
