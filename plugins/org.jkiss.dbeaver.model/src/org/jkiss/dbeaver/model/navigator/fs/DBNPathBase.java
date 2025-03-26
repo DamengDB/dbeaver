@@ -301,7 +301,7 @@ public abstract class DBNPathBase extends DBNNode implements DBNLazyNode {
                     // Already in this container
                     continue;
                 }
-               boolean doCopy = !isTheSameFileSystem(node);
+                boolean doCopy = !isTheSameFileSystem(node);
                 boolean doDelete = false;
                 monitor.subTask((doCopy ? "Copy" : "Move") + " file " + resource);
                 try {

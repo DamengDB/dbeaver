@@ -329,14 +329,21 @@ public abstract class NodeListControl extends ObjectListControl<DBNNode>
         if (isDisposed()) {
             return;
         }
-        if (event.getNode().isChildOf(getRootNode())) {
+        DBNNode rootNode = getRootNode();
+        DBNNode eventNode = event.getNode();
+        if (eventNode == rootNode || eventNode.isChildOf(rootNode)) {
             switch (event.getAction()) {
                 case ADD:
                 case REMOVE:
                     loadData(false, true);
                     break;
                 case UPDATE:
-                    getItemsViewer().update(event.getNode(), null);
+                    if (eventNode == rootNode) {
+                        // Root node was updated
+                        loadData(false, true);
+                    } else {
+                        getItemsViewer().update(eventNode, null);
+                    }
                     break;
             }
         }
