@@ -1721,12 +1721,6 @@ public final class DBUtils {
 
     @SuppressWarnings("unchecked")
     @NotNull
-    public static <T> Class<T> getDriverClass(@NotNull DBPDataSource dataSource, @NotNull String className) throws ClassNotFoundException {
-        return (Class<T>) Class.forName(className, true, dataSource.getContainer().getDriver().getClassLoader());
-    }
-
-    @SuppressWarnings("unchecked")
-    @NotNull
     public static <T extends DBCSession> T openMetaSession(@NotNull DBRProgressMonitor monitor, @NotNull DBSObject object, @NotNull String task) throws DBCException {
         DBCExecutionContext defaultContext = getOrOpenDefaultContext(object, true);
         if (defaultContext == null) {
