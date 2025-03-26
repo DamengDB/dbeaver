@@ -105,7 +105,6 @@ public class UIIcon {
     public static final DBIcon ALIGN_TO_RIGHT = new DBIcon("align_to_right", "misc/align_to_right.png"); //$NON-NLS-1$ //$NON-NLS-2$
 
     public static final DBIcon FILTER = new DBIcon("misc/filter.png"); //$NON-NLS-1$ //$NON-NLS-2$
-    public static final DBIcon FILTER_SMALL = new DBIcon("misc/filter_small.png"); //$NON-NLS-1$ //$NON-NLS-2$
     public static final DBIcon FILTER_VALUE = new DBIcon("misc/filter_value.png"); //$NON-NLS-1$ //$NON-NLS-2$
     public static final DBIcon FILTER_INPUT = new DBIcon("misc/filter_input.png"); //$NON-NLS-1$ //$NON-NLS-2$
     public static final DBIcon FILTER_CLIPBOARD = new DBIcon("misc/filter_clipboard.png"); //$NON-NLS-1$ //$NON-NLS-2$
