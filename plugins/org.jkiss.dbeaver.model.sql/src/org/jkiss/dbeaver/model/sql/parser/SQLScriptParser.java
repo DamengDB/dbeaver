@@ -107,7 +107,8 @@ public class SQLScriptParser {
 
         // Parse range
         TPRuleBasedScanner ruleScanner = context.getScanner();
-        boolean useBlankLines = !scriptMode && context.getSyntaxManager().getStatementDelimiterMode().useBlankLine;
+        boolean useBlankLines = (!scriptMode && context.getSyntaxManager().getStatementDelimiterMode().useBlankLine)
+            || (scriptMode && context.getSyntaxManager().getStatementDelimiterMode().useSmart);
         boolean lineFeedIsDelimiter = ArrayUtils.contains(context.getSyntaxManager().getStatementDelimiters(), "\n");
         ruleScanner.setRange(document, startPos, endPos - startPos);
         int statementStart = startPos;
