@@ -123,7 +123,7 @@ public final class SQLSchemaManager {
                             databaseConfig.getSchema(),
                             versionManager.getLatestSchemaVersion()
                         );
-                        result = UpdateSchemaResult.CREATED;
+                        result = prevModuleMigrationResult != null ? prevModuleMigrationResult : UpdateSchemaResult.CREATED;
                     } else if (schemaVersionObsolete > 0 && currentSchemaVersion < schemaVersionObsolete) {
                         dropSchema(monitor, dbCon);
                         createNewSchema(monitor, dbCon);
