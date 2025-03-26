@@ -109,7 +109,6 @@ public final class SQLSchemaManager {
             Connection dbCon = connectionProvider.getDatabaseConnection(monitor);
             try (JDBCTransaction txn = new JDBCTransaction(dbCon)) {
                 try {
-                    //fixme чек на старой версии бд, и сначала выдать эксепшен на dc
                     int currentSchemaVersion = versionManager.getCurrentSchemaVersion(monitor, dbCon, databaseConfig.getSchema());
                     // Do rollback in case some error happened during version check (makes sense for PG)
                     txn.rollback();
