@@ -113,6 +113,9 @@ public class UIIcon {
     public static final DBIcon FILTER_RESET = new DBIcon("misc/filter_reset.png"); //$NON-NLS-1$ //$NON-NLS-2$
     public static final DBIcon FILTER_SAVE = new DBIcon("misc/filter_save.png"); //$NON-NLS-1$ //$NON-NLS-2$
     public static final DBIcon FILTER_CONFIG = new DBIcon("misc/filter_config.png"); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final DBIcon FILTER_CONNECTIONS = new DBIcon("misc/filter_connections.png"); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final DBIcon FILTER_CONTAINERS = new DBIcon("misc/filter_containers.png"); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final DBIcon FILTER_OBJECTS = new DBIcon("misc/filter_objects.png"); //$NON-NLS-1$ //$NON-NLS-2$
 
     public static final DBIcon EVENT = new DBIcon("event", "misc/event.png"); //$NON-NLS-1$ //$NON-NLS-2$
     public static final DBIcon HOME = new DBIcon("home", "misc/home.png"); //$NON-NLS-1$ //$NON-NLS-2$

@@ -21,6 +21,7 @@ import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.ui.commands.IElementUpdater;
 import org.eclipse.ui.menus.UIElement;
+import org.jkiss.dbeaver.model.DBIcon;
 import org.jkiss.dbeaver.ui.ActionUtils;
 import org.jkiss.dbeaver.ui.DBeaverIcons;
 import org.jkiss.dbeaver.ui.UIIcon;
@@ -53,9 +54,10 @@ public class NavigatorHandlerConnectionFilter extends AbstractHandler implements
     public void updateElement(UIElement element, Map parameters) {
         DatabaseNavigatorTree navigatorTree = NavigatorUtils.getNavigatorTree(element.getServiceLocator());
         if (navigatorTree != null) {
-            element.setIcon(DBeaverIcons.getImageDescriptor(
-                navigatorTree.isFilterShowConnected() ? UIIcon.FILTER_RESET : UIIcon.FILTER_APPLY
-            ));
+            DBIcon actionIcon = navigatorTree.isFilterShowConnected()
+                ? UIIcon.FILTER_APPLY
+                : UIIcon.FILTER;
+            element.setIcon(DBeaverIcons.getImageDescriptor(actionIcon));
             String actionName = navigatorTree.isFilterShowConnected()
                 ? UINavigatorMessages.navigator_handler_connections_filter_show_connected_text
                 : UINavigatorMessages.navigator_handler_connections_filter_show_all_text;

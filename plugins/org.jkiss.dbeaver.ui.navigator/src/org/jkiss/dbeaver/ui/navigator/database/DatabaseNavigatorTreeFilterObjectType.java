@@ -18,23 +18,24 @@ package org.jkiss.dbeaver.ui.navigator.database;
 
 import org.jkiss.code.NotNull;
 import org.jkiss.dbeaver.model.DBIcon;
+import org.jkiss.dbeaver.ui.UIIcon;
 import org.jkiss.dbeaver.ui.internal.UINavigatorMessages;
 
 public enum DatabaseNavigatorTreeFilterObjectType {
     connection(
         UINavigatorMessages.actions_navigator_search_filter_connection_name,
         UINavigatorMessages.actions_navigator_search_filter_connection_description,
-        DBIcon.TREE_DATABASE
+        UIIcon.FILTER_CONNECTIONS
     ),
     container(
         UINavigatorMessages.actions_navigator_search_filter_container_name,
         UINavigatorMessages.actions_navigator_search_filter_container_description,
-        DBIcon.TREE_SCHEMA
+        UIIcon.FILTER_CONTAINERS
     ),
     table(
         UINavigatorMessages.actions_navigator_search_filter_object_name,
         UINavigatorMessages.actions_navigator_search_filter_object_description,
-        DBIcon.TREE_TABLE
+        UIIcon.FILTER_OBJECTS
     );
 
     private final String name;
