@@ -91,7 +91,15 @@ public interface SMAdminController extends SMController {
 
     int countUsers(@NotNull SMUserFilter filter) throws DBException;
 
-    void enableUser(String userId, boolean enabled) throws DBException;
+    /**
+     * Method for enabling/disabling user.
+     */
+    void enableUser(
+        @NotNull String userId,
+        boolean enabled,
+        @Nullable String disabledBy,
+        @Nullable String disableReason
+    ) throws DBException;
 
     void setUserAuthRole(@NotNull String userId, @Nullable String authRole) throws DBException;
 
@@ -224,7 +232,5 @@ public interface SMAdminController extends SMController {
 
     @NotNull
     List<SMTeamMemberInfo> getTeamMembersInfo(@NotNull String teamId) throws DBException;
-
-    void blockUserByBruteForceProtection(@NotNull String userId) throws DBException;
 
 }

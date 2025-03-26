@@ -16,6 +16,8 @@
  */
 package org.jkiss.dbeaver.model.qm.meta;
 
+import org.jkiss.code.NotNull;
+import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.model.DBUtils;
 import org.jkiss.dbeaver.model.connection.DBPConnectionConfiguration;
 import org.jkiss.dbeaver.model.exec.*;
@@ -305,16 +307,19 @@ public class QMMConnectionInfo extends QMMObject implements QMMDataSourceInfo {
         return projectInfo;
     }
 
+    @NotNull
     @Override
     public String getContainerId() {
         return containerId;
     }
 
+    @Nullable
     @Override
     public String getContainerName() {
         return containerName;
     }
 
+    @NotNull
     @Override
     public String getDriverId() {
         return driverId;

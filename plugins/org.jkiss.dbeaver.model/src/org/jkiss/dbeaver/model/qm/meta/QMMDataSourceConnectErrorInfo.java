@@ -24,11 +24,17 @@ import org.jkiss.dbeaver.model.DBPDataSourceContainer;
  * QM model data source connect error info.
  */
 public class QMMDataSourceConnectErrorInfo implements QMMDataSourceInfo {
+    @NotNull
     private final String containerId;
+    @NotNull
     private final String containerName;
+    @NotNull
     private final String driverId;
+    @Nullable
     private final String connectionUrl;
+    @NotNull
     private final String errorType;
+    @Nullable
     private final String errorMessage;
 
     public QMMDataSourceConnectErrorInfo(
@@ -45,30 +51,36 @@ public class QMMDataSourceConnectErrorInfo implements QMMDataSourceInfo {
     }
 
 
+    @NotNull
     @Override
     public String getContainerId() {
         return containerId;
     }
 
+    @NotNull
     @Override
     public String getContainerName() {
         return containerName;
     }
 
+    @NotNull
     @Override
     public String getDriverId() {
         return driverId;
     }
 
+    @Nullable
     @Override
     public String getConnectionUrl() {
         return connectionUrl;
     }
 
+    @NotNull
     public String getErrorType() {
         return errorType;
     }
 
+    @Nullable
     public String getErrorMessage() {
         return errorMessage;
     }
