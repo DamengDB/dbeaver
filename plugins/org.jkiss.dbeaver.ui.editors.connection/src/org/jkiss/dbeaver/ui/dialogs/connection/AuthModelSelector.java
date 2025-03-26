@@ -169,19 +169,17 @@ public class AuthModelSelector extends Composite implements DBPEventListener {
 
     @Override
     public void handleDataSourceEvent(DBPEvent event) {
-        if (event.getAction() == DBPEvent.Action.OBJECT_UPDATE) {
+        if (event.getAction() == DBPEvent.Action.OBJECT_UPDATE && event.getData() instanceof DBPConnectionConfiguration newConfig) {
             UIUtils.asyncExec(() -> {
-                if (event.getData() instanceof DBPConnectionConfiguration newConfig) {
-                    DBPConnectionConfiguration currentConfig = activeDataSource.getConnectionConfiguration();
-                    currentConfig.setUserName(newConfig.getUserName());
-                    currentConfig.setUserPassword(newConfig.getUserPassword());
-                    currentConfig.setUrl(newConfig.getUrl());
+                DBPConnectionConfiguration currentConfig = activeDataSource.getConnectionConfiguration();
+                currentConfig.setUserName(newConfig.getUserName());
+                currentConfig.setUserPassword(newConfig.getUserPassword());
+                currentConfig.setUrl(newConfig.getUrl());
 
-                    if (activeDataSource instanceof DataSourceDescriptor dsd) {
-                        dsd.resetAllSecrets();
-                    }
-                    authModelConfigurator.loadSettings(activeDataSource);
+                if (activeDataSource instanceof DataSourceDescriptor dsd) {
+                    dsd.resetAllSecrets();
                 }
+                authModelConfigurator.loadSettings(activeDataSource);
             });
         }
     }
