@@ -156,7 +156,6 @@ public class DataSourceDescriptor
 
     private boolean temporary;
     private boolean hidden;
-    private boolean template;
     private boolean dpiEnabled;
 
     @NotNull
@@ -757,15 +756,6 @@ public class DataSourceDescriptor
     @Override
     public boolean isExternallyProvided() {
         return getOrigin().isDynamic();
-    }
-
-    @Override
-    public boolean isTemplate() {
-        return template;
-    }
-
-    public void setTemplate(boolean template) {
-        this.template = template;
     }
 
     @Override
