@@ -55,8 +55,8 @@ public class NavigatorHandlerConnectionFilter extends AbstractHandler implements
         DatabaseNavigatorTree navigatorTree = NavigatorUtils.getNavigatorTree(element.getServiceLocator());
         if (navigatorTree != null) {
             DBIcon actionIcon = navigatorTree.isFilterShowConnected()
-                ? UIIcon.FILTER_APPLY
-                : UIIcon.FILTER;
+                ? UIIcon.FILTER_CONNECTED
+                : UIIcon.FILTER_ALL;
             element.setIcon(DBeaverIcons.getImageDescriptor(actionIcon));
             String actionName = navigatorTree.isFilterShowConnected()
                 ? UINavigatorMessages.navigator_handler_connections_filter_show_connected_text
