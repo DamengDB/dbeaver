@@ -1,0 +1,1427 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?>
+<!--
+ * DBeaver - Universal Database Manager
+ * Copyright (C) 2010-2025 DBeaver Corp and others
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+  -->
+
+<plugin>
+
+	<extension point="org.jkiss.dbeaver.dataSourceProvider">
+		<datasource
+			class="org.jkiss.dbeaver.ext.damengdb.DamengDataSourceProvider"
+			description="DM JDBC connector"
+			icon="icons/dameng_icon.png"
+			id="damengdb"
+			label="Dameng"
+			dialect="damengdb">
+			<tree
+				icon="icons/dameng_icon.png"
+				label="DM data source"
+				path="damengdb">
+				<folder type="org.jkiss.dbeaver.ext.damengdb.model.DamengSchema"
+					label="%tree.schemas.node.name" icon="#folder_schema"
+					description="Database schemas">
+					<items label="%tree.schema.node.name" path="schema"
+						property="schemas" icon="#schema">
+						<icon if="object.system" icon="#schema_system" />
+						<folder
+							type="org.jkiss.dbeaver.ext.damengdb.model.DamengTable"
+							label="%tree.tables.node.name" icon="#folder_table"
+							description="Tables">
+							<items label="%tree.table.node.name" path="table"
+								property="tables" icon="#table">
+								<folder
+									type="org.jkiss.dbeaver.ext.damengdb.model.DamengTableColumn"
+									label="%tree.columns.node.name"
+									icon="#columns" description="Table columns">
+									<items label="%tree.column.node.name"
+										path="column" property="attributes"
+										icon="#column">
+									</items>
+								</folder>
+								<folder
+									type="org.jkiss.dbeaver.ext.damengdb.model.DamengTableConstraint"
+									label="%tree.constraints.node.name"
+									icon="#constraints"
+									description="Table constraints">
+									<items label="%tree.constraint.node.name"
+										path="constraint" property="constraints"
+										icon="#unique-key">
+										<items
+											label="%tree.constraint_columns.node.name"
+											path="column"
+											property="attributeReferences"
+											navigable="false" inline="true">
+										</items>
+									</items>
+								</folder>
+								<folder
+									type="org.jkiss.dbeaver.ext.damengdb.model.DamengTableForeignKey"
+									label="%tree.foreign_keys.node.name"
+									icon="#foreign-keys"
+									description="Table foreign keys">
+									<items label="%tree.foreign_key.node.name"
+										path="association"
+										property="associations"
+										icon="#foreign-key">
+										<items
+											label="%tree.foreign_key_columns.node.name"
+											itemLabel="%tree.column.node.name"
+											path="column"
+											property="attributeReferences"
+											navigable="false" inline="true">
+										</items>
+									</items>
+								</folder>
+								<folder label="%tree.references.node.name"
+									icon="#references"
+									description="Table references"
+									virtual="true">
+									<items label="%tree.reference_key.node.name"
+										path="referenceKey"
+										property="references" icon="#reference"
+										virtual="true">
+										<items
+											label="%tree.reference_key_columns.node.name"
+											itemLabel="%tree.column.node.name"
+											path="column"
+											property="attributeReferences"
+											navigable="false" inline="true"
+											virtual="true">
+										</items>
+									</items>
+								</folder>
+								<folder
+									type="org.jkiss.dbeaver.ext.damengdb.model.DamengTableTrigger"
+									label="%tree.triggers.node.name"
+									icon="#triggers" description="Triggers">
+									<items label="%tree.trigger.node.name"
+										path="trigger" property="triggers"
+										icon="#trigger">
+										<items label="%tree.columns.node.name"
+											itemLabel="%tree.column.node.name"
+											path="column" property="columns"
+											navigable="false" inline="false">
+										</items>
+									</items>
+								</folder>
+								<folder
+									type="org.jkiss.dbeaver.ext.damengdb.model.DamengTableIndex"
+									label="%tree.indexes.node.name"
+									icon="#indexes" description="Table indexes">
+									<items label="%tree.index.node.name"
+										path="index" property="indexes"
+										icon="#index">
+										<items
+											label="%tree.index_columns.node.name"
+											itemLabel="%tree.column.node.name"
+											path="column"
+											property="attributeReferences"
+											navigable="false" inline="true">
+										</items>
+									</items>
+								</folder>
+								<folder
+									type="org.jkiss.dbeaver.ext.damengdb.model.DamengTablePartition"
+									label="%tree.partitions.node.name"
+									icon="#partitions"
+									description="Table partitions">
+									<items label="%tree.partition.node.name"
+										path="partition" property="partitions"
+										icon="#partition">
+										<folder
+											type="org.jkiss.dbeaver.ext.damengdb.model.DamengTablePartition"
+											label="%tree.subpartitions.node.name"
+											icon="#partitions"
+											description="tree.subpartitions.node.name">
+											<items
+												label="%tree.subpartitions.node.name"
+												itemLabel="%tree.subpartition.node.name"
+												path="subpartition"
+												property="subPartitions">
+											</items>
+										</folder>
+									</items>
+								</folder>
+								<folder
+									type="org.jkiss.dbeaver.ext.damengdb.model.DamengPrivTable"
+									label="%tree.table_privileges.node.name"
+									icon="#permissions"
+									description="Table Privileges"
+									navigable="false">
+									<items label="%tree.privilege.node.name"
+										path="tablePrivs" property="tablePrivs"
+										icon="#privilege">
+									</items>
+								</folder>
+								<folder
+									type="org.jkiss.dbeaver.ext.damengdb.model.DamengDependency"
+									label="%tree.dependencies.node.name"
+									description="Table dependency/dependent objects">
+									<items label="%tree.dependency.node.name"
+										path="dependency"
+										property="dependencies"
+										icon="platform:/plugin/org.jkiss.dbeaver.model/icons/tree/link.png">
+										<items
+											label="%tree.dependencies.node.name"
+											path="entry" property="entries"
+											navigable="false" inline="true">
+										</items>
+									</items>
+								</folder>
+							</items>
+						</folder>
+						<folder
+							type="org.jkiss.dbeaver.ext.damengdb.model.DamengTableIndex"
+							label="%tree.indexes.node.name" icon="#indexes"
+							description="%tree.indexes.node.tip" virtual="true">
+							<items icon="#index" label="%tree.index.node.name"
+								path="index" property="indexes" virtual="true">
+								<items icon="#column"
+									label="%tree.index_columns.node.name"
+									itemLabel="%tree.column.node.name"
+									path="column" property="attributeReferences"
+									inline="true" navigable="false"
+									virtual="true">
+								</items>
+							</items>
+						</folder>
+						<folder
+							type="org.jkiss.dbeaver.ext.damengdb.model.DamengView"
+							label="%tree.views.node.name" icon="#folder_view"
+							description="Views">
+							<items label="%tree.view.node.name" path="view"
+								property="views" icon="#view">
+								<folder
+									type="org.jkiss.dbeaver.ext.damengdb.model.DamengTableColumn"
+									label="%tree.columns.node.name"
+									icon="#columns" description="View columns">
+									<items label="%tree.columns.node.name"
+										itemLabel="%tree.column.node.name"
+										path="column" property="attributes"
+										icon="#column">
+									</items>
+								</folder>
+								<folder
+									type="org.jkiss.dbeaver.ext.damengdb.model.DamengTableConstraint"
+									label="%tree.constraints.node.name"
+									icon="#constraints"
+									description="View constraints">
+									<items label="%tree.constraint.node.name"
+										path="constraint" property="constraints"
+										icon="#unique-key">
+										<items
+											label="%tree.constraint.node.name columns"
+											path="column"
+											property="attributeReferences"
+											navigable="false" inline="true">
+										</items>
+									</items>
+								</folder>
+								<folder
+									type="org.jkiss.dbeaver.ext.damengdb.model.DamengViewTrigger"
+									label="%tree.triggers.node.name"
+									icon="#triggers" description="View Triggers">
+									<items label="%tree.trigger.node.name"
+										path="viewTrigger"
+										property="viewTriggers" icon="#trigger">
+										<items label="%tree.columns.node.name"
+											itemLabel="%tree.column.node.name"
+											path="column" property="columns"
+											navigable="false" inline="false">
+										</items>
+									</items>
+								</folder>
+								<folder
+									type="org.jkiss.dbeaver.ext.damengdb.model.DamengPrivTable"
+									label="%tree.table_privileges.node.name"
+									icon="#permissions"
+									description="View Privileges"
+									navigable="false">
+									<items label="%tree.privilege.node.name"
+										path="tablePrivs" property="tablePrivs"
+										icon="#privilege">
+									</items>
+								</folder>
+								<folder
+									type="org.jkiss.dbeaver.ext.damengdb.model.DamengDependency"
+									label="%tree.dependencies.node.name"
+									description="Table dependency/dependent objects">
+									<items label="%tree.dependency.node.name"
+										path="dependency"
+										property="dependencies"
+										icon="platform:/plugin/org.jkiss.dbeaver.model/icons/tree/link.png">
+										<items
+											label="%tree.dependencies.node.name"
+											path="entry" property="entries"
+											navigable="false" inline="true">
+										</items>
+									</items>
+								</folder>
+							</items>
+						</folder>
+						<folder
+							type="org.jkiss.dbeaver.ext.damengdb.model.DamengMaterializedView"
+							label="%tree.materialized_views.node.name"
+							icon="#folder_view" description="Materialized Views">
+							<items label="%tree.materialized_view.node.name"
+								path="view" property="materializedViews"
+								icon="#view">
+								<folder
+									type="org.jkiss.dbeaver.ext.damengdb.model.DamengTableColumn"
+									label="%tree.columns.node.name"
+									icon="#columns" description="View columns">
+									<items label="%tree.columns.node.name"
+										itemLabel="%tree.column.node.name"
+										path="column" property="attributes"
+										icon="#column">
+									</items>
+								</folder>
+								<folder
+									type="org.jkiss.dbeaver.ext.damengdb.model.DamengTableConstraint"
+									label="%tree.constraints.node.name"
+									icon="#constraints"
+									description="View constraints">
+									<items label="%tree.constraint.node.name"
+										path="constraint" property="constraints"
+										icon="#unique-key">
+										<items
+											label="%tree.constraint.node.name columns"
+											path="column"
+											property="attributeReferences"
+											navigable="false" inline="true">
+										</items>
+									</items>
+								</folder>
+							</items>
+						</folder>
+						<folder id="procedures"
+							type="org.jkiss.dbeaver.ext.damengdb.model.DamengProcedureStandalone"
+							label="%tree.procedures.node.name"
+							icon="#procedures" description="Procedures">
+							<items label="%tree.procedure.node.name"
+								itemLabel="%tree.procedure.node.name"
+								path="procedure" property="proceduresOnly"
+								icon="#procedure" id="Procedure">
+								<folder
+									type="org.jkiss.dbeaver.ext.damengdb.model.DamengProcedureArgument"
+									label="%tree.arguments.node.name"
+									description="Arguments detail">
+									<items label="%tree.arguments.node.name"
+										itemLabel="%tree.argument.node.name"
+										path="argument" property="parameters"
+										icon="#argument" navigable="true"
+										inline="true" />
+								</folder>
+								<folder
+									type="org.jkiss.dbeaver.ext.damengdb.model.DamengDependency"
+									label="%tree.dependencies.node.name"
+									description="Procedure dependency/dependent objects">
+									<items label="%tree.dependency.node.name"
+										path="dependency"
+										property="dependencies"
+										icon="platform:/plugin/org.jkiss.dbeaver.model/icons/tree/link.png">
+										<items
+											label="%tree.dependencies.node.name"
+											path="entry" property="entries"
+											navigable="false" inline="true">
+										</items>
+									</items>
+								</folder>
+							</items>
+						</folder>
+						<folder id="functions"
+							type="org.jkiss.dbeaver.ext.damengdb.model.DamengProcedureStandalone"
+							label="%tree.functions.node.name" icon="#functions"
+							description="Functions">
+							<items label="%tree.function.node.name"
+								itemLabel="%tree.function.node.name"
+								path="function" property="functionsOnly"
+								icon="#function" id="Function">
+								<folder
+									type="org.jkiss.dbeaver.ext.damengdb.model.DamengProcedureArgument"
+									label="%tree.arguments.node.name"
+									description="Arguments detail">
+									<items label="%tree.arguments.node.name"
+										itemLabel="%tree.argument.node.name"
+										path="argument" property="parameters"
+										icon="#argument" navigable="true"
+										inline="true" />
+								</folder>
+								<folder
+									type="org.jkiss.dbeaver.ext.damengdb.model.DamengDependency"
+									label="%tree.dependencies.node.name"
+									description="Function dependency/dependent objects">
+									<items label="%tree.dependency.node.name"
+										path="dependency"
+										property="dependencies"
+										icon="platform:/plugin/org.jkiss.dbeaver.model/icons/tree/link.png">
+										<items
+											label="%tree.dependencies.node.name"
+											path="entry" property="entries"
+											navigable="false" inline="true">
+										</items>
+									</items>
+								</folder>
+							</items>
+						</folder>
+						<folder id="external_functions"
+							type="org.jkiss.dbeaver.ext.damengdb.model.DamengExternalFunction"
+							label="%tree.external_funtions.node.name "
+							icon="#functions" description="External functions">
+							<items label="%tree.external_funtion.node.name"
+								itemLabel="%tree.external_funtion.node.name"
+								path="external_function"
+								property="externalFunctionsOnly"
+								icon="#function" id="Externalfunction">
+								<folder
+									type="org.jkiss.dbeaver.ext.damengdb.model.DamengProcedureArgument"
+									label="%tree.arguments.node.name"
+									description="Arguments detail">
+									<items label="%tree.arguments.node.name"
+										itemLabel="%tree.argument.node.name"
+										path="argument" property="parameters"
+										icon="#argument" navigable="true"
+										inline="true" />
+								</folder>
+								<folder
+									type="org.jkiss.dbeaver.ext.damengdb.model.DamengDependency"
+									label="%tree.dependencies.node.name"
+									description="Function dependency/dependent objects">
+									<items label="%tree.dependency.node.name"
+										path="dependency"
+										property="dependencies"
+										icon="platform:/plugin/org.jkiss.dbeaver.model/icons/tree/link.png">
+										<items
+											label="%tree.dependencies.node.name"
+											path="entry" property="entries"
+											navigable="false" inline="true">
+										</items>
+									</items>
+								</folder>
+							</items>
+						</folder>
+						<folder
+							type="org.jkiss.dbeaver.ext.damengdb.model.DamengDBLink"
+							label="%tree.database_links.node.name"
+							icon="#folder_link"
+							description="Database Links (DBLinks)">
+							<items label="%tree.database_links.node.name"
+								path="databaseLink" property="databaseLinks"
+								icon="#link" />
+						</folder>
+						<folder
+							type="org.jkiss.dbeaver.ext.damengdb.model.DamengSequence"
+							label="%tree.sequences.node.name" icon="#sequences"
+							description="Sequences">
+							<items label="%tree.sequence.node.name"
+								path="sequence" property="sequences"
+								icon="#sequence">
+							</items>
+						</folder>
+						<folder
+							type="org.jkiss.dbeaver.ext.damengdb.model.DamengTableTrigger"
+							label="%tree.triggers.node.name " icon="#triggers"
+							description="all triggers">
+							<folder
+								type="org.jkiss.dbeaver.ext.damengdb.model.DamengDataBaseTrigger"
+								label="%tree.database.triggers.node.name"
+								icon="#triggers"
+								description="Database level triggers">
+								<items label="%tree.database.trigger.node.name"
+									path="databasetrigger"
+									property="dataBaseTriggers" icon="#trigger">
+								</items>
+							</folder>
+							<folder
+								type="org.jkiss.dbeaver.ext.damengdb.model.DamengSchemaTrigger"
+								label="%tree.schema.triggers.node.name"
+								icon="#triggers"
+								description="Schema level triggers">
+								<items label="%tree.schema.trigger.node.name"
+									path="trigger" property="triggers"
+									icon="#trigger">
+								</items>
+							</folder>
+							<folder
+								type="org.jkiss.dbeaver.ext.damengdb.model.DamengTableTrigger"
+								label="%tree.table.triggers.node.name"
+								icon="#triggers" description="Table triggers">
+								<items label="%tree.table.trigger.node.name"
+									path="tabletrigger" property="tableTriggers"
+									icon="#trigger">
+									<items label="%tree.columns.node.name"
+										itemLabel="%tree.column.node.name"
+										path="column" property="columns"
+										navigable="false" inline="false"
+										virtual="true">
+									</items>
+								</items>
+							</folder>
+							<folder
+								type="org.jkiss.dbeaver.ext.damengdb.model.DamengViewTrigger"
+								label="%tree.view.triggers.node.name"
+								icon="#triggers"
+								description="View level triggers">
+								<items label="%tree.view.trigger.node.name"
+									path="viewtrigger" property="viewTriggers"
+									icon="#trigger">
+								</items>
+							</folder>
+						</folder>
+						<folder
+							type="org.jkiss.dbeaver.ext.damengdb.model.DamengPackage"
+							label="%tree.packages.node.name" icon="#packages"
+							description="Packages">
+							<items label="%tree.package.node.name"
+								path="package" property="packages"
+								icon="#package">
+								<folder
+									type="org.jkiss.dbeaver.ext.damengdb.model.DamengDataTypeAttribute"
+									label="%tree.attributes.node.name"
+									icon="#attributes"
+									description="Type attributes">
+									<items label="%tree.attribute.node.name"
+										path="attribute" property="attributes"
+										icon="#attribute" />
+								</folder>
+								<folder
+									type="org.jkiss.dbeaver.ext.damengdb.model.DamengDataTypeProc"
+									label="%tree.procs.node.name"
+									icon="#procedures"
+									description="Type procdures">
+									<items label="%tree.proc.node.name"
+										path="procdure" property="procdures"
+										icon="#procedure">
+										<folder
+											type="org.jkiss.dbeaver.ext.damengdb.model.DamengDataTypeAttribute"
+											label="%tree.arguments.node.name"
+											icon="#attributes"
+											description="Type attributes">
+											<items
+												label="%tree.argument.node.name"
+												path="attribute"
+												property="attributes"
+												icon="#argument" />
+										</folder>
+									</items>
+								</folder>
+								<folder
+									type="org.jkiss.dbeaver.ext.damengdb.model.DamengDataTypeMethod"
+									label="%tree.methods.node.name"
+									icon="#procedures"
+									description="Type methods">
+									<items label="%tree.method.node.name"
+										path="method" property="methods"
+										icon="#procedure">
+										<folder
+											type="org.jkiss.dbeaver.ext.damengdb.model.DamengDataTypeAttribute"
+											label="%tree.arguments.node.name"
+											icon="#attributes"
+											description="Type attributes">
+											<items
+												label="%tree.argument.node.name"
+												path="attribute"
+												property="attributes"
+												icon="#argument" />
+										</folder>
+									</items>
+								</folder>
+								<folder
+									type="org.jkiss.dbeaver.ext.damengdb.model.DamengDataTypeDefineType"
+									label="%tree.definetypes.node.name"
+									icon="#attributes"
+									description="Define types">
+									<items label="%tree.definetype.node.name"
+										path="definetype" property="types"
+										icon="#attribute" />
+								</folder>
+								<folder
+									type="org.jkiss.dbeaver.ext.damengdb.model.DamengDependency"
+									label="%tree.dependencies.node.name"
+									description="Table dependency/dependent objects">
+									<items label="%tree.dependency.node.name"
+										path="dependency"
+										property="dependencies"
+										icon="platform:/plugin/org.jkiss.dbeaver.model/icons/tree/link.png">
+										<items
+											label="%tree.dependencies.node.name"
+											path="entry" property="entries"
+											navigable="false" inline="true">
+										</items>
+									</items>
+								</folder>
+							</items>
+						</folder>
+						<folder
+							type="org.jkiss.dbeaver.ext.damengdb.model.DamengDataType"
+							label="%tree.types.node.name" icon="#data_types"
+							description="Types">
+							<items label="%tree.type.node.name" path="type"
+								property="dataTypes" icon="#data_type">
+								<folder
+									type="org.jkiss.dbeaver.ext.damengdb.model.DamengDataTypeAttribute"
+									label="%tree.attributes.node.name"
+									icon="#attributes"
+									description="Type attributes">
+									<items label="%tree.attribute.node.name"
+										path="attribute" property="attributes"
+										icon="#attribute" />
+								</folder>
+								<folder
+									type="org.jkiss.dbeaver.ext.damengdb.model.DamengDataTypeProc"
+									label="%tree.procs.node.name"
+									icon="#procedures"
+									description="Type procdures">
+									<items label="%tree.proc.node.name"
+										path="procdure" property="procdures"
+										icon="#procedure">
+										<folder
+											type="org.jkiss.dbeaver.ext.damengdb.model.DamengDataTypeAttribute"
+											label="%tree.arguments.node.name"
+											icon="#attributes"
+											description="Type attributes">
+											<items
+												label="%tree.argument.node.name"
+												path="attribute"
+												property="attributes"
+												icon="#argument" />
+										</folder>
+									</items>
+								</folder>
+								<folder
+									type="org.jkiss.dbeaver.ext.damengdb.model.DamengDataTypeMethod"
+									label="%tree.methods.node.name"
+									icon="#procedures"
+									description="Type methods">
+									<items label="%tree.method.node.name"
+										path="method" property="methods"
+										icon="#procedure">
+										<folder
+											type="org.jkiss.dbeaver.ext.damengdb.model.DamengDataTypeAttribute"
+											label="%tree.arguments.node.name"
+											icon="#attributes"
+											description="Type attributes">
+											<items
+												label="%tree.argument.node.name"
+												path="attribute"
+												property="attributes"
+												icon="#argument" />
+										</folder>
+									</items>
+								</folder>
+								<folder
+									type="org.jkiss.dbeaver.ext.damengdb.model.DamengDataTypeDefineType"
+									label="%tree.definetypes.node.name"
+									icon="#attributes"
+									description="Define types">
+									<items label="%tree.definetype.node.name"
+										path="definetype" property="types"
+										icon="#attribute" />
+								</folder>
+							</items>
+						</folder>
+						<folder
+							type="org.jkiss.dbeaver.ext.damengdb.model.DamengSynonym"
+							label="%tree.synonyms.node.name" icon="#synonyms"
+							description="Synonyms">
+							<items label="%tree.synonym.node.name"
+								path="synonym" property="synonyms"
+								icon="#synonym" />
+						</folder>
+						<folder
+							type="org.jkiss.dbeaver.ext.damengdb.model.DamengDefineType"
+							label="%tree.definetypes.node.name"
+							icon="#data_types" description="defineTypes">
+							<items label="%tree.definetype.node.name"
+								path="definetype" property="defineTypes"
+								icon="#data_type">
+							</items>
+						</folder>
+						<folder id="domains"
+							type="org.jkiss.dbeaver.ext.damengdb.model.DamengDomain"
+							label="%tree.domains.node.name " icon="#domains"
+							description="Database domains">
+							<items label="%tree.domain.node.name"
+								itemLabel="%tree.domain.node.name" path="domain"
+								property="domainsOnly" icon="icons/domain.png"
+								id="Domain">
+								<folder
+									type="org.jkiss.dbeaver.ext.damengdb.model.DamengPrivDomain"
+									label="%tree.privilege.node.name"
+									icon="#permissions"
+									description="Domain Privileges"
+									navigable="true">
+									<items label="%tree.privilege.node.name"
+										path="domainPrivs"
+										property="domainPrivs" icon="#privilege">
+									</items>
+								</folder>
+								<folder
+									type="org.jkiss.dbeaver.ext.damengdb.model.DamengDependency"
+									label="%tree.dependencies.node.name"
+									description="Function dependency/dependent objects">
+									<items label="%tree.dependency.node.name"
+										path="dependency"
+										property="dependencies"
+										icon="platform:/plugin/org.jkiss.dbeaver.model/icons/tree/link.png">
+										<items
+											label="%tree.dependencies.node.name"
+											path="entry" property="entries"
+											navigable="false" inline="true">
+										</items>
+									</items>
+								</folder>
+							</items>
+						</folder>
+						<folder
+							type="org.jkiss.dbeaver.ext.damengdb.model.DamengUdOperator"
+							label="%tree.udoperators.node.name"
+							icon="#udoperators"
+							description="User-defined operators">
+							<items label="%tree.udoperator.node.name"
+								itemLabel="%tree.udoperator.node.name"
+								path="udoperator" property="udoperatorsOnly"
+								icon="icons/ud_operator.png" id="Udoperator">
+								<folder
+									type="org.jkiss.dbeaver.ext.damengdb.model.DamengUdOperatorOverride"
+									label="%tree.udoperatoroverrides.node.name"
+									icon="#udoperatoroverride"
+									description="User-defined operators override"
+									navigable="true">
+									<items
+										label="%tree.udoperatoroverride.node.name"
+										path="udoperatoroverride"
+										property="udoperatorsoverrideOnly"
+										icon="icons/ud_operator.png"
+										navigable="true" inline="false">
+									</items>
+								</folder>
+								<folder
+									type="org.jkiss.dbeaver.ext.damengdb.model.DamengDependency"
+									label="%tree.dependencies.node.name"
+									description="Function dependency/dependent objects">
+									<items label="%tree.dependency.node.name"
+										path="dependency"
+										property="dependencies"
+										icon="platform:/plugin/org.jkiss.dbeaver.model/icons/tree/link.png">
+										<items
+											label="%tree.dependencies.node.name"
+											path="entry" property="entries"
+											navigable="false" inline="true">
+										</items>
+									</items>
+								</folder>
+							</items>
+						</folder>
+
+					</items><!--模式及元素在此行以上添加-->
+				</folder>
+				<folder label="%tree.global_metadata.node.name" icon="#logical"
+					id="globalMetadataObjects" description="Global metadata objects">
+					<folder
+						type="org.jkiss.dbeaver.ext.damengdb.model.DamengDataType"
+						label="%tree.types.node.name" icon="#data_types"
+						description="Types">
+						<items label="%tree.data_type.node.name" path="type"
+							property="localDataTypes" icon="#data_type" />
+					</folder>
+					<folder
+						type="org.jkiss.dbeaver.ext.damengdb.model.DamengSynonym"
+						label="%tree.public_synonyms.node.name" icon="#synonyms"
+						description="Public synonyms">
+						<items label="%tree.synonym.node.name" path="synonym"
+							property="publicSynonyms" icon="#synonym" />
+					</folder>
+					<folder
+						type="org.jkiss.dbeaver.ext.damengdb.model.DamengDBLink"
+						label="%tree.public_database_links.node.name"
+						icon="#links" description="Public database links">
+						<items label="%tree.database_link.node.name"
+							path="databaseLink" property="publicDatabaseLinks"
+							icon="#link" />
+					</folder>
+				</folder>
+				<folder label="%tree.storage.node.name" icon="#storage"
+					id="storageManagement" description="Storage management">
+					<folder
+						type="org.jkiss.dbeaver.ext.damengdb.model.DamengTablespace"
+						label="%tree.tablespaces.node.name" icon="#tablespaces"
+						description="Tablespaces">
+						<items label="%tree.tablespace.node.name"
+							path="tablespace" property="tablespaces"
+							icon="#tablespace">
+							<folder
+								type="org.jkiss.dbeaver.ext.damengdb.model.DamengDataFile"
+								label="%tree.files.node.name" icon="#files"
+								description="Data Files">
+								<items label="%tree.file.node.name" path="file"
+									property="files" icon="#file" />
+							</folder>
+							<folder
+								type="org.jkiss.dbeaver.ext.damengdb.model.DamengSegment"
+								label="%tree.objects.node.name" icon="#segments"
+								description="Objects (segments)">
+								<items label="%tree.segment.node.name"
+									path="segment" property="segments"
+									icon="#segment" />
+							</folder>
+						</items>
+					</folder>
+				</folder>
+				<folder label="%tree.security.node.name" icon="#security"
+					id="securityManagement" description="Security management">
+					<folder label="%tree.users.node.name" icon="#folder_user"
+						id="userManagement" description="Users">
+						<folder
+							type="org.jkiss.dbeaver.ext.damengdb.model.DamengUser"
+							label="%tree.users_dba.node.name" icon="#folder_user"
+							description="Administrate Users">
+							<items label="%tree.user.node.name" path="users"
+								property="dbaUsers" icon="#user">
+								<folder
+									type="org.jkiss.dbeaver.ext.damengdb.model.DamengPrivRole"
+									label="%tree.roles.node.name"
+									icon="#folder_role" description="User roles"
+									navigable="false">
+									<items label="%tree.role.node.name"
+										path="roles" property="rolePrivs"
+										icon="#user_group">
+									</items>
+								</folder>
+								<folder
+									type="org.jkiss.dbeaver.ext.damengdb.model.DamengPrivSystem"
+									label="%tree.system_privileges.node.name"
+									icon="#permissions"
+									description="System Privileges"
+									navigable="false">
+									<items label="%tree.privilege.node.name"
+										path="sysPrivs" property="systemPrivs"
+										icon="#privilege">
+									</items>
+								</folder>
+								<folder
+									type="org.jkiss.dbeaver.ext.damengdb.model.DamengPrivObject"
+									label="%tree.objects.node.name"
+									icon="#permissions" description="Objects"
+									navigable="false">
+									<items label="%tree.privilege.node.name"
+										path="objectPriv" property="objectPrivs"
+										icon="#privilege">
+									</items>
+								</folder>
+							</items>
+						</folder>
+						<folder
+							type="org.jkiss.dbeaver.ext.damengdb.model.DamengUser"
+							label="%tree.users_audit.node.name" icon="#folder_user"
+							description="Audit User">
+							<items label="%tree.user.node.name" path="users"
+								property="auditUsers" icon="#user">
+								<folder
+									type="org.jkiss.dbeaver.ext.damengdb.model.DamengPrivRole"
+									label="%tree.roles.node.name"
+									icon="#folder_role" description="User roles"
+									navigable="false">
+									<items label="%tree.role.node.name"
+										path="roles" property="rolePrivs"
+										icon="#user_group">
+									</items>
+								</folder>
+								<folder
+									type="org.jkiss.dbeaver.ext.damengdb.model.DamengPrivSystem"
+									label="%tree.system_privileges.node.name"
+									icon="#permissions"
+									description="System Privileges"
+									navigable="false">
+									<items label="%tree.privilege.node.name"
+										path="sysPrivs" property="systemPrivs"
+										icon="#privilege">
+									</items>
+								</folder>
+								<folder
+									type="org.jkiss.dbeaver.ext.damengdb.model.DamengPrivObject"
+									label="%tree.objects.node.name"
+									icon="#permissions" description="Objects"
+									navigable="false">
+									<items label="%tree.privilege.node.name"
+										path="objectPriv" property="objectPrivs"
+										icon="#privilege">
+									</items>
+								</folder>
+							</items>
+						</folder>
+						<folder
+							type="org.jkiss.dbeaver.ext.damengdb.model.DamengUser"
+							label="%tree.users_policydba.node.name"
+							icon="#folder_user" description="Policy User">
+							<items label="%tree.user.node.name" path="users"
+								property="policyUsers" icon="#user">
+								<folder
+									type="org.jkiss.dbeaver.ext.damengdb.model.DamengPrivRole"
+									label="%tree.roles.node.name"
+									icon="#folder_role" description="User roles"
+									navigable="false">
+									<items label="%tree.role.node.name"
+										path="roles" property="rolePrivs"
+										icon="#user_group">
+									</items>
+								</folder>
+								<folder
+									type="org.jkiss.dbeaver.ext.damengdb.model.DamengPrivSystem"
+									label="%tree.system_privileges.node.name"
+									icon="#permissions"
+									description="System Privileges"
+									navigable="false">
+									<items label="%tree.privilege.node.name"
+										path="sysPrivs" property="systemPrivs"
+										icon="#privilege">
+									</items>
+								</folder>
+								<folder
+									type="org.jkiss.dbeaver.ext.damengdb.model.DamengPrivObject"
+									label="%tree.objects.node.name"
+									icon="#permissions" description="Objects"
+									navigable="false">
+									<items label="%tree.privilege.node.name"
+										path="objectPriv" property="objectPrivs"
+										icon="#privilege">
+									</items>
+								</folder>
+							</items>
+						</folder>
+						<folder
+							type="org.jkiss.dbeaver.ext.damengdb.model.DamengUser"
+							label="%tree.users_dbo.node.name" icon="#folder_user"
+							description="Operated User"
+							visibleIf="object.hasPrivFlag()">
+							<items label="%tree.user.node.name" path="users"
+								property="dboUsers" icon="#user">
+								<folder
+									type="org.jkiss.dbeaver.ext.damengdb.model.DamengPrivRole"
+									label="%tree.roles.node.name"
+									icon="#folder_role" description="User roles"
+									navigable="false">
+									<items label="%tree.role.node.name"
+										path="roles" property="rolePrivs"
+										icon="#user_group">
+									</items>
+								</folder>
+								<folder
+									type="org.jkiss.dbeaver.ext.damengdb.model.DamengPrivSystem"
+									label="%tree.system_privileges.node.name"
+									icon="#permissions"
+									description="System Privileges"
+									navigable="false">
+									<items label="%tree.privilege.node.name"
+										path="sysPrivs" property="systemPrivs"
+										icon="#privilege">
+									</items>
+								</folder>
+								<folder
+									type="org.jkiss.dbeaver.ext.damengdb.model.DamengPrivObject"
+									label="%tree.objects.node.name"
+									icon="#permissions" description="Objects"
+									navigable="false">
+									<items label="%tree.privilege.node.name"
+										path="objectPriv" property="objectPrivs"
+										icon="#privilege">
+									</items>
+								</folder>
+							</items>
+						</folder>
+						<folder
+							type="org.jkiss.dbeaver.ext.damengdb.model.DamengUser"
+							label="%tree.users_sys.node.name" icon="#folder_user"
+							description="System User">
+							<items label="%tree.user.node.name" path="users"
+								property="sysUsers" icon="#user">
+								<folder
+									type="org.jkiss.dbeaver.ext.damengdb.model.DamengPrivRole"
+									label="%tree.roles.node.name"
+									icon="#folder_role" description="User roles"
+									navigable="false">
+									<items label="%tree.role.node.name"
+										path="roles" property="rolePrivs"
+										icon="#user_group">
+									</items>
+								</folder>
+								<folder
+									type="org.jkiss.dbeaver.ext.damengdb.model.DamengPrivSystem"
+									label="%tree.system_privileges.node.name"
+									icon="#permissions"
+									description="System Privileges"
+									navigable="false">
+									<items label="%tree.privilege.node.name"
+										path="sysPrivs" property="systemPrivs"
+										icon="#privilege">
+									</items>
+								</folder>
+								<folder
+									type="org.jkiss.dbeaver.ext.damengdb.model.DamengPrivObject"
+									label="%tree.objects.node.name"
+									icon="#permissions" description="Objects"
+									navigable="false">
+									<items label="%tree.privilege.node.name"
+										path="objectPriv" property="objectPrivs"
+										icon="#privilege">
+									</items>
+								</folder>
+							</items>
+						</folder>
+					</folder>
+					<folder type="org.jkiss.dbeaver.ext.damengdb.model.DamengRole"
+						label="%tree.roles.node.name" icon="#folder_role"
+						description="Roles">
+						<items label="%tree.role.node.name" path="roles"
+							property="roles" icon="#user_group">
+							<folder
+								type="org.jkiss.dbeaver.ext.damengdb.model.DamengPrivUser"
+								label="%tree.users.node.name"
+								icon="#folder_user" description="Users"
+								navigable="false">
+								<items label="%tree.user.node.name"
+									path="userPrivs" property="userPrivs"
+									icon="#user">
+								</items>
+							</folder>
+							<folder
+								type="org.jkiss.dbeaver.ext.damengdb.model.DamengPrivRole"
+								label="%tree.roles.node.name"
+								icon="#folder_role" description="Roles"
+								navigable="false">
+								<items label="%tree.role.node.name" path="roles"
+									property="rolePrivs" icon="#user_group">
+								</items>
+							</folder>
+							<folder
+								type="org.jkiss.dbeaver.ext.damengdb.model.DamengPrivSystem"
+								label="%tree.system_privileges.node.name"
+								icon="#permissions"
+								description="System Privileges"
+								navigable="false">
+								<items label="%tree.privilege.node.name"
+									path="sysPrivs" property="systemPrivs"
+									icon="#privilege">
+								</items>
+							</folder>
+							<folder
+								type="org.jkiss.dbeaver.ext.damengdb.model.DamengPrivObject"
+								label="%tree.objects.node.name"
+								icon="#permissions" description="Objects"
+								navigable="false">
+								<items label="%tree.privilege.node.name"
+									path="objectPriv" property="objectPrivs"
+									icon="#privilege">
+								</items>
+							</folder>
+						</items>
+					</folder>
+					<folder
+						type="org.jkiss.dbeaver.ext.damengdb.model.DamengUserProfile"
+						label="%tree.profiles.node.name" icon="#folder_profile"
+						description="User profiles">
+						<items label="%tree.profile.node.name" path="profiles"
+							property="profiles" icon="#profile">
+							<items label="%tree.resource.node.name"
+								path="resource" property="resources"
+								icon="#resource" />
+						</items>
+					</folder>
+				</folder>
+				<folder label="%tree.administer.node.name" icon="#folder_admin"
+					id="maintenanceSettings" description="Maintenance/Settings">
+					<treeContribution category="connectionEditor" />
+				</folder>
+
+			</tree>
+			<drivers managable="true">
+				<driver
+					id="damengdb"
+					label="达梦"
+					icon="icons/dameng_icon.png"
+					iconBig="icons/dameng_icon_big.png"
+					class="dm.jdbc.driver.DmDriver"
+					sampleURL="jdbc:dm://{host}[:{port}]"
+					useURL="false"
+					defaultPort="5236"
+					defaultUser="SYSDBA"
+					webURL="https://www.damengdb.com/"
+					propertiesURL="https://eco.damengdb.com/document/dm/zh-cn/app-dev/java-jdbc.html"
+					description="Driver for DM8 and later"
+					supportedConfigurationTypes="MANUAL,URL"
+					promoted="1"
+					categories="sql">
+                    <file type="jar" path="maven:/com.dameng:DmJdbcDriver8:RELEASE[8.1.4.93]" bundle="!drivers.damengdb"/>
+                    <file type="license" path="licenses/LICENSE-2.0.txt"/>
+                    <file type="jar" path="drivers/damengdb" bundle="drivers.damengdb"/>
+					<property name="connectTimeout" value="20000" />
+					<property name="@dbeaver-default-resultset.maxrows.sql"
+						value="true" />
+					<property
+						name="@dbeaver-default-resultset.format.datetime.native"
+						value="true" />
+					<property
+						name="@dbeaver-default-dataformat.type.timestamp.pattern"
+						value="yyyy-MM-dd HH:mm:ss" />
+					<provider-properties>
+						<propertyGroup label="Advanced">
+							<property id="@dbeaver-serverTimezone@"
+								label="Server Time Zone" type="string" />
+						</propertyGroup>
+					</provider-properties>
+					<!-- 隐藏新建连接页面的ssh选项 -->
+					<parameter name="disableNetworkParameters" value="true" />
+				</driver>
+			</drivers>
+		</datasource>
+	</extension>
+
+	<extension point="org.jkiss.dbeaver.objectManager">
+		<manager class="org.jkiss.dbeaver.ext.damengdb.edit.DamengDataTypeManager"
+			objectType="org.jkiss.dbeaver.ext.damengdb.model.DamengDataType" />
+		<manager class="org.jkiss.dbeaver.ext.damengdb.edit.DamengSchemaManager"
+			objectType="org.jkiss.dbeaver.ext.damengdb.model.DamengSchema" />
+		<manager class="org.jkiss.dbeaver.ext.damengdb.edit.DamengTableManager"
+			objectType="org.jkiss.dbeaver.ext.damengdb.model.DamengTable" />
+		<manager
+			class="org.jkiss.dbeaver.ext.damengdb.edit.DamengTableColumnManager"
+			objectType="org.jkiss.dbeaver.ext.damengdb.model.DamengTableColumn" />
+		<manager
+			class="org.jkiss.dbeaver.ext.damengdb.edit.DamengForeignKeyManager"
+			objectType="org.jkiss.dbeaver.ext.damengdb.model.DamengTableForeignKey" />
+		<manager
+			class="org.jkiss.dbeaver.ext.damengdb.edit.DamengConstraintManager"
+			objectType="org.jkiss.dbeaver.ext.damengdb.model.DamengTableConstraint" />
+		<manager class="org.jkiss.dbeaver.ext.damengdb.edit.DamengIndexManager"
+			objectType="org.jkiss.dbeaver.ext.damengdb.model.DamengTableIndex" />
+		<manager class="org.jkiss.dbeaver.ext.damengdb.edit.DamengViewManager"
+			objectType="org.jkiss.dbeaver.ext.damengdb.model.DamengView" />
+		<manager
+			class="org.jkiss.dbeaver.ext.damengdb.edit.DamengMaterializedViewManager"
+			objectType="org.jkiss.dbeaver.ext.damengdb.model.DamengMaterializedView" />
+		<manager
+			class="org.jkiss.dbeaver.ext.damengdb.edit.DamengProcedureManager"
+			objectType="org.jkiss.dbeaver.ext.damengdb.model.DamengProcedureStandalone" />
+		<manager class="org.jkiss.dbeaver.ext.damengdb.edit.DamengPackageManager"
+			objectType="org.jkiss.dbeaver.ext.damengdb.model.DamengPackage" />
+		<manager
+			class="org.jkiss.dbeaver.ext.damengdb.edit.DamengTableTriggerManager"
+			objectType="org.jkiss.dbeaver.ext.damengdb.model.DamengTableTrigger" />
+		<manager class="org.jkiss.dbeaver.ext.damengdb.edit.DamengSequenceManager"
+			objectType="org.jkiss.dbeaver.ext.damengdb.model.DamengSequence" />
+	</extension>
+
+	<extension point="org.eclipse.core.runtime.adapters">
+		<factory adaptableType="org.jkiss.dbeaver.model.navigator.DBNNode"
+			class="org.jkiss.dbeaver.ext.damengdb.model.DamengObjectAdapter">
+			<adapter
+				type="org.jkiss.dbeaver.ext.damengdb.model.source.DamengSourceObject" />
+			<adapter
+				type="org.jkiss.dbeaver.ext.damengdb.model.DamengProcedurePackaged" />
+			<adapter type="org.jkiss.dbeaver.ext.damengdb.model.DamengDBLink" />
+		</factory>
+		<factory
+			adaptableType="org.jkiss.dbeaver.ext.damengdb.model.DamengDialect"
+			class="org.jkiss.dbeaver.ext.damengdb.sql.DamengDialectAdapterFactory">
+			<adapter type="org.jkiss.dbeaver.model.text.parser.TPRuleProvider" />
+		</factory>
+	</extension>
+
+	<extension point="org.eclipse.core.runtime.preferences">
+		<initializer
+			class="org.jkiss.dbeaver.ext.damengdb.internal.DamengPreferencesInitializer" />
+	</extension>
+
+	<extension point="org.jkiss.dbeaver.sqlInsertMethod">
+		<method id="dmInsertIgnore"
+			class="org.jkiss.dbeaver.ext.damengdb.model.DamengInsertReplaceMethodIgnore"
+			label="INSERT IGNORE ROW INDEX"
+			description="Insert ignore duplicate key value" />
+	</extension>
+
+	<extension point="org.jkiss.dbeaver.sqlDialect">
+		<dialect id="damengdb" parent="basic"
+			class="org.jkiss.dbeaver.ext.damengdb.model.DamengDialect"
+			label="Dameng" description="DM dialect."
+			icon="icons/dameng_icon.png">
+			<property name="insertMethods" value="dmInsertIgnore" />
+		</dialect>
+	</extension>
+
+	<!--仪表盘-内存-->
+	<extension point="org.jkiss.dbeaver.dashboard">
+		<dashboard id="dm.memory_usage"
+			label="%dashboards.dmstatistics.memory_usage.name"
+			defaultView="timeseries" group="Standard" updatePeriod="15000"
+			calc="value" value="decimal" fetch="rows" showByDefault="true"
+			description="%dashboards.dmstatistics.memory_usage.description">
+			<datasource id="damengdb" />
+			<query>
+				SELECT STAT_VAL*1.0/1024/1024 as Memory_Usage FROM SYS.V$SYSSTAT
+				WHERE UPPER(NAME)='MEMORY USED BYTES'
+			</query>
+		</dashboard>
+	</extension>
+	<!--仪表盘-CPU-->
+	<extension point="org.jkiss.dbeaver.dashboard">
+		<dashboard id="dm.cpu_usage"
+			label="%dashboards.dmstatistics.cpu_usage.name"
+			defaultView="timeseries" group="Standard" updatePeriod="15000"
+			calc="delta" value="percent" fetch="columns" showByDefault="true"
+			description="%dashboards.dmstatistics.threads.description">
+			<datasource id="damengdb" />
+			<query>
+				SELECT STAT_VAL AS Cpu_Usage FROM SYS.V$SYSSTAT WHERE
+				UPPER(NAME)='OS DM DATABASE CPU RATE'
+			</query>
+		</dashboard>
+	</extension>
+	<!--仪表盘-线程-->
+	<extension point="org.jkiss.dbeaver.dashboard">
+		<dashboard id="dm.threads_count"
+			label="%dashboards.dmstatistics.threads.name"
+			defaultView="timeseries" group="Standard" updatePeriod="15000"
+			calc="value" value="integer" fetch="rows" showByDefault="true"
+			description="%dashboards.dmstatistics.threads.description">
+			<datasource id="damengdb" />
+			<query>
+				SELECT COUNT(*)as Active_Threads FROM SYS.V$THREADS
+			</query>
+		</dashboard>
+	</extension>
+	<!--仪表盘-会话-->
+	<extension point="org.jkiss.dbeaver.dashboard">
+		<dashboard id="dm.sessionCount"
+			label="%dashboards.dmstatistics.server_sessions.name"
+			defaultView="timeseries" group="Standard" updatePeriod="2000"
+			calc="value" value="integer" fetch="rows" showByDefault="true"
+			description="%dashboards.dmstatistics.server_sessions.description">
+			<datasource id="damengdb" />
+			<query>
+				select STATE, count(*) from V$SESSIONS group by STATE
+			</query>
+		</dashboard>
+	</extension>
+	<!--仪表盘-事务-->
+	<extension point="org.jkiss.dbeaver.dashboard">
+		<dashboard id="dm.transaction_total_count"
+			label="%dashboards.dmstatistics.transaction_total_count.name"
+			defaultView="timeseries" group="Standard" updatePeriod="2000"
+			calc="delta" value="integer" fetch="rows" showByDefault="false"
+			description="%dashboards.dmstatistics.transaction_total_count.description">
+			<datasource id="damengdb" />
+			<query>
+				SELECT NAME , STAT_VAL FROM SYS.V$SYSSTAT WHERE
+				UPPER(NAME)='TRANSACTION TOTAL COUNT'
+			</query>
+		</dashboard>
+	</extension>
+	<!--仪表盘-物理读写-->
+	<extension point="org.jkiss.dbeaver.dashboard">
+		<dashboard id="dm.physical_read_wirte_count"
+			label="%dashboards.dmstatistics.physical_read_wirte_count.name"
+			defaultView="timeseries" group="Standard" updatePeriod="2000"
+			calc="delta" value="bytes" fetch="columns" showByDefault="false"
+			description="%dashboards.dmstatistics.physical_read_wirte_count.description">
+			<datasource id="damengdb" />
+			<query>
+				SELECT
+				(SELECT STAT_VAL FROM SYS.V$SYSSTAT WHERE UPPER(NAME)='PHYSICAL
+				WRITE COUNT') AS "Write",
+				(SELECT STAT_VAL FROM SYS.V$SYSSTAT WHERE UPPER(NAME)= 'PHYSICAL
+				READ COUNT') AS "Read"
+			</query>
+		</dashboard>
+	</extension>
+	<!--仪表盘-总字节数-->
+	<extension point="org.jkiss.dbeaver.dashboard">
+		<dashboard id="dm.client_total_bytes_received_sent"
+			label="%dashboards.dmstatistics.client_total_bytes_received_sent.name"
+			defaultView="timeseries" group="Standard" updatePeriod="2000"
+			calc="delta" value="bytes" fetch="columns" showByDefault="false"
+			description="%dashboards.dmstatistics.client_total_bytes_received_sent.description">
+			<datasource id="damengdb" />
+			<query>
+				SELECT
+				(SELECT STAT_VAL FROM SYS.V$SYSSTAT WHERE UPPER(NAME)='TOTAL
+				BYTES RECEIVED FROM CLIENT') AS "Received",
+				(SELECT STAT_VAL FROM SYS.V$SYSSTAT WHERE UPPER(NAME)= 'TOTAL
+				BYTES SENT TO CLIENT') AS "Sent"
+			</query>
+		</dashboard>
+	</extension>
+	<!--仪表盘-SQL statements-->
+	<extension point="org.jkiss.dbeaver.dashboard">
+		<dashboard id="dm.select_statements"
+			label="%dashboards.dmstatistics.select_statements.name"
+			defaultView="timeseries" group="Standard" updatePeriod="5000"
+			calc="delta" value="integer" fetch="rows" showByDefault="false"
+			description="%dashboards.dmstatistics.select_statements.description">
+			<datasource id="damengdb" />
+			<query>
+				SELECT NAME,STAT_VAL FROM SYS.V$SYSSTAT WHERE
+				UPPER(NAME)='SELECT STATEMENTS'
+			</query>
+		</dashboard>
+	</extension>
+	<extension point="org.jkiss.dbeaver.dashboard">
+		<dashboard id="dm.insert_statements"
+			label="%dashboards.dmstatistics.insert_statements.name"
+			defaultView="timeseries" group="Standard" updatePeriod="5000"
+			calc="delta" value="integer" fetch="rows" showByDefault="false"
+			description="%dashboards.dmstatistics.insert_statements.description">
+			<datasource id="damengdb" />
+			<query>
+				SELECT NAME , STAT_VAL FROM SYS.V$SYSSTAT WHERE
+				UPPER(NAME)='INSERT STATEMENTS'
+			</query>
+		</dashboard>
+	</extension>
+	<extension point="org.jkiss.dbeaver.dashboard">
+		<dashboard id="dm.delete_statements"
+			label="%dashboards.dmstatistics.delete_statements.name"
+			defaultView="timeseries" group="Standard" updatePeriod="5000"
+			calc="delta" value="integer" fetch="rows" showByDefault="false"
+			description="%dashboards.dmstatistics.delete_statements.description">
+			<datasource id="damengdb" />
+			<query>
+				SELECT STAT_VAL AS Cpu_Usage FROM SYS.V$SYSSTAT WHERE
+				UPPER(NAME)='DELETE STATEMENTS'
+			</query>
+		</dashboard>
+	</extension>
+	<extension point="org.jkiss.dbeaver.dashboard">
+		<dashboard id="dm.update_statements"
+			label="%dashboards.dmstatistics.update_statements.name"
+			defaultView="timeseries" group="Standard" updatePeriod="5000"
+			calc="delta" value="integer" fetch="rows" showByDefault="false"
+			description="%dashboards.dmstatistics.update_statements.description">
+			<datasource id="damengdb" />
+			<query>
+				SELECT NAME , STAT_VAL FROM SYS.V$SYSSTAT WHERE
+				UPPER(NAME)='UPDATE STATEMENTS'
+			</query>
+		</dashboard>
+	</extension>
+	<extension point="org.jkiss.dbeaver.dashboard">
+		<dashboard id="dm.queries_statements"
+			label="%dashboards.dmstatistics.queries_statements.name"
+			defaultView="timeseries" group="Standard" updatePeriod="5000"
+			calc="delta" value="integer" fetch="columns" showByDefault="false"
+			description="%dashboards.dmstatistics.queries_statements.description">
+			<datasource id="damengdb" />
+			<query>
+				SELECT
+				(SELECT STAT_VAL FROM SYS.V$SYSSTAT WHERE UPPER(NAME)='SELECT
+				STATEMENTS') AS "Select",
+				(SELECT STAT_VAL FROM SYS.V$SYSSTAT WHERE UPPER(NAME)='UPDATE
+				STATEMENTS') AS "Update",
+				(SELECT STAT_VAL FROM SYS.V$SYSSTAT WHERE UPPER(NAME)='DELETE
+				STATEMENTS') AS "Delete",
+				(SELECT STAT_VAL FROM SYS.V$SYSSTAT WHERE UPPER(NAME)='INSERT
+				STATEMENTS') AS "Insert"
+			</query>
+		</dashboard>
+	</extension>
+
+	<extension point="org.jkiss.dbeaver.task">
+		<category id="damengdb" name="Dameng"
+			description="%org.jkiss.dbeaver.task.category.damengdb.description"
+			icon="icons/dameng_icon.png" />
+		<category id="damengTool" parent="damengdb"
+			name="%org.jkiss.dbeaver.task.category.damengTool.name"
+			description="%org.jkiss.dbeaver.task.category.damengTool.description"
+			icon="icons/dameng_icon.png" />
+		<task id="damengToolMViewRefresh"
+			name="%task.damengToolMViewRefresh.name"
+			description="%task.damengToolMViewRefresh.description"
+			icon="platform:/plugin/org.jkiss.dbeaver.model/icons/tree/admin.png"
+			type="damengTool"
+			handler="org.jkiss.dbeaver.ext.damengdb.tasks.DamengToolMViewRefresh">
+			<datasource id="damengdb" />
+			<objectType
+				name="org.jkiss.dbeaver.ext.damengdb.model.DamengMaterializedView" />
+		</task>
+		<task id="damengToolTruncateTable"
+			name="%task.damengToolTruncateTable.name"
+			description="%task.damengToolTruncateTable.description"
+			icon="platform:/plugin/org.jkiss.dbeaver.model/icons/tree/admin.png"
+			type="damengTool"
+			handler="org.jkiss.dbeaver.ext.damengdb.tasks.DamengToolTableTruncate">
+			<datasource id="damengdb" />
+			<objectType name="org.jkiss.dbeaver.ext.damengdb.model.DamengTable" />
+		</task>
+		<task id="damengToolTriggerEnable"
+			name="%task.damengToolTriggerEnable.name"
+			description="%task.damengToolTriggerEnable.name"
+			icon="platform:/plugin/org.jkiss.dbeaver.model/icons/tree/admin.png"
+			type="damengTool"
+			handler="org.jkiss.dbeaver.ext.damengdb.tasks.DamengToolTriggerEnable">
+			<datasource id="damengdb" />
+			<objectType
+				name="org.jkiss.dbeaver.ext.damengdb.model.DamengDataBaseTrigger"
+				if="object.status == 'DISABLED'" />
+			<objectType
+				name="org.jkiss.dbeaver.ext.damengdb.model.DamengSchemaTrigger"
+				if="object.status == 'DISABLED'" />
+			<objectType
+				name="org.jkiss.dbeaver.ext.damengdb.model.DamengTableTrigger"
+				if="object.status == 'DISABLED'" />
+			<objectType
+				name="org.jkiss.dbeaver.ext.damengdb.model.DamengViewTrigger"
+				if="object.status == 'DISABLED'" />
+		</task>
+		<task id="damengToolTriggerDisable"
+			name="%task.damengToolTriggerDisable.name"
+			description="%task.damengToolTriggerDisable.name"
+			icon="platform:/plugin/org.jkiss.dbeaver.model/icons/tree/admin.png"
+			type="damengTool"
+			handler="org.jkiss.dbeaver.ext.damengdb.tasks.DamengToolTriggerDisable">
+			<datasource id="damengdb" />
+			<objectType
+				name="org.jkiss.dbeaver.ext.damengdb.model.DamengDataBaseTrigger"
+				if="object.status == 'ENABLED'" />
+			<objectType
+				name="org.jkiss.dbeaver.ext.damengdb.model.DamengSchemaTrigger"
+				if="object.status == 'ENABLED'" />
+			<objectType
+				name="org.jkiss.dbeaver.ext.damengdb.model.DamengTableTrigger"
+				if="object.status == 'ENABLED'" />
+			<objectType
+				name="org.jkiss.dbeaver.ext.damengdb.model.DamengViewTrigger"
+				if="object.status == 'ENABLED'" />
+		</task>
+		<task id="damengToolTableGatherStatistics"
+			name="%task.damengToolGatherTableStatistics.name"
+			description="%task.damengToolGatherTableStatistics.description"
+			icon="platform:/plugin/org.jkiss.dbeaver.model/icons/tree/admin.png"
+			type="damengTool"
+			handler="org.jkiss.dbeaver.ext.damengdb.tasks.DamengToolTableGatherStatistics">
+			<datasource id="damengdb" />
+			<objectType name="org.jkiss.dbeaver.ext.damengdb.model.DamengTable" />
+		</task>
+		<task id="damengScriptExecute" name="%task.damengScriptExecute.name"
+			description="%task.damengScriptExecute.description"
+			icon="platform:/plugin/org.jkiss.dbeaver.model/icons/tree/script.png"
+			type="damengdb"
+			handler="org.jkiss.dbeaver.ext.damengdb.tasks.DamengScriptExecuteHandler">
+			<datasource id="damengdb" />
+			<objectType name="org.jkiss.dbeaver.model.struct.DBSDataManipulator" />
+		</task>
+	</extension>
+
+</plugin>

@@ -1,0 +1,501 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?>
+<!--
+ * DBeaver - Universal Database Manager
+ * Copyright (C) 2010-2025 DBeaver Corp and others
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+  -->
+
+<plugin>
+
+	<extension point="org.eclipse.ui.commands">
+		<category id="org.jkiss.dbeaver.ext.damengdb" name="Dameng"
+			description="Dameng Commands" />
+		<command id="org.jkiss.dbeaver.ext.damengdb.code.compile" name="Compile"
+			description="Compile" categoryId="org.jkiss.dbeaver.ext.damengdb" />
+		<command id="org.jkiss.dbeaver.ext.damengdb.code.package.navigate"
+			name="Go to source code"
+			description="Navigate to object source code"
+			categoryId="org.jkiss.dbeaver.ext.damengdb" />
+		<command id="org.jkiss.dbeaver.ext.damengdb.job.run" name="Run"
+			description="Run Job" categoryId="org.jkiss.dbeaver.ext.damengdb" />
+		<command id="org.jkiss.dbeaver.ext.damengdb.code.testDbLink" name='Test'
+			description='Test DbLink' categoryId="org.jkiss.dbeaver.ext.damengdb" />
+	</extension>
+
+	<extension point="org.eclipse.ui.commandImages">
+		<image commandId="org.jkiss.dbeaver.ext.damengdb.code.compile"
+			icon="icons/compile.png" />
+		<image commandId="org.jkiss.dbeaver.ext.damengdb.code.package.navigate"
+			icon="icons/source_navigate.png" />
+		<image commandId="org.jkiss.dbeaver.ext.damengdb.job.run"
+			icon="icons/run.png" />
+		<image commandId="org.jkiss.dbeaver.ext.damengdb.code.testDbLink"
+			icon="icons/run.png" />
+	</extension>
+
+	<extension point="org.eclipse.ui.handlers">
+		<handler commandId="org.jkiss.dbeaver.ext.damengdb.code.compile"
+			class="org.jkiss.dbeaver.ext.damengdb.ui.actions.CompileHandler">
+			<enabledWhen>
+				<or>
+					<with variable="selection">
+						<count value="+" />
+						<iterate operator="and">
+							<adapt
+								type="org.jkiss.dbeaver.model.struct.DBSObject">
+								<instanceof
+									value="org.jkiss.dbeaver.ext.damengdb.model.source.DamengSourceObject" />
+							</adapt>
+							<not>
+								<adapt
+									type="org.jkiss.dbeaver.model.struct.DBSObject">
+									<instanceof
+										value="org.jkiss.dbeaver.ext.damengdb.model.DamengMaterializedView">
+									</instanceof>
+								</adapt>
+							</not>
+							<not>
+								<adapt
+									type="org.jkiss.dbeaver.model.struct.DBSObject">
+									<instanceof
+										value="org.jkiss.dbeaver.ext.damengdb.model.DamengDBLink">
+									</instanceof>
+								</adapt>
+							</not>
+							<not>
+								<adapt
+									type="org.jkiss.dbeaver.model.struct.DBSObject">
+									<instanceof
+										value="org.jkiss.dbeaver.ext.damengdb.model.DamengExternalFunction">
+									</instanceof>
+								</adapt>
+							</not>
+							<not>
+								<adapt
+									type="org.jkiss.dbeaver.model.struct.DBSObject">
+									<instanceof
+										value="org.jkiss.dbeaver.ext.damengdb.model.DamengUdOperator">
+									</instanceof>
+								</adapt>
+							</not>
+							<not>
+								<adapt
+									type="org.jkiss.dbeaver.model.struct.DBSObject">
+									<instanceof
+										value="org.jkiss.dbeaver.ext.damengdb.model.DamengUdOperatorOverride">
+									</instanceof>
+								</adapt>
+							</not>
+							<not>
+								<adapt
+									type="org.jkiss.dbeaver.model.struct.DBSObject">
+									<instanceof
+										value="org.jkiss.dbeaver.ext.damengdb.model.DamengSynonym">
+									</instanceof>
+								</adapt>
+							</not>
+							<not>
+								<adapt
+									type="org.jkiss.dbeaver.model.struct.DBSObject">
+									<instanceof
+										value="org.jkiss.dbeaver.ext.damengdb.model.DamengDomain">
+									</instanceof>
+								</adapt>
+							</not>
+						</iterate>
+					</with>
+					<with variable="activePart">
+						<and>
+							<not>
+								<adapt
+									type="org.jkiss.dbeaver.model.struct.DBSObject">
+									<instanceof
+										value="org.jkiss.dbeaver.ext.damengdb.model.DamengMaterializedView">
+									</instanceof>
+								</adapt>
+							</not>
+							<adapt
+								type="org.jkiss.dbeaver.model.struct.DBSObject">
+								<instanceof
+									value="org.jkiss.dbeaver.ext.damengdb.model.source.DamengSourceObject">
+								</instanceof>
+							</adapt>
+							<not>
+								<adapt
+									type="org.jkiss.dbeaver.model.struct.DBSObject">
+									<instanceof
+										value="org.jkiss.dbeaver.ext.damengdb.model.DamengDBLink">
+									</instanceof>
+								</adapt>
+							</not>
+							<not>
+								<adapt
+									type="org.jkiss.dbeaver.model.struct.DBSObject">
+									<instanceof
+										value="org.jkiss.dbeaver.ext.damengdb.model.DamengExternalFunction">
+									</instanceof>
+								</adapt>
+							</not>
+							<not>
+								<adapt
+									type="org.jkiss.dbeaver.model.struct.DBSObject">
+									<instanceof
+										value="org.jkiss.dbeaver.ext.damengdb.model.DamengUdOperator">
+									</instanceof>
+								</adapt>
+							</not>
+							<not>
+								<adapt
+									type="org.jkiss.dbeaver.model.struct.DBSObject">
+									<instanceof
+										value="org.jkiss.dbeaver.ext.damengdb.model.DamengUdOperatorOverride">
+									</instanceof>
+								</adapt>
+							</not>
+							<not>
+								<adapt
+									type="org.jkiss.dbeaver.model.struct.DBSObject">
+									<instanceof
+										value="org.jkiss.dbeaver.ext.damengdb.model.DamengSynonym">
+									</instanceof>
+								</adapt>
+							</not>
+							<not>
+								<adapt
+									type="org.jkiss.dbeaver.model.struct.DBSObject">
+									<instanceof
+										value="org.jkiss.dbeaver.ext.damengdb.model.DamengDomain">
+									</instanceof>
+								</adapt>
+							</not>
+						</and>
+					</with>
+				</or>
+			</enabledWhen>
+		</handler>
+		<handler commandId="org.jkiss.dbeaver.ext.damengdb.code.package.navigate"
+			class="org.jkiss.dbeaver.ext.damengdb.ui.actions.PackageNavigateHandler">
+			<enabledWhen>
+				<with variable="selection">
+					<count value="+" />
+					<iterate operator="and">
+						<adapt type="org.jkiss.dbeaver.model.struct.DBSObject">
+							<instanceof
+								value="org.jkiss.dbeaver.ext.damengdb.model.DamengProcedurePackaged" />
+						</adapt>
+						<!--<adapt type="org.jkiss.dbeaver.ext.damengdb.model.DamengProcedurePackaged"/>-->
+					</iterate>
+				</with>
+			</enabledWhen>
+		</handler>
+		<handler
+			class="org.jkiss.dbeaver.ext.damengdb.ui.actions.DamengTestDbLinkHandler"
+			commandId="org.jkiss.dbeaver.ext.damengdb.code.testDbLink">
+			<enabledWhen>
+				<or>
+					<with
+						variable="activePart">
+						<adapt
+							type="org.jkiss.dbeaver.model.struct.DBSObject">
+							<instanceof
+								value="org.jkiss.dbeaver.ext.damengdb.model.DamengDBLink">
+							</instanceof>
+						</adapt>
+					</with>
+					<with
+						variable="selection">
+						<count
+							value="1">
+						</count>
+						<iterate
+							operator="and">
+							<adapt
+								type="org.jkiss.dbeaver.model.struct.DBSObject">
+								<instanceof
+									value="org.jkiss.dbeaver.ext.damengdb.model.DamengDBLink">
+								</instanceof>
+							</adapt>
+						</iterate>
+					</with>
+				</or>
+			</enabledWhen>
+		</handler>
+	</extension>
+
+	<extension point="org.eclipse.ui.menus">
+		<menuContribution allPopups="false"
+			locationURI="popup:org.eclipse.ui.popup.any?after=navigator_additions_end">
+			<command commandId="org.jkiss.dbeaver.ext.damengdb.code.compile">
+				<visibleWhen checkEnabled="true" />
+			</command>
+			<command
+				commandId="org.jkiss.dbeaver.ext.damengdb.code.package.navigate">
+				<visibleWhen checkEnabled="true" />
+			</command>
+			<command commandId="org.jkiss.dbeaver.ext.damengdb.job.run">
+				<visibleWhen checkEnabled="true" />
+			</command>
+			<command commandId="org.jkiss.dbeaver.ext.damengdb.code.testDbLink">
+				<visibleWhen checkEnabled="true" />
+			</command>
+		</menuContribution>
+	</extension>
+
+	<extension point="org.eclipse.ui.editors">
+		<editor
+			name="Session Manager"
+			icon="platform:/plugin/org.jkiss.dbeaver.model/icons/tree/sessions.png"
+			class="org.jkiss.dbeaver.ext.damengdb.ui.editors.DamengSessionEditor"
+			id="org.jkiss.dbeaver.ext.damengdb.ui.editors.DamengSessionEditor"
+			contributorClass="org.jkiss.dbeaver.ui.editors.EditorSearchActionsContributor">
+		</editor>
+
+		<editor
+			name="Lock Manager"
+			icon="#locked"
+			class="org.jkiss.dbeaver.ext.damengdb.ui.editors.DamengLockEditor"
+			id="org.jkiss.dbeaver.ext.damengdb.ui.editors.DamengLockEditor">
+		</editor>
+
+	</extension>
+
+	<extension point="org.jkiss.dbeaver.dataSourceProvider">
+		<editorContribution
+			editorId="org.jkiss.dbeaver.ext.damengdb.ui.editors.DamengSessionEditor"
+			category="connectionEditor" label="%editor.session_manager.name"
+			icon="platform:/plugin/org.jkiss.dbeaver.model/icons/tree/sessions.png">
+			<supports dataSource="damengdb" />
+		</editorContribution>
+
+		<editorContribution
+			editorId="org.jkiss.dbeaver.ext.damengdb.ui.editors.DamengLockEditor"
+			category="connectionEditor" label="%editor.lock_manager.name"
+			icon="#locked">
+			<supports dataSource="damengdb" />
+		</editorContribution>
+
+	</extension>
+
+	<extension point="org.eclipse.ui.preferencePages">
+		<page category="org.jkiss.dbeaver.preferences.drivers"
+			id="org.jkiss.dbeaver.preferences.damengdb.general"
+			class="org.jkiss.dbeaver.ext.damengdb.ui.views.DamengPrefPage"
+			name="Dameng">
+			<keywordReference id="org.jkiss.dbeaver.core.keyword.dbeaver" />
+		</page>
+	</extension>
+
+	<extension point="org.eclipse.ui.propertyPages">
+		<page id="org.jkiss.dbeaver.preferences.damengdb.main"
+			class="org.jkiss.dbeaver.ext.damengdb.ui.views.DamengPrefPage"
+			name="%page.org.jkiss.dbeaver.preferences.damengdb.main.name">
+			<enabledWhen>
+				<adapt type="org.jkiss.dbeaver.model.DBPDataSourceContainer">
+					<test
+						property="org.jkiss.dbeaver.core.datasourceContainer.driverId"
+						value="dameng_driver" />
+				</adapt>
+			</enabledWhen>
+		</page>
+	</extension>
+
+	<extension point="org.jkiss.dbeaver.dataSourceView">
+		<view
+			id="org.jkiss.dbeaver.ext.damengdb.dataSourceWizardView"
+			dataSource="damengdb"
+			targetID="org.jkiss.dbeaver.ext.ui.newConnectionWizard"
+			label="%dialog.connection.header"
+			class="org.jkiss.dbeaver.ext.damengdb.ui.views.DamengConnectionPage"
+			icon="icons/dameng_icon.png">
+		</view>
+		<view
+			id="org.jkiss.dbeaver.ext.damengdb.dataSourceEditorView"
+			dataSource="damengdb"
+			targetID="org.jkiss.dbeaver.ext.ui.editConnectionDialog"
+			label="%dialog.connection.header"
+			class="org.jkiss.dbeaver.ext.damengdb.ui.views.DamengConnectionPage">
+		</view>
+	</extension>
+
+	<extension point="org.jkiss.dbeaver.databaseEditor">
+		<editor id="source.declaration"
+			class="org.jkiss.dbeaver.ext.damengdb.ui.editors.DamengSourceDeclarationEditor"
+			label="%editor.package.declaration.name"
+			description="%editor.package.declaration.description"
+			icon="#sql_text" position="additions_middle"
+			contributor="org.jkiss.dbeaver.ui.editors.sql.SQLEditorContributorNested"
+			type="folder" embeddable="false">
+			<objectType name="org.jkiss.dbeaver.ext.damengdb.model.DamengView" />
+			<objectType
+				name="org.jkiss.dbeaver.ext.damengdb.model.DamengMaterializedView" />
+			<objectType
+				name="org.jkiss.dbeaver.ext.damengdb.model.DamengProcedureStandalone" />
+			<objectType name="org.jkiss.dbeaver.ext.damengdb.model.DamengPackage" />
+			<objectType name="org.jkiss.dbeaver.ext.damengdb.model.DamengDataType"
+				if="!object.predefined" />
+			<objectType name="org.jkiss.dbeaver.ext.damengdb.model.DamengTrigger" />
+			<objectType name="org.jkiss.dbeaver.ext.damengdb.model.DamengDBLink" />
+			<objectType
+				name="org.jkiss.dbeaver.ext.damengdb.model.DamengExternalFunction" />
+			<objectType name="org.jkiss.dbeaver.ext.damengdb.model.DamengSynonym" />
+			<objectType
+				name="org.jkiss.dbeaver.ext.damengdb.model.DamengDefineType" />
+			<objectType name="org.jkiss.dbeaver.ext.damengdb.model.DamengDomain" />
+			<objectType
+				name="org.jkiss.dbeaver.ext.damengdb.model.DamengUdOperator" />
+			<objectType
+				name="org.jkiss.dbeaver.ext.damengdb.model.DamengUdOperatorOverride" />
+		</editor>
+		<editor id="source.definition"
+			class="org.jkiss.dbeaver.ext.damengdb.ui.editors.DamengSourceDefinitionEditor"
+			label="%editor.package.body.name"
+			description="%editor.package.body.description" icon="#sql_text"
+			position="additions_middle"
+			contributor="org.jkiss.dbeaver.ui.editors.sql.SQLEditorContributorNested"
+			type="folder" embeddable="false">
+			<objectType name="org.jkiss.dbeaver.ext.damengdb.model.DamengPackage" />
+			<objectType name="org.jkiss.dbeaver.ext.damengdb.model.DamengDataType"
+				if="!object.predefined" />
+		</editor>
+		<editor id="source.ddl"
+			class="org.jkiss.dbeaver.ext.damengdb.ui.editors.DamengObjectDDLEditor"
+			label="DDL" description="DDL" icon="#sql_text"
+			position="additions_middle"
+			contributor="org.jkiss.dbeaver.ui.editors.sql.SQLEditorContributorNested"
+			type="folder">
+			<objectType name="org.jkiss.dbeaver.ext.damengdb.model.DamengTable" />
+		</editor>
+		<editor id="source.declaration.read-only"
+			class="org.jkiss.dbeaver.ext.damengdb.ui.editors.DamengObjectDeclarationViewer"
+			label="%editor.package.declaration.name"
+			description="%editor.package.declaration.description"
+			icon="#sql_text" position="additions_middle"
+			contributor="org.jkiss.dbeaver.ui.editors.sql.SQLEditorContributorNested"
+			type="folder" embeddable="false">
+			<objectType name="org.jkiss.dbeaver.ext.damengdb.model.DamengSchema" />
+			<objectType
+				name="org.jkiss.dbeaver.ext.damengdb.model.DamengTableIndex" />
+			<objectType name="org.jkiss.dbeaver.ext.damengdb.model.DamengSequence" />
+		</editor>
+
+		<configurator
+			class="org.jkiss.dbeaver.ext.damengdb.ui.config.DamengConstraintConfigurator">
+			<objectType
+				name="org.jkiss.dbeaver.ext.damengdb.model.DamengTableConstraint" />
+		</configurator>
+		<configurator
+			class="org.jkiss.dbeaver.ext.damengdb.ui.config.DamengDataTypeConfigurator">
+			<objectType name="org.jkiss.dbeaver.ext.damengdb.model.DamengDataType" />
+		</configurator>
+		<configurator
+			class="org.jkiss.dbeaver.ext.damengdb.ui.config.DamengForeignKeyConfigurator">
+			<objectType
+				name="org.jkiss.dbeaver.ext.damengdb.model.DamengTableForeignKey" />
+		</configurator>
+		<configurator
+			class="org.jkiss.dbeaver.ext.damengdb.ui.config.DamengIndexConfigurator">
+			<objectType
+				name="org.jkiss.dbeaver.ext.damengdb.model.DamengTableIndex" />
+		</configurator>
+		<configurator
+			class="org.jkiss.dbeaver.ext.damengdb.ui.config.DamengPackageConfigurator">
+			<objectType name="org.jkiss.dbeaver.ext.damengdb.model.DamengPackage" />
+		</configurator>
+		<configurator
+			class="org.jkiss.dbeaver.ext.damengdb.ui.config.DamengProcedureConfigurator">
+			<objectType
+				name="org.jkiss.dbeaver.ext.damengdb.model.DamengProcedureStandalone" />
+		</configurator>
+		<configurator
+			class="org.jkiss.dbeaver.ext.damengdb.ui.config.DamengSchemaConfigurator">
+			<objectType name="org.jkiss.dbeaver.ext.damengdb.model.DamengSchema" />
+		</configurator>
+		<configurator
+			class="org.jkiss.dbeaver.ext.damengdb.ui.config.DamengSequenceConfigurator">
+			<objectType name="org.jkiss.dbeaver.ext.damengdb.model.DamengSequence" />
+		</configurator>
+		<configurator
+			class="org.jkiss.dbeaver.ext.damengdb.ui.config.DamengTableTriggerConfigurator">
+			<objectType
+				name="org.jkiss.dbeaver.ext.damengdb.model.DamengTableTrigger" />
+		</configurator>
+
+	</extension>
+
+	<extension point="org.jkiss.dbeaver.tools">
+		<tools>
+			<toolGroup id="org.jkiss.dbeaver.ext.damengdb.ui.tools.statistics"
+				label="%tool.org.jkiss.dbeaver.ext.damengdb.ui.tools.statistics.label" />
+			<toolGroup id="org.jkiss.dbeaver.ext.damengdb.ui.tools.maintenance"
+				label="%tool.org.jkiss.dbeaver.ext.damengdb.ui.tools.maintenance.label" />
+			<tool
+				description="%tool.org.jkiss.dbeaver.ext.damengdb.ui.tools.DamengToolScript.description"
+				id="org.jkiss.dbeaver.ext.damengdb.ui.tools.DamengToolScript"
+				label="%tool.org.jkiss.dbeaver.ext.damengdb.ui.tools.DamengToolScript.label">
+				<task id="damengScriptExecute"/>
+			</tool>
+			<tool
+				description="%tool.org.jkiss.dbeaver.ext.damengdb.ui.tools.maintenance.DamengToolRefreshMView.label"
+				id="org.jkiss.dbeaver.ext.damengdb.ui.tools.maintenance.DamengToolRefreshMView"
+				group="org.jkiss.dbeaver.ext.damengdb.ui.tools.maintenance"
+				label="%tool.org.jkiss.dbeaver.ext.damengdb.ui.tools.maintenance.DamengToolRefreshMView.label"
+				singleton="false">
+				<task id="damengMaterializedView"/>
+			</tool>
+			<tool
+				description="%tool.org.jkiss.dbeaver.ext.damengdb.ui.tools.maintenance.DamengToolGatherStatistics.label"
+				id="org.jkiss.dbeaver.ext.damengdb.ui.tools.maintenance.DamengToolGatherStatistics"
+				group="org.jkiss.dbeaver.ext.damengdb.ui.tools.statistics"
+				label="%tool.org.jkiss.dbeaver.ext.damengdb.ui.tools.maintenance.DamengToolGatherStatistics.label"
+				singleton="false">
+				 <task id="damengToolTableGatherStatistics"/>
+			</tool>
+			<tool
+				description="%tool.org.jkiss.dbeaver.ext.damengdb.ui.tools.maintenance.DamengToolTruncate.description"
+				id="org.jkiss.dbeaver.ext.damengdb.ui.tools.maintenance.DamengToolTruncate"
+				group="org.jkiss.dbeaver.ext.damengdb.ui.tools.maintenance"
+				label="%tool.org.jkiss.dbeaver.ext.damengdb.ui.tools.maintenance.DamengToolTruncate.label"
+				singleton="false">
+				<task id="damengToolTruncateTable"/>
+			</tool>
+			<tool
+				description="%tool.org.jkiss.dbeaver.ext.damengdb.ui.tools.maintenance.DamengToolTriggerDisable.description"
+				id="org.jkiss.dbeaver.ext.damengdb.ui.tools.maintenance.DamengToolTriggerDisable"
+				group="org.jkiss.dbeaver.ext.damengdb.ui.tools.maintenance"
+				label="%tool.org.jkiss.dbeaver.ext.damengdb.ui.tools.maintenance.DamengToolTriggerDisable.label"
+				singleton="false">
+				<task id="damengToolTriggerDisable"/>
+			</tool>
+			<tool
+				description="%tool.org.jkiss.dbeaver.ext.damengdb.ui.tools.maintenance.DamengToolTriggerEnable.description"
+				id="org.jkiss.dbeaver.ext.damengdb.ui.tools.maintenance.DamengToolTriggerEnable"
+				group="org.jkiss.dbeaver.ext.damengdb.ui.tools.maintenance"
+				label="%tool.org.jkiss.dbeaver.ext.damengdb.ui.tools.maintenance.DamengToolTriggerEnable.label"
+				singleton="false">
+				<task id="damengToolTriggerEnable"/>
+			</tool>
+		</tools>
+	</extension>
+	<extension point="org.jkiss.dbeaver.sql.executors">
+		<executor
+			class="org.jkiss.dbeaver.ext.damengdb.ui.tools.DamengScriptExecutor"
+			datasource="damengdb" />
+	</extension>
+	<extension point="org.jkiss.dbeaver.task.ui">
+		<configurator type="damengScriptExecute"
+			class="org.jkiss.dbeaver.ext.damengdb.ui.tools.DamengTaskConfigurator" />
+	</extension>
+
+</plugin>
