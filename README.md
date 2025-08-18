@@ -15,7 +15,7 @@
 添加以下语句：
 
 ```
-org.jkiss.dbeaver.ext.damengdb,版本号,plugins/org.jkiss.dbeaver.ext.dameng_版本号.jar,4,false
+org.jkiss.dbeaver.ext.damengdb,版本号,plugins/org.jkiss.dbeaver.ext.damengdb_版本号.jar,4,false
 org.jkiss.dbeaver.ext.damengdb.ui,版本号,plugins/org.jkiss.dbeaver.ext.damengdb.ui_版本号.jar,4,false
 ```
 
