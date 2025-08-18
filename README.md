@@ -28,7 +28,7 @@ org.jkiss.dbeaver.ext.damengdb.ui_1.0.1.202503281523.jar
 则需要添加以下语句：
 
 ```
-org.jkiss.dbeaver.ext.damengdb,1.0.1.202503281523,plugins/org.jkiss.dbeaver.ext.dameng_1.0.1.202503281523.jar,4,false
+org.jkiss.dbeaver.ext.damengdb,1.0.1.202503281523,plugins/org.jkiss.dbeaver.ext.damengdb_1.0.1.202503281523.jar,4,false
 org.jkiss.dbeaver.ext.damengdb.ui,1.0.1.202503281523,plugins/org.jkiss.dbeaver.ext.damengdb.ui_1.0.1.202503281523.jar,4,false
 ```
 
