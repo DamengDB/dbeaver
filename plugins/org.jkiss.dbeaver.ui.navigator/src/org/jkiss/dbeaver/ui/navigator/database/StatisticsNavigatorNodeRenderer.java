@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2025 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,8 +40,9 @@ import org.jkiss.dbeaver.model.navigator.*;
 import org.jkiss.dbeaver.model.preferences.DBPPreferenceStore;
 import org.jkiss.dbeaver.model.runtime.AbstractJob;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
+import org.jkiss.dbeaver.model.runtime.LocalCacheProgressMonitor;
+import org.jkiss.dbeaver.model.runtime.VoidProgressMonitor;
 import org.jkiss.dbeaver.model.struct.DBSObject;
-import org.jkiss.dbeaver.registry.DataSourceUtils;
 import org.jkiss.dbeaver.runtime.DBWorkbench;
 import org.jkiss.dbeaver.ui.BaseThemeSettings;
 import org.jkiss.dbeaver.ui.DBeaverIcons;
@@ -51,6 +52,7 @@ import org.jkiss.dbeaver.ui.internal.registry.NavigatorExtensionsRegistry;
 import org.jkiss.dbeaver.ui.navigator.INavigatorModelView;
 import org.jkiss.dbeaver.ui.navigator.INavigatorNodeActionHandler;
 import org.jkiss.dbeaver.ui.navigator.NavigatorPreferences;
+import org.jkiss.dbeaver.utils.DataSourceUtils;
 import org.jkiss.utils.ByteNumberFormat;
 import org.jkiss.utils.CommonUtils;
 
@@ -118,6 +120,9 @@ public class StatisticsNavigatorNodeRenderer extends DefaultNavigatorNodeRendere
             if (store.getBoolean(NavigatorPreferences.NAVIGATOR_SHOW_STATISTICS_INFO)) {
                 drawObjectStatistics(gc, databaseNode, item, event);
             }
+            if (node instanceof DBNDatabaseFolder && store.getBoolean(NavigatorPreferences.NAVIGATOR_SHOW_CHILD_COUNT) && !databaseNode.needsInitialization()) {
+                drawObjectChildrenCounter(gc, databaseNode, item);
+            }
             if (node instanceof DBNDatabaseItem && store.getBoolean(NavigatorPreferences.NAVIGATOR_SHOW_OBJECTS_DESCRIPTION)) {
                 drawObjectDescription(gc, databaseNode, item);
             }
@@ -143,7 +148,7 @@ public class StatisticsNavigatorNodeRenderer extends DefaultNavigatorNodeRendere
         // Compute width required to draw all actions
         int width = (actions.size() - 1) * ELEMENT_MARGIN;
         for (INavigatorNodeActionHandler action : actions) {
-            Image image = DBeaverIcons.getImage(action.getNodeActionIcon(getView(), node));
+            Image image = DBeaverIcons.getImage(action.getNodeActionIcon(node));
             Rectangle size = image.getBounds();
             width += size.width;
         }
@@ -158,7 +163,7 @@ public class StatisticsNavigatorNodeRenderer extends DefaultNavigatorNodeRendere
         // Draw actions
         for (int i = actions.size() - 1; i >= 0; i--) {
             INavigatorNodeActionHandler action = actions.get(i);
-            Image image = DBeaverIcons.getImage(action.getNodeActionIcon(getView(), node));
+            Image image = DBeaverIcons.getImage(action.getNodeActionIcon(node));
             Rectangle size = image.getBounds();
 
             if (bounds.width < size.width) {
@@ -190,6 +195,18 @@ public class StatisticsNavigatorNodeRenderer extends DefaultNavigatorNodeRendere
                 drawText(gc, CommonUtils.getSingleLineString(description), bounds);
             }
         }
+    }
+
+    private void drawObjectChildrenCounter(@NotNull GC gc, @NotNull DBNDatabaseNode node, @NotNull Rectangle bounds) {
+        int childCount = 0;
+        try {
+            DBNDatabaseNode[] nodeChildren = node.getChildren(new LocalCacheProgressMonitor(new VoidProgressMonitor()));
+            childCount = nodeChildren == null ? 0 : nodeChildren.length;
+        } catch (DBException e) {
+            return;
+        }
+        String text = "(" + childCount + ")";
+        drawText(gc, text, bounds);
     }
 
     private void drawObjectStatistics(@NotNull GC gc, @NotNull DBNDatabaseNode node, @NotNull Rectangle bounds, @NotNull Event event) {
@@ -252,7 +269,7 @@ public class StatisticsNavigatorNodeRenderer extends DefaultNavigatorNodeRendere
 
         try {
             gc.setForeground(NavigatorThemeSettings.instance.hintColor);
-            gc.setFont(BaseThemeSettings.instance.baseFontItalic);
+            gc.setFont(BaseThemeSettings.instance.treeAndTableFontItalic);
 
             drawTextClipped(gc, text, bounds);
         } finally {
@@ -345,7 +362,7 @@ public class StatisticsNavigatorNodeRenderer extends DefaultNavigatorNodeRendere
             if (node instanceof DBNDataSource) {
                 INavigatorNodeActionHandler overActionButton = getActionButton(node, tree, event);
                 if (overActionButton != null) {
-                    return overActionButton.getNodeActionToolTip(view, node);
+                    return overActionButton.getNodeActionToolTip(node);
                 }
             }
         }
@@ -359,7 +376,7 @@ public class StatisticsNavigatorNodeRenderer extends DefaultNavigatorNodeRendere
             // Detect active action
             INavigatorNodeActionHandler overActionButton = getActionButton(node, tree, event);
             if (overActionButton != null) {
-                overActionButton.handleNodeAction(view, node, event, defaultAction);
+                overActionButton.handleNodeAction(node, defaultAction);
             }
         }
     }
@@ -403,7 +420,7 @@ public class StatisticsNavigatorNodeRenderer extends DefaultNavigatorNodeRendere
 
         for (int i = actions.size() - 1; i >= 0; i--) {
             INavigatorNodeActionHandler action = actions.get(i);
-            Image image = DBeaverIcons.getImage(action.getNodeActionIcon(getView(), node));
+            Image image = DBeaverIcons.getImage(action.getNodeActionIcon(node));
             Rectangle size = image.getBounds();
 
             if (client.width < size.width || event.y < client.y || event.y >= client.y + client.height) {
@@ -552,8 +569,9 @@ public class StatisticsNavigatorNodeRenderer extends DefaultNavigatorNodeRendere
             this.treeItem = treeItem;
         }
 
+        @NotNull
         @Override
-        protected IStatus run(DBRProgressMonitor monitor) {
+        protected IStatus run(@NotNull DBRProgressMonitor monitor) {
             try {
                 monitor.beginTask("Collect database statistics", 1);
                 if (object instanceof DBPObjectStatisticsCollector) {
@@ -563,9 +581,9 @@ public class StatisticsNavigatorNodeRenderer extends DefaultNavigatorNodeRendere
                 }
                 long maxStatSize = 0;
 
-                if (parentNode instanceof DBNDatabaseNode) {
+                if (parentNode instanceof DBNDatabaseNode dbNode) {
                     // Calculate max object size
-                    DBNDatabaseNode[] children = ((DBNDatabaseNode)parentNode).getChildren(monitor);
+                    DBNDatabaseNode[] children = dbNode.getChildren(monitor);
                     if (children != null) {
                         for (DBNDatabaseNode childNode : children) {
                             DBSObject child = childNode.getObject();

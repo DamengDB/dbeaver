@@ -3,9 +3,9 @@ Bundle-ManifestVersion: 2
 Bundle-Vendor: DBeaver Corp
 Bundle-Name: DBeaver RCP Model
 Bundle-SymbolicName: org.jkiss.dbeaver.model.rcp;singleton:=true
-Bundle-Version: 1.0.13.qualifier
-Bundle-Release-Date: 20250407
-Bundle-RequiredExecutionEnvironment: JavaSE-17
+Bundle-Version: 1.0.47.qualifier
+Bundle-Release-Date: 20260831
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Bundle-ActivationPolicy: lazy
 Export-Package: org.jkiss.dbeaver.model.app,
  org.jkiss.dbeaver.model.fs,
@@ -15,9 +15,9 @@ Export-Package: org.jkiss.dbeaver.model.app,
  org.jkiss.dbeaver.registry,
  org.jkiss.dbeaver.runtime,
  org.jkiss.dbeaver.utils
-Bundle-ClassPath: .
 Require-Bundle: org.eclipse.core.expressions,
  org.eclipse.core.filesystem,
+ org.jkiss.dbeaver.model.nio,
  org.eclipse.core.resources;visibility:=reexport,
  org.jkiss.dbeaver.model;visibility:=reexport,
  org.jkiss.dbeaver.registry

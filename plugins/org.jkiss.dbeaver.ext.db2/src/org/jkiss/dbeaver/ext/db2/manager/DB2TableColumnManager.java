@@ -1,7 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2013-2015 Denis Forveille (titou10.titou10@gmail.com)
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,7 +70,7 @@ public class DB2TableColumnManager extends SQLTableColumnManager<DB2TableColumn,
     }
 
     @Override
-    public boolean canEditObject(DB2TableColumn object) {
+    public boolean canEditObject(@NotNull DB2TableColumn object) {
         // Edit is only available for DB2Table and not for other kinds of tables (View, MQTs, Nicknames..)
         DB2TableBase db2TableBase = object.getParentObject();
         if ((db2TableBase != null) && (db2TableBase.getClass().equals(DB2Table.class))) {
@@ -86,8 +85,13 @@ public class DB2TableColumnManager extends SQLTableColumnManager<DB2TableColumn,
     // ------
 
     @Override
-    protected DB2TableColumn createDatabaseObject(@NotNull DBRProgressMonitor monitor, @NotNull DBECommandContext context, Object container,
-                                                  Object copyFrom, @NotNull Map<String, Object> options) throws DBException {
+    protected DB2TableColumn createDatabaseObject(
+        @NotNull DBRProgressMonitor monitor,
+        @NotNull DBECommandContext context,
+        @NotNull Object container,
+        @Nullable Object copyFrom,
+        @NotNull Map<String, Object> options
+    ) throws DBException {
         DB2TableColumn column = new DB2TableColumn((DB2TableBase) container);
         column.setName(getNewColumnName(monitor, context, (DB2TableBase) container));
         return column;
@@ -177,7 +181,7 @@ public class DB2TableColumnManager extends SQLTableColumnManager<DB2TableColumn,
         return sb.toString();
     }
 
-    private DBEPersistAction buildCommentAction(DB2TableColumn db2Column) {
+    static DBEPersistAction buildCommentAction(DB2TableColumn db2Column) {
         String tableName = db2Column.getTable().getFullyQualifiedName(DBPEvaluationContext.DDL);
         String columnName = db2Column.getName();
         String comment = db2Column.getDescription();

@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,8 +102,7 @@ public abstract class DBDAttributeBinding implements DBSObject, DBSAttributeBase
      * @return resolved entity attribute or just meta attribute
      */
     @NotNull
-    public DBSAttributeBase getAttribute()
-    {
+    public DBSAttributeBase getAttribute() {
         DBSEntityAttribute attr = getEntityAttribute();
         return attr == null ? getMetaAttribute() : attr;
     }
@@ -128,6 +127,7 @@ public abstract class DBDAttributeBinding implements DBSObject, DBSAttributeBase
         return false;
     }
 
+    @Nullable
     public DBSDataContainer getDataContainer() {
         DBDAttributeBinding parentObject = getParentObject();
         return parentObject == null ? null : parentObject.getDataContainer();
@@ -139,6 +139,7 @@ public abstract class DBDAttributeBinding implements DBSObject, DBSAttributeBase
     @Nullable
     public abstract DBDRowIdentifier getRowIdentifier();
 
+    @Nullable
     public abstract String getRowIdentifierStatus();
 
     public boolean isInRowIdentifier() {
@@ -180,27 +181,41 @@ public abstract class DBDAttributeBinding implements DBSObject, DBSAttributeBase
     }
 
     public boolean matches(@Nullable DBSAttributeBase attr, boolean searchByName) {
-        if (attr != null && (this == attr || getMetaAttribute() == attr || getEntityAttribute() == attr)) {
+        if (attr != null && (
+            this == attr ||
+            this.getMetaAttribute() == attr ||
+            this.getEntityAttribute() == attr ||
+            this.getEntityAttribute() instanceof DBSContextBoundAttribute cba && cba.getUnderlyingAttribute() == attr
+        )) {
             return true;
         }
         if (searchByName) {
-            if (attr instanceof DBDAttributeBinding) {
-                DBDAttributeBinding cmpAttr = (DBDAttributeBinding) attr;
+            if (attr instanceof DBDAttributeBinding cmpAttr) {
                 if (getLevel() != cmpAttr.getLevel() || getOrdinalPosition() != cmpAttr.getOrdinalPosition()) {
                     return false;
                 }
                 // Match all hierarchy names
                 for (DBDAttributeBinding a1 = cmpAttr, a2 = this; a1 != null && a2 != null; a1 = a1.getParentObject(), a2 = a2.getParentObject()) {
-                    if (!SQLUtils.compareAliases(attr.getName(), this.getName())) {
+                    if (!SQLUtils.compareAliases(a1.getName(), a2.getName())) {
                         return false;
                     }
                 }
                 return true;
             } else if (attr != null) {
-                return SQLUtils.compareAliases(attr.getName(), this.getName());
+                return matchesAttributes(attr);
             }
         }
         return false;
+    }
+
+    private boolean matchesAttributes(@NotNull DBSAttributeBase attr) {
+        if (attr instanceof DBSObject attrObj && this.getEntityAttribute() != null &&  attrObj.getParentObject() != null) {
+            return attrObj.getParentObject().equals(this.getEntityAttribute().getParentObject()) && SQLUtils.compareAliases(
+                attr.getName(),
+                this.getName()
+            );
+        }
+        return SQLUtils.compareAliases(attr.getName(), this.getName());
     }
 
     @Nullable
@@ -225,7 +240,7 @@ public abstract class DBDAttributeBinding implements DBSObject, DBSAttributeBase
 
     @NotNull
     @Override
-    public String getFullyQualifiedName(DBPEvaluationContext context) {
+    public String getFullyQualifiedName(@NotNull DBPEvaluationContext context) {
         return getFullyQualifiedName(context, DBPAttributeReferencePurpose.UNSPECIFIED);
     }
 
@@ -341,8 +356,7 @@ public abstract class DBDAttributeBinding implements DBSObject, DBSAttributeBase
 
     protected List<DBSEntityReferrer> findVirtualReferrers() {
         DBSDataContainer dataContainer = getDataContainer();
-        if (dataContainer instanceof DBSEntity) {
-            DBSEntity attrEntity = (DBSEntity) dataContainer;
+        if (dataContainer instanceof DBSEntity attrEntity) {
             DBVEntity vEntity = DBVUtils.getVirtualEntity(attrEntity, false);
             if (vEntity != null) {
                 List<DBVEntityForeignKey> foreignKeys = vEntity.getForeignKeys();

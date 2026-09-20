@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import org.eclipse.core.runtime.Status;
 import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
+import org.jkiss.dbeaver.DBRuntimeException;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.model.app.DBPDataSourceRegistry;
 import org.jkiss.dbeaver.model.app.DBPProject;
@@ -44,8 +45,6 @@ import org.jkiss.dbeaver.utils.ContentUtils;
 import org.jkiss.dbeaver.utils.RuntimeUtils;
 import org.jkiss.utils.CommonUtils;
 
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
@@ -54,6 +53,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 
 public abstract class BaseProjectImpl implements DBPProject, DBSSecretSubject {
 
@@ -62,6 +63,23 @@ public abstract class BaseProjectImpl implements DBPProject, DBSSecretSubject {
     public static final String SETTINGS_STORAGE_FILE = "project-settings.json";
     public static final String METADATA_STORAGE_FILE = "project-metadata.json";
     public static final String PROP_PROJECT_ID = "id";
+    public static final String PROP_PROJECT_NAME = "name";
+    public static final String PROP_PROJECT_DESCRIPTION = "description";
+    public static final String PROJECT_FILE = ".project";
+
+    private static final String EMPTY_PROJECT_TEMPLATE = """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <projectDescription>
+        <name>${project-name}</name>
+        <comment></comment>
+        <projects>
+        </projects>
+        <buildSpec>
+        </buildSpec>
+        <natures>
+            <nature>org.jkiss.dbeaver.DBeaverNature</nature>
+        </natures>
+        </projectDescription>""";
 
     public enum ProjectFormat {
         UNKNOWN,    // Project is not open or corrupted
@@ -114,9 +132,23 @@ public abstract class BaseProjectImpl implements DBPProject, DBSSecretSubject {
         return getName();
     }
 
+    @Nullable
+    @Override
+    public String getDescription() {
+        Object projectDescription = this.getProjectProperty(PROP_PROJECT_DESCRIPTION);
+        if (projectDescription != null) {
+            return projectDescription.toString();
+        }
+        return null;
+    }
+
     @NotNull
     @Override
     public String getDisplayName() {
+        Object projectName = this.getProjectProperty(PROP_PROJECT_NAME);
+        if (projectName != null) {
+            return projectName.toString();
+        }
         return getName();
     }
 
@@ -191,6 +223,7 @@ public abstract class BaseProjectImpl implements DBPProject, DBSSecretSubject {
                         ensureOpen();
                         if (dataSourceRegistry == null) {
                             dataSourceRegistry = createDataSourceRegistry();
+                            dataSourceRegistry.initializeDataSources();
                         }
                     }
                 }
@@ -201,6 +234,9 @@ public abstract class BaseProjectImpl implements DBPProject, DBSSecretSubject {
                 registryOpener.run();
             } else {
                 RuntimeUtils.runTask(monitor -> registryOpener.run(), "Load registry", 0);
+            }
+            if (dataSourceRegistry == null) {
+                throw new DBRuntimeException("Internal error - datasource registry is null after init");
             }
         }
         return dataSourceRegistry;
@@ -272,7 +308,15 @@ public abstract class BaseProjectImpl implements DBPProject, DBSSecretSubject {
         }
     }
 
-    private void loadProperties() {
+    public void setProjectProperties(@NotNull Map<String, Object> properties) {
+        synchronized (metadataSync) {
+            loadProperties();
+            this.properties.putAll(properties);
+            saveProperties();
+        }
+    }
+
+    protected void loadProperties() {
         if (properties != null) {
             return;
         }
@@ -433,8 +477,50 @@ public abstract class BaseProjectImpl implements DBPProject, DBSSecretSubject {
     }
 
     @Override
-    public void refreshProject(DBRProgressMonitor monitor) {
+    public void refreshProject() {
+        synchronized (metadataSync) {
+            properties = null;
+        }
+    }
 
+    /**
+     * Replace project name in .project file
+     * @param projectPath path to project folder
+     * @param name project name
+     */
+    public static void updateProjectFile(@NotNull Path projectPath, @NotNull String name) throws IOException {
+        Path projectFile = projectPath.resolve(PROJECT_FILE);
+        if (Files.exists(projectFile)) {
+            String content = Files.readString(projectFile);
+            if (content.contains("<name>") && content.contains("</name>")) {
+                int start = content.indexOf("<name>");
+                int end = content.indexOf("</name>", start);
+                if (start != -1 && end != -1) {
+                    String newContent = content.substring(0, start + 6) + name + content.substring(end);
+                    if (!content.equals(newContent)) {
+                        Files.writeString(projectFile, newContent);
+                    }
+                    return;
+                }
+            }
+        }
+        Files.writeString(projectFile, EMPTY_PROJECT_TEMPLATE.replace("${project-name}", name));
+    }
+
+    public static boolean isHiddenProjectName(@NotNull String name) {
+        return name.startsWith(".");
+    }
+
+    @Override
+    public void updateProject(@Nullable String newName, @Nullable String description) throws DBException {
+        Map<String, Object> properties = new LinkedHashMap<>();
+        if (CommonUtils.isNotEmpty(newName)) {
+            properties.put(PROP_PROJECT_NAME, newName);
+        }
+        if (description != null) {
+            properties.put(PROP_PROJECT_DESCRIPTION, CommonUtils.notEmpty(description));
+        }
+        setProjectProperties(properties);
     }
 
     public boolean resetResourceProperties(@NotNull String resourcePath) {
@@ -587,8 +673,9 @@ public abstract class BaseProjectImpl implements DBPProject, DBSSecretSubject {
             super("Project metadata sync");
         }
 
+        @NotNull
         @Override
-        protected IStatus run(DBRProgressMonitor monitor) {
+        protected IStatus run(@NotNull DBRProgressMonitor monitor) {
             setName("Project '" + BaseProjectImpl.this.getName() + "' sync job");
 
             ContentUtils.makeFileBackup(getMetadataFolder(false).resolve(METADATA_STORAGE_FILE));
@@ -638,9 +725,10 @@ public abstract class BaseProjectImpl implements DBPProject, DBSSecretSubject {
         }
     }
 
-    @Nullable
+    @NotNull
     @Override
     public DBNModel getNavigatorModel() {
+        // FIXME: It mustn't return null actually
         return null;
     }
 
@@ -661,4 +749,10 @@ public abstract class BaseProjectImpl implements DBPProject, DBSSecretSubject {
         return fileNotEmpty;
     }
 
+    // Called by model itself when some project-dependent entities change their state
+    // E.g. when we save/load datasource registry
+    // By default does nothing
+    public void updateProjectNature() {
+
+    }
 }

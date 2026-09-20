@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2025 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import org.jkiss.dbeaver.model.runtime.DBRRunnableContext;
 import org.jkiss.dbeaver.model.struct.DBSEntity;
 import org.jkiss.dbeaver.model.struct.DBSObject;
 import org.jkiss.dbeaver.model.task.DBTTask;
+import org.jkiss.dbeaver.tools.transfer.DTConstants;
 import org.jkiss.dbeaver.tools.transfer.IDataTransferConsumer;
 import org.jkiss.dbeaver.tools.transfer.IDataTransferProcessor;
 import org.jkiss.dbeaver.tools.transfer.IDataTransferProducer;
@@ -145,9 +146,9 @@ public class StreamTransferProducer implements IDataTransferProducer<StreamProdu
         @NotNull IDataTransferConsumer consumer,
         @Nullable IDataTransferProcessor processor,
         @NotNull StreamProducerSettings settings,
-        @Nullable DBTTask task)
-        throws DBException
-    {
+        @Nullable DBTTask task,
+        long maxRows
+    ) throws DBException {
         // Initialize importer
         DBSObject databaseObject = consumer.getDatabaseObject();
         if (!(databaseObject instanceof DBSEntity)) {
@@ -156,6 +157,8 @@ public class StreamTransferProducer implements IDataTransferProducer<StreamProdu
         if (processor == null) {
             throw new DBException("Stream data producer requires data processor");
         }
+
+        settings.setMaxRows(maxRows);
 
         Map<String, Object> processorProperties = settings.getProcessorProperties();
         StreamDataImporterSite site = new StreamDataImporterSite(settings, entityMapping, processorProperties);
@@ -196,7 +199,7 @@ public class StreamTransferProducer implements IDataTransferProducer<StreamProdu
             state.put("child", mapping.isChild());
             if (object.defaultProcessor != null) {
                 state.put("node", object.defaultProcessor.getNode().getId());
-                state.put("processor", object.defaultProcessor.getId());
+                state.put(DTConstants.PROP_PROCESSOR_TYPE, object.defaultProcessor.getId());
             }
         }
 
@@ -208,7 +211,7 @@ public class StreamTransferProducer implements IDataTransferProducer<StreamProdu
             @NotNull Map<String, Object> state
         ) throws DBException {
             String nodeId = CommonUtils.toString(state.get("node"));
-            String processorId = CommonUtils.toString(state.get("processor"));
+            String processorId = CommonUtils.toString(state.get(DTConstants.PROP_PROCESSOR_TYPE));
             DataTransferProcessorDescriptor processor = null;
             if (!CommonUtils.isEmpty(nodeId) && !CommonUtils.isEmpty(processorId)) {
                 DataTransferNodeDescriptor nodeDesc = DataTransferRegistry.getInstance().getNodeById(nodeId);

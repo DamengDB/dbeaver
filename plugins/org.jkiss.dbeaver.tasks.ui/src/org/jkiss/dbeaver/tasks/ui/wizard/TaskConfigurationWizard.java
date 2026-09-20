@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,13 +22,13 @@ import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Event;
-import org.eclipse.swt.widgets.Group;
 import org.eclipse.ui.*;
 import org.eclipse.ui.views.IViewDescriptor;
 import org.jkiss.code.NotNull;
@@ -40,11 +40,15 @@ import org.jkiss.dbeaver.model.exec.DBCExecutionContext;
 import org.jkiss.dbeaver.model.rm.RMConstants;
 import org.jkiss.dbeaver.model.runtime.DBRRunnableContext;
 import org.jkiss.dbeaver.model.task.*;
+import org.jkiss.dbeaver.registry.configurator.UIPropertyConfiguratorDescriptor;
+import org.jkiss.dbeaver.registry.configurator.UIPropertyConfiguratorRegistry;
 import org.jkiss.dbeaver.registry.task.TaskConstants;
 import org.jkiss.dbeaver.registry.task.TaskRegistry;
 import org.jkiss.dbeaver.runtime.DBWorkbench;
 import org.jkiss.dbeaver.tasks.ui.internal.TaskUIMessages;
 import org.jkiss.dbeaver.tasks.ui.registry.TaskUIRegistry;
+import org.jkiss.dbeaver.ui.IObjectPropertyConfigurator;
+import org.jkiss.dbeaver.ui.UIIcon;
 import org.jkiss.dbeaver.ui.UIUtils;
 import org.jkiss.dbeaver.ui.dialogs.BaseWizard;
 import org.jkiss.dbeaver.ui.dialogs.IWizardPageActive;
@@ -52,6 +56,7 @@ import org.jkiss.dbeaver.ui.dialogs.IWizardPageNavigable;
 import org.jkiss.dbeaver.ui.navigator.NavigatorUtils;
 import org.jkiss.utils.CommonUtils;
 
+import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -63,7 +68,7 @@ public abstract class TaskConfigurationWizard<SETTINGS extends DBTTaskSettings> 
 
     private DBTTask currentTask;
     private IStructuredSelection currentSelection;
-    private Button saveAsTaskButton;
+    private TaskConfigurationWIzardActionConfigurator<SETTINGS> actionsConfigurator;
 
     private Map<String, Object> variables;
     private boolean promptVariables;
@@ -149,7 +154,7 @@ public abstract class TaskConfigurationWizard<SETTINGS extends DBTTaskSettings> 
     }
 
     @Override
-    public void init(IWorkbench workbench, IStructuredSelection currentSelection) {
+    public void init(@NotNull IWorkbench workbench, @Nullable IStructuredSelection currentSelection) {
         updateWizardTitle();
         setNeedsProgressMonitor(true);
         this.currentSelection = currentSelection;
@@ -162,7 +167,7 @@ public abstract class TaskConfigurationWizard<SETTINGS extends DBTTaskSettings> 
         addTaskConfigPages();
     }
 
-    protected boolean isTaskConfigPage(IWizardPage page) {
+    protected boolean isTaskConfigPage(@NotNull IWizardPage page) {
         return page instanceof TaskConfigurationWizardPageTask || page instanceof TaskConfigurationWizardPageSettings;
     }
 
@@ -176,6 +181,10 @@ public abstract class TaskConfigurationWizard<SETTINGS extends DBTTaskSettings> 
         }
     }
 
+    public boolean isTaskSaveEnabled() {
+        return !getContainer().isSelectorMode();
+    }
+
     public boolean isNewTaskEditor() {
         return currentTask != null && getProject().getTaskManager().getTaskById(currentTask.getId()) == null;
     }
@@ -185,7 +194,7 @@ public abstract class TaskConfigurationWizard<SETTINGS extends DBTTaskSettings> 
     }
 
     @Override
-    public IWizardPage getNextPage(IWizardPage page) {
+    public IWizardPage getNextPage(@NotNull IWizardPage page) {
         IWizardPage nextPage = super.getNextPage(page);
         if (nextPage instanceof TaskConfigurationWizardPageSettings &&
             page instanceof TaskConfigurationWizardPageTask &&
@@ -198,7 +207,7 @@ public abstract class TaskConfigurationWizard<SETTINGS extends DBTTaskSettings> 
     }
 
     @Override
-    public IWizardPage getPreviousPage(IWizardPage page) {
+    public IWizardPage getPreviousPage(@NotNull IWizardPage page) {
         IWizardPage prevPage = super.getPreviousPage(page);
         if (prevPage instanceof TaskConfigurationWizardPageSettings &&
             !TaskUIRegistry.getInstance().supportsConfiguratorPage(getContainer().getTaskPage().getSelectedTaskType()))
@@ -220,21 +229,14 @@ public abstract class TaskConfigurationWizard<SETTINGS extends DBTTaskSettings> 
             }
         }
         TaskConfigurationWizardPageTask taskPage = getContainer().getTaskPage();
-        if (taskPage != null && !taskPage.isPageComplete()) {
-            return false;
-        }
-
-        return true;
+        return taskPage == null || taskPage.isPageComplete();
     }
 
-    protected boolean isPageNeedsCompletion(IWizardPage page) {
+    protected boolean isPageNeedsCompletion(@NotNull IWizardPage page) {
         if (page instanceof TaskConfigurationWizardPageTask) {
             return false;
         }
-        if (page instanceof IWizardPageNavigable && !((IWizardPageNavigable) page).isPageApplicable()) {
-            return false;
-        }
-        return true;
+        return !(page instanceof IWizardPageNavigable pageNavigable) || pageNavigable.isPageApplicable();
     }
 
     @Override
@@ -275,11 +277,11 @@ public abstract class TaskConfigurationWizard<SETTINGS extends DBTTaskSettings> 
         return true;
     }
 
-    protected boolean isPageValid(IWizardPage page) {
+    protected boolean isPageValid(@NotNull IWizardPage page) {
         return true;
     }
 
-    private boolean saveTask() {
+    boolean saveTask() {
         IWizardPage currentPage = getContainer().getCurrentPage();
         // Save current page settings
         if (currentPage instanceof IWizardPageActive) {
@@ -295,7 +297,12 @@ public abstract class TaskConfigurationWizard<SETTINGS extends DBTTaskSettings> 
                 DBWorkbench.getPlatformUI().showError("No task type", "Can't find task type " + getTaskTypeId());
                 return false;
             }
-            EditTaskConfigurationDialog dialog = new EditTaskConfigurationDialog(getContainer().getShell(), getProject(), taskType);
+            EditTaskConfigurationDialog dialog = new EditTaskConfigurationDialog(
+                getContainer().getShell(),
+                getProject(),
+                taskType,
+                currentTask != null ? currentTask.getMaxExecutionTime() : Duration.ZERO
+            );
             if (dialog.open() == IDialogConstants.OK_ID) {
                 setCurrentTask(currentTask = dialog.getTask());
             } else {
@@ -336,77 +343,94 @@ public abstract class TaskConfigurationWizard<SETTINGS extends DBTTaskSettings> 
         return true;
     }
 
-    public void createTaskSaveButtons(Composite parent, boolean horizontal, int hSpan) {
+    public void createTaskActions(@NotNull Composite parent) {
         if (!DBWorkbench.getPlatform().getWorkspace().hasRealmPermission(RMConstants.PERMISSION_DATABASE_DEVELOPER)) {
             return;
         }
 
-        IViewDescriptor tasksViewDescriptor = PlatformUI.getWorkbench().getViewRegistry().find(TASKS_VIEW_ID);
-        if (tasksViewDescriptor == null || getContainer().isSelectorMode()) {
-            // Do not create save buttons
-            UIUtils.createEmptyLabel(parent, hSpan, 1);
-        } else {
-            Composite panel = new Composite(parent, SWT.NONE);
-            panel.setBackground(parent.getBackground());
-            if (parent.getLayout() instanceof GridLayout) {
-                GridData gd = new GridData(GridData.FILL_HORIZONTAL);
-                gd.horizontalSpan = hSpan;
-                panel.setLayoutData(gd);
-            }
-            boolean supportsVariables = false;//getTaskType().supportsVariables();
-            panel.setLayout(new GridLayout(horizontal ? (supportsVariables ? 3 : 2) : 1, false));
+        createTaskViewButton(parent);
+        createVariablesButton(parent);
+        createActionButtons(parent);
+    }
 
-            if (supportsVariables) {
-                UIUtils.createDialogButton(panel, TaskUIMessages.task_config_wizard_button_variables + " ...", new SelectionAdapter() {
-                    @Override
-                    public void widgetSelected(SelectionEvent e) {
-                        configureVariables();
-                    }
-                });
-            }
+    private static void createTaskViewButton(@NotNull Composite parent) {
+        IViewDescriptor descriptor = PlatformUI.getWorkbench().getViewRegistry().find(TASKS_VIEW_ID);
+        if (descriptor == null) {
+            return;
+        }
 
-            saveAsTaskButton = UIUtils.createDialogButton(panel, TaskUIMessages.task_config_wizard_button_save_task, new SelectionAdapter() {
-                @Override
-                public void widgetSelected(SelectionEvent e) {
-                    saveTask();
+        ((GridLayout) parent.getLayout()).numColumns++;
+        Button taskViewButton = UIUtils.createPushButton(
+            parent,
+            null,
+            TaskUIMessages.task_config_wizard_link_open_tasks_view,
+            null,
+            SelectionListener.widgetSelectedAdapter(e -> {
+                try {
+                    UIUtils.getActiveWorkbenchWindow().getActivePage().showView(descriptor.getId());
+                } catch (PartInitException e1) {
+                    DBWorkbench.getPlatformUI().showError("Show view", "Error opening database tasks view", e1);
                 }
-            });
-            Button tasksLink = UIUtils.createDialogButton(panel, TaskUIMessages.task_config_wizard_link_open_tasks_view, new SelectionAdapter() {
-                @Override
-                public void widgetSelected(SelectionEvent e) {
-                    try {
-                        UIUtils.getActiveWorkbenchWindow().getActivePage().showView(TASKS_VIEW_ID);
-                    } catch (PartInitException e1) {
-                        DBWorkbench.getPlatformUI().showError("Show view", "Error opening database tasks view", e1);
-                    }
+            })
+        );
+        Image viewImage = descriptor.getImageDescriptor().createImage();
+        taskViewButton.setImage(viewImage);
+        taskViewButton.addDisposeListener(e -> viewImage.dispose());
+        taskViewButton.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_END));
+    }
 
+    private void createVariablesButton(@NotNull Composite parent) {
+        if (true) {
+            // Disabled, for some reason. See blame to figure out why
+            return;
+        }
+        ((GridLayout) parent.getLayout()).numColumns++;
+        UIUtils.createPushButton(
+            parent,
+            null,
+            null,
+            UIIcon.SQL_VARIABLE,
+            SelectionListener.widgetSelectedAdapter(e -> configureVariables())
+        );
+    }
+
+    private void createActionButtons(@NotNull Composite parent) {
+        if (actionsConfigurator == null) {
+            IObjectPropertyConfigurator<?, ?> configurator = null;
+
+            UIPropertyConfiguratorDescriptor descriptor = UIPropertyConfiguratorRegistry.getInstance()
+                .getDescriptor(TaskConfigurationWIzardActionConfigurator.class.getName());
+            if (descriptor != null) {
+                try {
+                    configurator = descriptor.createConfigurator();
+                } catch (DBException e) {
+                    log.debug("Error creating actions configurator", e);
                 }
-            });
-            IViewDescriptor viewDescriptor = PlatformUI.getWorkbench().getViewRegistry().find("org.jkiss.dbeaver.tasks");
-            if (viewDescriptor != null) {
-                Image viewImage = viewDescriptor.getImageDescriptor().createImage();
-                tasksLink.setImage(viewImage);
-                tasksLink.setText("");
-                tasksLink.addDisposeListener(e -> viewImage.dispose());
             }
-            tasksLink.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_END));
+
+            if (configurator instanceof TaskConfigurationWIzardActionConfigurator<?> configurator1) {
+                @SuppressWarnings("unchecked")
+                var actionsConfigurator = (TaskConfigurationWIzardActionConfigurator<SETTINGS>) configurator1;
+                this.actionsConfigurator = actionsConfigurator;
+            }
+        }
+
+        if (actionsConfigurator != null) {
+            actionsConfigurator.createControl(parent, this, this::updateTaskButtons);
         }
     }
 
     public void createVariablesEditButton(Composite parent) {
-        final Group group = UIUtils.createControlGroup(
+        Composite group = UIUtils.createTitledComposite(
             parent,
             TaskUIMessages.task_config_wizard_button_variables,
             1,
-            GridData.HORIZONTAL_ALIGN_BEGINNING | GridData.VERTICAL_ALIGN_BEGINNING,
-            0
+            GridData.HORIZONTAL_ALIGN_BEGINNING | GridData.VERTICAL_ALIGN_BEGINNING
         );
-        UIUtils.createDialogButton(group, TaskUIMessages.task_config_wizard_button_variables_configure, new SelectionAdapter() {
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                configureVariables();
-            }
-        });
+        UIUtils.createDialogButton(
+            group,
+            TaskUIMessages.task_config_wizard_button_variables_configure,
+            SelectionListener.widgetSelectedAdapter(e -> configureVariables()));
         final Button promptTaskVariablesCheckbox = UIUtils.createCheckbox(
             group,
             TaskUIMessages.task_config_wizard_button_variables_prompt,
@@ -455,18 +479,18 @@ public abstract class TaskConfigurationWizard<SETTINGS extends DBTTaskSettings> 
         taskContext = DBTaskUtils.extractContext(executionContext);
     }
 
-    void updateSaveTaskButton(boolean enable) {
-        if (saveAsTaskButton != null) {
-            saveAsTaskButton.setEnabled(enable);
+    void enableTaskButtons(boolean enable) {
+        if (actionsConfigurator != null) {
+            actionsConfigurator.enableActions(enable);
         }
         if (enable) {
-            updateSaveTaskButtons();
+            updateTaskButtons();
         }
     }
 
-    public void updateSaveTaskButtons() {
-        if (saveAsTaskButton != null) {
-            saveAsTaskButton.setEnabled(canFinish() && getTaskType() != null);
+    public void updateTaskButtons() {
+        if (actionsConfigurator != null) {
+            actionsConfigurator.updateActions();
         }
     }
 
@@ -485,7 +509,11 @@ public abstract class TaskConfigurationWizard<SETTINGS extends DBTTaskSettings> 
     }
 
     @NotNull
-    public TaskConfigurationWizardDialog createWizardDialog(@NotNull IWorkbenchWindow window, @Nullable IStructuredSelection selection) {
-        return new TaskConfigurationWizardDialog(window, this, selection);
+    public TaskConfigurationWizardDialog createWizardDialog(
+        @NotNull IWorkbenchWindow window,
+        @NotNull IStructuredSelection selection,
+        @NotNull Map<String, Object> options
+    ) {
+        return new TaskConfigurationWizardDialog(window, this, selection, options);
     }
 }

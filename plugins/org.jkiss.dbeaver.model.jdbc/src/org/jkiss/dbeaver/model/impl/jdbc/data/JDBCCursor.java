@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,9 +47,10 @@ public class JDBCCursor implements DBDCursor {
     public JDBCCursor(JDBCSession session, ResultSet resultSet, String description) throws SQLException {
         //super(session, null, original, description, true);
         this.session = session;
-        this.resultSet = JDBCResultSetImpl.makeResultSet(session, null, resultSet, description, true);
+        this.resultSet = JDBCResultSetImpl.makeResultSet(session, null, resultSet, true);
     }
 
+    @Nullable
     @Override
     public Object getRawValue() {
         return resultSet;
@@ -93,7 +94,7 @@ public class JDBCCursor implements DBDCursor {
         return resultSet;
     }
 
-    @Nullable
+    @NotNull
     @Override
     public String getCursorName() {
         return cursorName;

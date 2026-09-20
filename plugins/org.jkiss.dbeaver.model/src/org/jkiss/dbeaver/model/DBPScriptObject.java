@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,10 @@
  */
 package org.jkiss.dbeaver.model;
 
+import org.jkiss.code.NotNull;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -58,9 +57,9 @@ public interface DBPScriptObject extends DBPObject {
 
     String OPTION_DDL_SKIP_FOREIGN_KEYS = "ddl.skipForeignKeys"; //$NON-NLS-1$
     String OPTION_DDL_ONLY_FOREIGN_KEYS = "ddl.onlyForeignKeys"; //$NON-NLS-1$
-    String OPTION_DDL_ONLY_PERSISTED_ATTRIBUTES = "ddl.onlyPersistedAttributes"; //$NON-NLS-1$
     String OPTION_SKIP_UNIQUE_KEYS = "ddl.skipUniqueKeys"; //$NON-NLS-1$
     String OPTION_SKIP_INDEXES = "ddl.skipIndexes"; //$NON-NLS-1$
+    String OPTION_SKIP_DROPS = "ddl.skipDrops"; //$NON-NLS-1$
 
     String OPTION_DDL_SEPARATE_FOREIGN_KEYS_STATEMENTS = "ddl.separateForeignKeys"; //$NON-NLS-1$
 
@@ -70,12 +69,15 @@ public interface DBPScriptObject extends DBPObject {
     String OPTION_INCLUDE_PARTITIONS = "ddl.includePartitions"; //$NON-NLS-1$
 
     String OPTION_USE_SPECIAL_NAME = "ddl.useSpecialName"; //$NON-NLS-1$
-    
+
     String OPTION_CAST_PARAMS = "sql.castParameter"; //$NON-NLS-1$
 
-    Map<String, Object> EMPTY_OPTIONS = Collections.unmodifiableMap(new HashMap<>());
+    String OPTION_FORMAT_SQL = "sql.format"; //$NON-NLS-1$
 
-    String getObjectDefinitionText(DBRProgressMonitor monitor, Map<String, Object> options)
+    Map<String, Object> EMPTY_OPTIONS = Map.of();
+
+    @NotNull
+    String getObjectDefinitionText(@NotNull DBRProgressMonitor monitor, @NotNull Map<String, Object> options)
         throws DBException;
 
 }

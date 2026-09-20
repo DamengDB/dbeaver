@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2025 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,6 +111,11 @@ public @interface Property
     boolean expensive() default false;
 
     /**
+     * Indicates whether the property contains value for the information label
+     */
+    boolean info() default false;
+
+    /**
      * Multiline properties usually contain some big texts
      */
     PropertyLength length() default PropertyLength.LONG;
@@ -155,6 +160,31 @@ public @interface Property
 
     boolean required() default false;
 
+    /**
+     * Minimum allowed value for numeric properties.
+     */
+    float min() default Float.NaN;
+
+    /**
+     * Maximum allowed value for numeric properties.
+     */
+    float max() default Float.NaN;
+
+    /**
+     * Property applies only for desktop products.
+     */
+    boolean desktop() default false;
+
+    /**
+     * Expression for determining the visibility of a property.
+     */
+    String hideExpr() default "";
+
+    /**
+     * Expression for determining the activity of a property.
+     */
+    String readOnlyExpr() default "";
+
     int order() default Integer.MAX_VALUE;
 
     String helpContextId() default ""; //NON-NLS-1
@@ -165,6 +195,13 @@ public @interface Property
      * @return the string
      */
     String[] features() default {};
+
+    /**
+     * List of required application features to enable property
+     *
+     * @return the string
+     */
+    String[] requiredFeatures() default {};
 
     /**
      * Can be used to format numbers and date/time property values

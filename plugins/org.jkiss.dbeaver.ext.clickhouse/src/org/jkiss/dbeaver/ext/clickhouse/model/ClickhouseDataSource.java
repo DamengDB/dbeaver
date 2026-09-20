@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,33 +20,40 @@ import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
+import org.jkiss.dbeaver.ModelPreferences;
 import org.jkiss.dbeaver.ext.clickhouse.ClickhouseConstants;
+import org.jkiss.dbeaver.ext.clickhouse.ClickhouseDataSourceInfo;
 import org.jkiss.dbeaver.ext.clickhouse.ClickhouseTypeParser;
 import org.jkiss.dbeaver.ext.clickhouse.model.jdbc.ClickhouseJdbcFactory;
 import org.jkiss.dbeaver.ext.generic.model.GenericDataSource;
-import org.jkiss.dbeaver.ext.generic.model.GenericDataSourceInfo;
 import org.jkiss.dbeaver.ext.generic.model.meta.GenericMetaModel;
 import org.jkiss.dbeaver.ext.generic.model.meta.GenericMetaObject;
-import org.jkiss.dbeaver.model.DBPDataSourceContainer;
-import org.jkiss.dbeaver.model.DBPDataSourceInfo;
-import org.jkiss.dbeaver.model.DBUtils;
+import org.jkiss.dbeaver.model.*;
 import org.jkiss.dbeaver.model.connection.DBPConnectionConfiguration;
 import org.jkiss.dbeaver.model.exec.DBCException;
 import org.jkiss.dbeaver.model.exec.jdbc.*;
 import org.jkiss.dbeaver.model.impl.jdbc.JDBCExecutionContext;
 import org.jkiss.dbeaver.model.impl.jdbc.JDBCUtils;
 import org.jkiss.dbeaver.model.impl.jdbc.cache.JDBCObjectCache;
+import org.jkiss.dbeaver.model.impl.jdbc.exec.JDBCStatementImpl;
 import org.jkiss.dbeaver.model.impl.net.SSLHandlerTrustStoreImpl;
 import org.jkiss.dbeaver.model.net.DBWHandlerConfiguration;
+import org.jkiss.dbeaver.model.preferences.DBPPreferenceStore;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 import org.jkiss.dbeaver.model.struct.DBSDataType;
 import org.jkiss.dbeaver.model.struct.DBSObject;
 import org.jkiss.dbeaver.model.struct.DBSObjectFilter;
 import org.jkiss.dbeaver.runtime.DBWorkbench;
+import org.jkiss.utils.BeanUtils;
 import org.jkiss.utils.CommonUtils;
+import org.osgi.framework.Version;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.*;
 
 public class ClickhouseDataSource extends GenericDataSource {
@@ -55,6 +62,13 @@ public class ClickhouseDataSource extends GenericDataSource {
 
     private static Map<String, String> dataTypeMap = new HashMap<>();
     private final TableEnginesCache engineCache = new TableEnginesCache();
+    // output_format_binary_write_json_as_string was introduced in ClickHouse 24.10.
+    private static final Version JSON_AS_STRING_MIN_VERSION = new Version(24, 10, 0);
+    // Driver methods used to enable JSON-as-string serialization. Resolved once (the driver class does not
+    // change during a data source's lifetime) and reused, so we don't re-resolve on every connection.
+    private Method getDefaultQuerySettingsMethod;
+    private Method serverSettingMethod;
+    private Method setDefaultQuerySettingsMethod;
 
     static {
         dataTypeMap.put(String.class.getName(), "String");
@@ -85,8 +99,21 @@ public class ClickhouseDataSource extends GenericDataSource {
 
     @NotNull
     @Override
-    protected Properties getAllConnectionProperties(@NotNull DBRProgressMonitor monitor, JDBCExecutionContext context, String purpose, DBPConnectionConfiguration connectionInfo) throws DBCException {
+    protected Properties getAllConnectionProperties(@NotNull DBRProgressMonitor monitor, @NotNull JDBCExecutionContext   context, @NotNull
+    String purpose, @NotNull DBPConnectionConfiguration connectionInfo) throws DBCException {
         Properties properties = super.getAllConnectionProperties(monitor, context, purpose, connectionInfo);
+        if (!CommonUtils.toBoolean(properties.getProperty(ClickhouseConstants.PROP_USE_SERVER_TIME_ZONE)) &&
+            !CommonUtils.toBoolean(properties.getProperty(ClickhouseConstants.PROP_USE_TIME_ZONE))
+        ) {
+            DBPPreferenceStore preferenceStore = DBWorkbench.getPlatform().getPreferenceStore();
+            String customTimeZone = preferenceStore.getString(ModelPreferences.CLIENT_TIMEZONE);
+            if (customTimeZone.equals(DBConstants.DEFAULT_TIMEZONE)) {
+                customTimeZone = TimeZone.getDefault().getID();
+            }
+            properties.put(ClickhouseConstants.PROP_USE_TIME_ZONE, customTimeZone);
+        }
+        properties.put(ClickhouseConstants.PROP_IGNORE_UNKNOWN_CONFIG_KEY, "true");
+
 
         final DBWHandlerConfiguration sslConfig = getContainer().getActualConnectionConfiguration().getHandler("clickhouse-ssl");
 
@@ -97,6 +124,9 @@ public class ClickhouseDataSource extends GenericDataSource {
                 throw new DBCException("Error configuring SSL certificates", e);
             }
         }
+
+        configureSession(properties);
+
         return properties;
     }
 
@@ -148,6 +178,65 @@ public class ClickhouseDataSource extends GenericDataSource {
         }
     }
 
+    private void configureSession(@NotNull Properties properties) {
+        properties.put(ClickhouseConstants.CLICKHOUSE_SETTING_SESSION_ID, "sess_" + UUID.randomUUID());
+    }
+
+    // Canceling
+    @Override
+    public void cancelStatementExecute(DBRProgressMonitor monitor, JDBCStatement statement) throws DBException {
+        try {
+
+            super.cancelStatementExecute(monitor, statement);
+        } catch (Throwable ex) {
+            if (ex.getMessage().contains(ClickhouseConstants.SESSION_BUSY_ERROR_CODE_MESSAGE)) {
+                fallbackForServerID(monitor, statement);
+            }
+        }
+    }
+
+    // same session_id will lead to impossibility of cancelling the query, because the session is already busy...
+    // So we need to temporarily create a new one
+    protected void fallbackForServerID(@NotNull DBRProgressMonitor monitor, @NotNull JDBCStatement statement) throws DBCException {
+        try (Connection connection = openConnection(monitor, statement.getConnection().getExecutionContext(), "Close Query")) {
+            try (Statement dbStat = connection.createStatement()) {
+                Statement original = ((JDBCStatementImpl) statement).getOriginal();
+                String getLastQueryId = (String) BeanUtils.invokeObjectDeclaredMethod(
+                    original,
+                    ClickhouseConstants.DRIVER_GET_LAST_QUERY_METHOD,
+                    new Class[0],
+                    new Object[0]
+                );
+                dbStat.execute("KILL QUERY WHERE query_id='%s'".formatted(getLastQueryId));
+            }
+        } catch (Throwable e) {
+            throw new DBCException("Error during cancelling query", e);
+        }
+    }
+
+    @Override
+    protected synchronized void readDatabaseServerVersion(Connection session, DatabaseMetaData metaData) {
+        if (databaseVersion == null) {
+            try {
+                String version = JDBCUtils.executeQuery(session, "SELECT VERSION()");
+                if (version != null) {
+                    databaseVersion = new Version(version);
+                }
+            } catch (Throwable e) {
+                log.error("Error determining server version", e);
+            }
+            if (databaseVersion == null) {
+                super.readDatabaseServerVersion(session, metaData);
+            }
+        }
+    }
+
+    @Nullable
+    @Override
+    public DBSDataType getLocalDataType(@Nullable String typeName) {
+        return super.getLocalDataType(ClickhouseTypeParser.getTypeNameWithoutModifiers(typeName));
+    }
+
     @Nullable
     @Override
     public DBSDataType resolveDataType(@NotNull DBRProgressMonitor monitor, @NotNull String typeFullName) throws DBException {
@@ -161,16 +250,31 @@ public class ClickhouseDataSource extends GenericDataSource {
                 return type;
             }
         }
-        return super.resolveDataType(monitor, typeFullName);
+
+        DBSDataType type = super.resolveDataType(monitor, typeFullName);
+        if (type != null) {
+            return type;
+        }
+
+        // As a last resort, try to find the type without modifiers
+        String baseTypeName = ClickhouseTypeParser.getTypeNameWithoutModifiers(typeFullName);
+        return super.resolveDataType(monitor, baseTypeName);
+    }
+
+    @NotNull
+    @Override
+    public String getDefaultDataTypeName(@NotNull DBPDataKind dataKind) {
+        switch (dataKind) {
+            case STRING:
+                return ClickhouseConstants.DATA_TYPE_STRING;
+            default:
+                return super.getDefaultDataTypeName(dataKind);
+        }
     }
 
     @Override
     protected DBPDataSourceInfo createDataSourceInfo(DBRProgressMonitor monitor, @NotNull JDBCDatabaseMetaData metaData) {
-        GenericDataSourceInfo info = (GenericDataSourceInfo) super.createDataSourceInfo(monitor, metaData);
-        // For now - Clickhouse driver return us empty list as indexInfo and we can't create Clickhouse indexes via DBeaver UI
-        // So far we turn off indexes
-        info.setSupportsIndexes(false);
-        return info;
+        return new ClickhouseDataSourceInfo(metaData);
     }
 
     @Override
@@ -209,6 +313,26 @@ public class ClickhouseDataSource extends GenericDataSource {
         return new ClickhouseJdbcFactory();
     }
 
+    @Override
+    public boolean isOmitCatalog() {
+        return isDriverVersionAtLeast(0, 8);
+    }
+
+    @NotNull
+    @Override
+    public DBPDataKind resolveDataKind(@NotNull String typeName, int valueType) {
+        if (typeName.startsWith(ClickhouseConstants.DATA_TYPE_ARRAY)) {
+            return DBPDataKind.ARRAY;
+        } else if (typeName.startsWith(ClickhouseConstants.DATA_TYPE_TUPLE)) {
+            return DBPDataKind.STRUCT;
+        } else if (typeName.equalsIgnoreCase(ClickhouseConstants.DATA_TYPE_JSON)) {
+            // Render JSON columns through the JSON content viewer/editor (see ClickhouseJSONValueHandler).
+            // Exact match only: parameterized JSON(...) and Nullable(JSON)/Array(JSON)/Map(_,JSON) stay UNKNOWN.
+            return DBPDataKind.CONTENT;
+        }
+        return super.resolveDataKind(typeName, valueType);
+    }
+
     boolean isSupportTableComments() {
         return isServerVersionAtLeast(21, 6);
     }
@@ -244,6 +368,78 @@ public class ClickhouseDataSource extends GenericDataSource {
                 return new ClickhouseTableEngine(engineName, clickhouseDataSource);
             }
             return null;
+        }
+    }
+
+    @Override
+    protected boolean isConnectionReadOnlyBroken() {
+        return isDriverVersionAtLeast(0, 8);
+    }
+
+    @Override
+    protected Connection openConnection(@NotNull DBRProgressMonitor monitor, @Nullable JDBCExecutionContext context, @NotNull String purpose) throws DBCException {
+        Connection connection = super.openConnection(monitor, context, purpose);
+
+        if (getContainer().isConnectionReadOnly() && isConnectionReadOnlyBroken()) {
+            try (Statement stmt = connection.createStatement()) {
+                stmt.execute("SET readonly=1");
+            } catch (SQLException e) {
+                log.error("Failed to set readonly mode", e);
+            }
+        }
+
+        enableJsonStringSerialization(connection);
+
+        return connection;
+    }
+
+    /**
+     * Makes the driver serialize {@code JSON} columns as canonical JSON strings, so that
+     * {@code getString()} returns valid JSON instead of a flattened {@code java.util.Map}. This is what
+     * lets the JSON content viewer/editor render those columns (see {@code ClickhouseJSONValueHandler}).
+     * <p>
+     * The {@code output_format_binary_write_json_as_string} setting is applied through the driver's own
+     * default query settings rather than a {@code SET} statement: a server-side {@code SET} changes the
+     * wire format without the driver knowing, which desynchronizes its binary reader. The setting is only
+     * applied when the server actually exposes it, so connecting to servers that predate it is unaffected.
+     */
+    private void enableJsonStringSerialization(@NotNull Connection connection) {
+        if (!isJsonStringSerializationSupported(connection)) {
+            return;
+        }
+        try {
+            if (getDefaultQuerySettingsMethod == null) {
+                getDefaultQuerySettingsMethod = connection.getClass()
+                    .getMethod(ClickhouseConstants.DRIVER_GET_DEFAULT_QUERY_SETTINGS_METHOD);
+            }
+            Object querySettings = getDefaultQuerySettingsMethod.invoke(connection);
+            if (serverSettingMethod == null) {
+                serverSettingMethod = querySettings.getClass()
+                    .getMethod(ClickhouseConstants.DRIVER_SERVER_SETTING_METHOD, String.class, String.class);
+                setDefaultQuerySettingsMethod = connection.getClass()
+                    .getMethod(ClickhouseConstants.DRIVER_SET_DEFAULT_QUERY_SETTINGS_METHOD, querySettings.getClass());
+            }
+            serverSettingMethod.invoke(querySettings, ClickhouseConstants.SETTING_JSON_AS_STRING, "1");
+            setDefaultQuerySettingsMethod.invoke(connection, querySettings);
+        } catch (Throwable e) {
+            log.debug("Can't enable JSON string serialization for ClickHouse JSON columns", e);
+        }
+    }
+
+    /**
+     * Whether the connected server is new enough to expose the
+     * {@code output_format_binary_write_json_as_string} setting (introduced in ClickHouse 24.10). The
+     * version is taken from the already-open connection, so it is available even for the very first
+     * connection (before the data source caches the server version) and needs no access to
+     * {@code system.settings}, which may be restricted or fail for some users.
+     */
+    private boolean isJsonStringSerializationSupported(@NotNull Connection connection) {
+        try {
+            String serverVersion = connection.getMetaData().getDatabaseProductVersion();
+            return new Version(serverVersion).compareTo(JSON_AS_STRING_MIN_VERSION) >= 0;
+        } catch (Throwable e) {
+            log.debug("Can't determine ClickHouse server version for JSON rendering", e);
+            return false;
         }
     }
 }

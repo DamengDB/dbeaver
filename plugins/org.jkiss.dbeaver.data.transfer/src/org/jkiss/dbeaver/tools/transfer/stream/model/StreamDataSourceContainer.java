@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2025 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ import org.jkiss.dbeaver.model.sql.SQLDialectMetadata;
 import org.jkiss.dbeaver.model.struct.DBSObject;
 import org.jkiss.dbeaver.model.struct.DBSObjectFilter;
 import org.jkiss.dbeaver.model.virtual.DBVModel;
+import org.jkiss.dbeaver.registry.DataSourceOriginLocal;
 import org.jkiss.dbeaver.runtime.DBWorkbench;
 import org.jkiss.dbeaver.runtime.IVariableResolver;
 
@@ -59,17 +60,19 @@ import java.util.Map;
 /**
  * Data container transfer producer
  */
-class StreamDataSourceContainer implements DBPDataSourceContainer {
+public class StreamDataSourceContainer implements DBPDataSourceContainer {
 
     private static final Log log = Log.getLog(StreamDataSourceContainer.class);
 
     private Path inputFile;
-    private String name;
+    private final String name;
+    private final DBPProject project;
     private final DBPExclusiveResource exclusiveLock = new SimpleExclusiveLock();
     private final DBVModel virtualModel;
 
-    StreamDataSourceContainer(String name) {
+    StreamDataSourceContainer(@NotNull String name, @NotNull DBPProject project) {
         this.name = name;
+        this.project = project;
         this.virtualModel = new DBVModel(this);
     }
 
@@ -82,7 +85,7 @@ class StreamDataSourceContainer implements DBPDataSourceContainer {
     @NotNull
     @Override
     public DBPDriver getDriver() {
-        throw new IllegalStateException("Not supported");
+        return StreamDataSourceDriver.INSTANCE;
     }
 
     @NotNull
@@ -94,7 +97,7 @@ class StreamDataSourceContainer implements DBPDataSourceContainer {
     @NotNull
     @Override
     public DBPDataSourceOrigin getOrigin() {
-        throw new IllegalStateException("Stream datasource doesn't have origin");
+        return DataSourceOriginLocal.INSTANCE;
     }
 
     @NotNull
@@ -132,11 +135,6 @@ class StreamDataSourceContainer implements DBPDataSourceContainer {
 
     @Override
     public boolean isExternallyProvided() {
-        return false;
-    }
-
-    @Override
-    public boolean isTemplate() {
         return false;
     }
 
@@ -182,12 +180,7 @@ class StreamDataSourceContainer implements DBPDataSourceContainer {
 
     @Override
     public boolean isDefaultAutoCommit() {
-        return false;
-    }
-
-    @Override
-    public void setDefaultAutoCommit(boolean autoCommit) {
-
+        return true;
     }
 
     @Nullable
@@ -203,11 +196,6 @@ class StreamDataSourceContainer implements DBPDataSourceContainer {
     }
 
     @Override
-    public void setDefaultTransactionsIsolation(DBPTransactionIsolation isolationLevel) {
-
-    }
-
-    @Override
     public boolean isExtraMetadataReadEnabled() {
         return false;
     }
@@ -219,7 +207,7 @@ class StreamDataSourceContainer implements DBPDataSourceContainer {
     }
 
     @Override
-    public void setObjectFilter(Class<?> type, DBSObject parentObject, DBSObjectFilter filter) {
+    public void setObjectFilter(@NotNull Class<?> type, @Nullable DBSObject parentObject, @Nullable DBSObjectFilter filter) {
 
     }
 
@@ -234,11 +222,13 @@ class StreamDataSourceContainer implements DBPDataSourceContainer {
         // noop
     }
 
+    @NotNull
     @Override
     public DBVModel getVirtualModel() {
         return virtualModel;
     }
 
+    @Nullable
     @Override
     public DBPNativeClientLocation getClientHome() {
         return null;
@@ -267,17 +257,17 @@ class StreamDataSourceContainer implements DBPDataSourceContainer {
     }
 
     @Override
-    public boolean connect(DBRProgressMonitor monitor, boolean initialize, boolean reflect) throws DBException {
+    public boolean connect(@NotNull DBRProgressMonitor monitor, boolean initialize, boolean reflect) throws DBException {
         throw new DBCFeatureNotSupportedException();
     }
 
     @Override
-    public boolean disconnect(DBRProgressMonitor monitor) throws DBException {
+    public boolean disconnect(@NotNull DBRProgressMonitor monitor) throws DBException {
         throw new DBCFeatureNotSupportedException();
     }
 
     @Override
-    public boolean reconnect(DBRProgressMonitor monitor) throws DBException {
+    public boolean reconnect(@NotNull DBRProgressMonitor monitor) throws DBException {
         throw new DBCFeatureNotSupportedException();
     }
 
@@ -310,28 +300,28 @@ class StreamDataSourceContainer implements DBPDataSourceContainer {
     }
 
     @Override
-    public void acquire(DBPDataSourceTask user) {
+    public void acquire(@NotNull DBPDataSourceTask user) {
 
     }
 
     @Override
-    public void release(DBPDataSourceTask user) {
+    public void release(@NotNull DBPDataSourceTask user) {
 
     }
 
     @Override
-    public void fireEvent(DBPEvent event) {
+    public void fireEvent(@NotNull DBPEvent event) {
 
     }
 
     @Nullable
     @Override
-    public String getExtension(@NotNull String name) {
+    public <T> T getExtension(@NotNull String name) {
         return null;
     }
 
     @Override
-    public void setExtension(@NotNull String name, @Nullable String value) {
+    public void setExtension(@NotNull String name, @Nullable Object value) {
 
     }
 
@@ -344,20 +334,21 @@ class StreamDataSourceContainer implements DBPDataSourceContainer {
     @NotNull
     @Override
     public DBPDataSourceRegistry getRegistry() {
-        return null;
+        return project.getDataSourceRegistry();
     }
 
     @NotNull
     @Override
     public DBPProject getProject() {
-        return null;
+        return project;
     }
 
     @Override
-    public boolean persistConfiguration() {
+    public boolean persistConfiguration(boolean forcePersistSecrets) {
         return true;
     }
 
+    @Nullable
     @Override
     public Date getConnectTime() {
         if (inputFile != null) {
@@ -386,26 +377,30 @@ class StreamDataSourceContainer implements DBPDataSourceContainer {
 
     }
 
+    @NotNull
     @Override
     public IVariableResolver getVariablesResolver(boolean actualConfig) {
         return null;
     }
 
+    @NotNull
     @Override
     public DBPDataSourceContainer createCopy(DBPDataSourceRegistry forRegistry) {
         return null;
     }
 
+    @NotNull
     @Override
     public DBPExclusiveResource getExclusiveLock() {
         return exclusiveLock;
     }
 
     @Override
-    public boolean hasModifyPermission(DBPDataSourcePermission permission) {
+    public boolean hasModifyPermission(@NotNull DBPDataSourcePermission permission) {
         return false;
     }
 
+    @NotNull
     @Override
     public List<DBPDataSourcePermission> getModifyPermission() {
         return null;
@@ -417,7 +412,7 @@ class StreamDataSourceContainer implements DBPDataSourceContainer {
     }
 
     @Override
-    public void setName(String newName) {
+    public void setName(@NotNull String newName) {
 
     }
 
@@ -438,6 +433,7 @@ class StreamDataSourceContainer implements DBPDataSourceContainer {
         return true;
     }
 
+    @NotNull
     @Override
     public DBDDataFormatterProfile getDataFormatterProfile() {
         return DBWorkbench.getPlatform().getDataFormatterRegistry().getGlobalProfile();
@@ -474,6 +470,7 @@ class StreamDataSourceContainer implements DBPDataSourceContainer {
         return false;
     }
 
+    @NotNull
     @Override
     public List<DBSSecretValue> listSharedCredentials() throws DBException {
         return List.of();
@@ -505,12 +502,12 @@ class StreamDataSourceContainer implements DBPDataSourceContainer {
     }
 
     @Override
-    public void persistSecrets(DBSSecretController secretController) throws DBException {
+    public void persistSecrets(@NotNull DBSSecretController secretController) throws DBException {
 
     }
 
     @Override
-    public void resolveSecrets(DBSSecretController secretController) throws DBException {
+    public void resolveSecrets(@NotNull DBSSecretController secretController) throws DBException {
 
     }
 
@@ -531,18 +528,20 @@ class StreamDataSourceContainer implements DBPDataSourceContainer {
         // do nothing
     }
 
+    @NotNull
     @Override
     public Map<String, String> getTags() {
         return null;
     }
 
+    @Nullable
     @Override
-    public String getTagValue(String tagName) {
+    public String getTagValue(@NotNull String tagName) {
         return null;
     }
 
     @Override
-    public void setTagValue(String tagName, String tagValue) {
+    public void setTagValue(@NotNull String tagName, @Nullable String tagValue) {
 
     }
 

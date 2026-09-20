@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2025 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ import java.util.*;
  * OracleTable base
  */
 public abstract class OracleTableBase extends JDBCTable<OracleDataSource, OracleSchema>
-    implements DBPNamedObject2, DBPRefreshableObject, OracleStatefulObject, DBPObjectWithLazyDescription, DBSEntityConstrainable
+    implements DBPNamedObject2, DBPRefreshableObject, OracleStatefulObject, DBPObjectWithLazyDescription, DBSEntityConstrainable, DBSDescriptionEditable
 {
     private static final Log log = Log.getLog(OracleTableBase.class);
 
@@ -61,7 +61,7 @@ public abstract class OracleTableBase extends JDBCTable<OracleDataSource, Oracle
 
     public static class AdditionalInfoValidator implements IPropertyCacheValidator<OracleTableBase> {
         @Override
-        public boolean isPropertyCached(OracleTableBase object, Object propertyId) {
+        public boolean isPropertyCached(@NotNull OracleTableBase object, @NotNull Object propertyId) {
             return object.getAdditionalInfo().isLoaded() // for isLazy() check when property already loaded in the cache returns true
                 || object.getDataSource().dataTypeCache.isFullyCached();
         }
@@ -69,7 +69,7 @@ public abstract class OracleTableBase extends JDBCTable<OracleDataSource, Oracle
 
     public static class CommentsValidator implements IPropertyCacheValidator<OracleTableBase> {
         @Override
-        public boolean isPropertyCached(OracleTableBase object, Object propertyId)
+        public boolean isPropertyCached(@NotNull OracleTableBase object, @NotNull Object propertyId)
         {
             return object.comment != null;
         }
@@ -77,6 +77,7 @@ public abstract class OracleTableBase extends JDBCTable<OracleDataSource, Oracle
 
     private final TablePrivCache tablePrivCache = new TablePrivCache();
 
+    @Nullable
     public abstract TableAdditionalInfo getAdditionalInfo();
 
     protected abstract String getTableTypeName();
@@ -148,7 +149,7 @@ public abstract class OracleTableBase extends JDBCTable<OracleDataSource, Oracle
 
     @NotNull
     @Override
-    public String getFullyQualifiedName(DBPEvaluationContext context)
+    public String getFullyQualifiedName(@NotNull DBPEvaluationContext context)
     {
         return DBUtils.getFullQualifiedName(getDataSource(),
             getContainer(),
@@ -177,7 +178,7 @@ public abstract class OracleTableBase extends JDBCTable<OracleDataSource, Oracle
 
     @Nullable
     @Override
-    public String getDescription(DBRProgressMonitor monitor) {
+    public String getDescription(@NotNull DBRProgressMonitor monitor) {
         return getComment(monitor);
     }
 
@@ -240,6 +241,11 @@ public abstract class OracleTableBase extends JDBCTable<OracleDataSource, Oracle
     public String getComment()
     {
         return comment;
+    }
+
+    @Override
+    public void setDescription(@Nullable String description) {
+        setComment(description);
     }
 
     public void setComment(String comment)
@@ -364,22 +370,79 @@ public abstract class OracleTableBase extends JDBCTable<OracleDataSource, Oracle
     static class TablePrivCache extends JDBCObjectCache<OracleTableBase, OraclePrivTable> {
         @NotNull
         @Override
-        protected JDBCStatement prepareObjectsStatement(@NotNull JDBCSession session, @NotNull OracleTableBase tableBase) throws SQLException
-        {
-            boolean hasDBA = tableBase.getDataSource().isViewAvailable(session.getProgressMonitor(), OracleConstants.SCHEMA_SYS, OracleConstants.VIEW_DBA_TAB_PRIVS);
-            final JDBCPreparedStatement dbStat = session.prepareStatement(
-                "SELECT p.*\n" +
-                    "FROM " + (hasDBA ? "DBA_TAB_PRIVS p" : "ALL_TAB_PRIVS p") + "\n" +
-                    "WHERE p."+ (hasDBA ? "OWNER": "TABLE_SCHEMA") +"=? AND p.TABLE_NAME =?");
+        protected JDBCStatement prepareObjectsStatement(
+            @NotNull JDBCSession session,
+            @NotNull OracleTableBase tableBase) throws SQLException {
+
+            final OracleDataSource dataSource = tableBase.getDataSource();
+            final boolean hasDBA = dataSource
+                .isViewAvailable(session.getProgressMonitor(), OracleConstants.SCHEMA_SYS, OracleConstants.VIEW_DBA_TAB_PRIVS);
+            final boolean hasCommonTypeCols = dataSource.isAtLeastV12();
+            final boolean hasHierarchy = dataSource.isAtLeastV9();
+
+            final String ownerColTab = hasDBA ? "OWNER" : "TABLE_SCHEMA";
+
+            // avoid ANSI CAST(...) here: Oracle (8.x) raises ORA-00600 on CAST within a UNION ALL.
+            final String hierarchyTabExpr = hasHierarchy ? "p.HIERARCHY" : "TO_CHAR(NULL)";
+            final String commonTabExpr = hasDBA && hasCommonTypeCols ? "p.COMMON" : "TO_CHAR(NULL)";
+            final String typeTabExpr   = hasDBA && hasCommonTypeCols ? "p.TYPE"   : "'TABLE'";
+            final String commonColExpr = hasDBA && hasCommonTypeCols ? "p.COMMON" : "TO_CHAR(NULL)";
+            final String typeColExpr   = "'COLUMN'";
+
+            final String tabView = hasDBA ? "DBA_TAB_PRIVS" : "ALL_TAB_PRIVS";
+            final String colView = hasDBA ? "DBA_COL_PRIVS" : "ALL_COL_PRIVS";
+
+            final JDBCPreparedStatement dbStat = session.prepareStatement("""
+                SELECT
+                    p.GRANTEE,
+                    p.%s,
+                    p.TABLE_NAME,
+                    NULL AS COLUMN_NAME,
+                    p.GRANTOR,
+                    p.PRIVILEGE,
+                    p.GRANTABLE,
+                    %s AS HIERARCHY,
+                    %s AS COMMON,
+                    %s AS TYPE
+                FROM %s p
+                WHERE p.%s = ? AND p.TABLE_NAME = ?
+                UNION ALL
+                SELECT
+                    p.GRANTEE,
+                    p.%s,
+                    p.TABLE_NAME,
+                    p.COLUMN_NAME,
+                    p.GRANTOR,
+                    p.PRIVILEGE,
+                    p.GRANTABLE,
+                    NULL AS HIERARCHY,
+                    %s AS COMMON,
+                    %s AS TYPE
+                FROM %s p
+                WHERE p.%s = ? AND p.TABLE_NAME = ?
+                """.formatted(
+                    ownerColTab, hierarchyTabExpr, commonTabExpr, typeTabExpr, tabView, ownerColTab,
+                    ownerColTab, commonColExpr, typeColExpr, colView, ownerColTab)
+            );
             dbStat.setString(1, tableBase.getSchema().getName());
             dbStat.setString(2, tableBase.getName());
+            dbStat.setString(3, tableBase.getSchema().getName());
+            dbStat.setString(4, tableBase.getName());
             return dbStat;
         }
 
         @Override
-        protected OraclePrivTable fetchObject(@NotNull JDBCSession session, @NotNull OracleTableBase tableBase, @NotNull JDBCResultSet resultSet) throws SQLException, DBException
-        {
-            return new OraclePrivTable(tableBase, resultSet);
+        protected OraclePrivTable fetchObject(
+            @NotNull JDBCSession session,
+            @NotNull OracleTableBase tableBase,
+            @NotNull JDBCResultSet resultSet) throws SQLException, DBException {
+
+            String type = JDBCUtils.safeGetString(resultSet, "TYPE");
+            if (OraclePrivTableColumn.COLUMN_TYPE.equals(type)) {
+                return new OraclePrivTableColumn(tableBase, resultSet);
+            } else {
+                return new OraclePrivTable(tableBase, resultSet);
+            }
         }
     }
 

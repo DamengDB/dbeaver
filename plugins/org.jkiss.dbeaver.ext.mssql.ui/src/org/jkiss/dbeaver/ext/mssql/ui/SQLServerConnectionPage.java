@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,21 @@
 package org.jkiss.dbeaver.ext.mssql.ui;
 
 import org.eclipse.jface.dialogs.IDialogPage;
+import org.eclipse.jface.fieldassist.ControlDecoration;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.*;
+import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Text;
+import org.jkiss.code.NotNull;
+import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.ext.mssql.SQLServerConstants;
 import org.jkiss.dbeaver.ext.mssql.SQLServerUtils;
 import org.jkiss.dbeaver.model.DBPDataSourceContainer;
@@ -66,7 +73,7 @@ public class SQLServerConnectionPage extends ConnectionPageWithAuth implements I
 
     public SQLServerConnectionPage() {
         LOGO_AZURE = createImage("icons/azure_logo.png");
-        LOGO_BABELFISH = createImage("icons/bbfsh_logo.png");
+        LOGO_BABELFISH = createImage("icons/babelfish_logo.png");
         LOGO_SQLSERVER = createImage("icons/mssql_logo.png");
         LOGO_SYBASE = createImage("icons/sybase_logo.png");
     }
@@ -84,7 +91,7 @@ public class SQLServerConnectionPage extends ConnectionPageWithAuth implements I
     public void createControl(Composite composite) {
         ModifyListener textListener = e -> {
             if (activated) {
-                updateUrl();
+                super.updateUrl(urlText);
                 site.updateButtons();
             }
         };
@@ -97,22 +104,17 @@ public class SQLServerConnectionPage extends ConnectionPageWithAuth implements I
         GridData gd = new GridData(GridData.FILL_BOTH);
         settingsGroup.setLayoutData(gd);
 
-        Group addrGroup = UIUtils.createControlGroup(
+        Composite addrGroup = UIUtils.createTitledComposite(
             settingsGroup,
             UIConnectionMessages.dialog_connection_server_label,
             4,
-            GridData.FILL_HORIZONTAL,
-            0
+            GridData.FILL_HORIZONTAL
         );
 
-        SelectionAdapter typeSwitcher = new SelectionAdapter() {
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                setupConnectionModeSelection(urlText, typeURLRadio.getSelection(), GROUP_CONNECTION_ARR);
-                updateUrl();
-            }
-        };
-        createConnectionModeSwitcher(addrGroup, typeSwitcher);
+        createConnectionModeSwitcher(addrGroup, SelectionListener.widgetSelectedAdapter(e -> {
+            super.setupConnectionModeSelection(urlText, typeURLRadio.getSelection(), GROUP_CONNECTION_ARR);
+            super.updateUrl(urlText);
+        }));
 
         Label urlLabel = UIUtils.createControlLabel(addrGroup, UIConnectionMessages.dialog_connection_url_label);
         urlLabel.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_END));
@@ -124,7 +126,7 @@ public class SQLServerConnectionPage extends ConnectionPageWithAuth implements I
         gd.widthHint = 355;
         urlText.setLayoutData(gd);
         urlText.addModifyListener(e -> site.updateButtons());
-
+        urlText.setData(URL_TEXT_DATA_ERROR_DECORATOR_KEY, new ControlDecoration(urlText, SWT.BOTTOM | SWT.LEFT));
 
         needsPort = CommonUtils.getBoolean(getSite().getDriver().getDriverParameter("needsPort"), true);
         {
@@ -136,6 +138,7 @@ public class SQLServerConnectionPage extends ConnectionPageWithAuth implements I
             gd = new GridData(GridData.FILL_HORIZONTAL);
             gd.grabExcessHorizontalSpace = true;
             hostText.setLayoutData(gd);
+            UIUtils.setDefaultTextControlWidthHint(hostText);
             hostText.addModifyListener(textListener);
             addControlToGroup(GROUP_CONNECTION, hostLabel, hostText);
 
@@ -164,9 +167,9 @@ public class SQLServerConnectionPage extends ConnectionPageWithAuth implements I
             dbText = new Text(addrGroup, SWT.BORDER);
             gd = new GridData(GridData.FILL_HORIZONTAL);
             gd.grabExcessHorizontalSpace = true;
-            //gd.widthHint = 270;
             gd.horizontalSpan = 3;
             dbText.setLayoutData(gd);
+            UIUtils.setDefaultTextControlWidthHint(dbText);
             dbText.addModifyListener(textListener);
             addControlToGroup(GROUP_CONNECTION, dbLabel, dbText);
         }
@@ -176,10 +179,7 @@ public class SQLServerConnectionPage extends ConnectionPageWithAuth implements I
         }
 
         {
-            Group secureGroup = new Group(settingsGroup, SWT.NONE);
-            secureGroup.setText(SQLServerUIMessages.dialog_setting_connection_settings);
-            secureGroup.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-            secureGroup.setLayout(new GridLayout(1, false));
+            Composite secureGroup = UIUtils.createTitledComposite(settingsGroup, SQLServerUIMessages.dialog_setting_connection_settings, 1, GridData.FILL_HORIZONTAL);
 
             if (!isSqlServer) {
                 encryptPassword = UIUtils.createCheckbox(secureGroup, SQLServerUIMessages.dialog_setting_encrypt_password, SQLServerUIMessages.dialog_setting_encrypt_password_tip, false, 1);
@@ -301,13 +301,13 @@ public class SQLServerConnectionPage extends ConnectionPageWithAuth implements I
             urlText.setText(connectionInfo.getUrl());
         }
         setupConnectionModeSelection(urlText, useURL, GROUP_CONNECTION_ARR);
-        updateUrl();
+        updateUrl(urlText);
 
         activated = true;
     }
 
     @Override
-    public void saveSettings(DBPDataSourceContainer dataSource) {
+    public void saveSettings(@NotNull DBPDataSourceContainer dataSource) {
         DBPConnectionConfiguration connectionInfo = dataSource.getConnectionConfiguration();
         
         connectionInfo.setConfigurationType(
@@ -348,19 +348,10 @@ public class SQLServerConnectionPage extends ConnectionPageWithAuth implements I
         super.saveSettings(dataSource);
     }
 
+    @Nullable
     @Override
     public IDialogPage[] getDialogPages(boolean extrasOnly, boolean forceCreate) {
         return new IDialogPage[] { new DriverPropertiesDialogPage(this) };
-    }
-
-    private void updateUrl() {
-        DBPDataSourceContainer dataSourceContainer = site.getActiveDataSource();
-        saveSettings(dataSourceContainer);
-        if (typeURLRadio != null && typeURLRadio.getSelection()) {
-            urlText.setText(dataSourceContainer.getConnectionConfiguration().getUrl());
-        } else {
-            urlText.setText(dataSourceContainer.getDriver().getConnectionURL(site.getActiveDataSource().getConnectionConfiguration()));
-        }
     }
 
 }

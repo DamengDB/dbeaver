@@ -70,7 +70,7 @@ public class SQLControlCommand implements SQLScriptElement {
         }
         int divPos = -1;
         for (int i = 0; i < text.length(); i++) {
-            if (Character.isWhitespace(text.charAt(i))) {
+            if (!Character.isLetterOrDigit(text.charAt(i))) {
                 divPos = i;
                 break;
             }
@@ -90,6 +90,8 @@ public class SQLControlCommand implements SQLScriptElement {
         return dataSource == null ? null : dataSource.getContainer();
     }
 
+    @Nullable
+    @Override
     public DBPDataSource getDataSource() {
         return dataSource;
     }

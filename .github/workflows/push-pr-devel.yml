@@ -10,7 +10,7 @@ on:
     branches: [devel]
 
 concurrency:
-  group: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || 'push-pr-devel' }}
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.ref_name }}
   cancel-in-progress: true
 
 jobs:
@@ -22,8 +22,12 @@ jobs:
       project-directory: ./dbeaver/product/aggregate
       project-deps: ./dbeaver/project.deps
       timeout-minutes: 5
+      mvn-args: -Pproduct-dbeaver-ce,product-dbeaver-eclipse-ce
 
   lint-java:
     name: Check style
     uses: dbeaver/dbeaver-common/.github/workflows/java-checkstyle.yml@devel
     secrets: inherit
+    permissions:
+      contents: read
+      pull-requests: read

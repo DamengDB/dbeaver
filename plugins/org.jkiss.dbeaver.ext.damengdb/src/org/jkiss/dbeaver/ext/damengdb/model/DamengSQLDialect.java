@@ -87,8 +87,6 @@ public class DamengSQLDialect extends JDBCSQLDialect
 
     private DBPPreferenceStore preferenceStore;
 
-    private SQLTokenPredicateSet cachedDialectSkipTokenPredicates = null;
-
     public DamengSQLDialect() {
         super("Dm", "dm");
         setUnquotedIdentCase(DBPIdentifierCase.UPPER);
@@ -183,8 +181,6 @@ public class DamengSQLDialect extends JDBCSQLDialect
 
         addKeywords(Arrays.asList(OTHER_TYPES_FUNCTIONS), DBPKeywordType.OTHER);
         turnFunctionIntoKeyword("TRUNCATE");
-
-        cachedDialectSkipTokenPredicates = makeDialectSkipTokenPredicates(dataSource);
     }
 
     @Override
@@ -439,20 +435,7 @@ public class DamengSQLDialect extends JDBCSQLDialect
     }
 
     @Override
-    @NotNull
-    public SQLTokenPredicateSet getSkipTokenPredicates() {
-        return cachedDialectSkipTokenPredicates == null ? super.getSkipTokenPredicates()
-            : cachedDialectSkipTokenPredicates;
-    }
-
-    @NotNull
-    private SQLTokenPredicateSet makeDialectSkipTokenPredicates(JDBCDataSource dataSource) {
-        SQLSyntaxManager syntaxManager = new SQLSyntaxManager();
-        syntaxManager.init(this, dataSource.getContainer().getPreferenceStore());
-        SQLRuleManager ruleManager = new SQLRuleManager(syntaxManager);
-        ruleManager.loadRules(dataSource, false);
-        TokenPredicateFactory tt = TokenPredicateFactory.makeDialectSpecificFactory(ruleManager);
-
+    protected TokenPredicateSet makeDialectSkipTokenPredicatesImpl(@NotNull JDBCDataSource dataSource, @NotNull TokenPredicateFactory tt) {
         TokenPredicateSet conditions = TokenPredicateSet.of(
             new TokenPredicatesCondition(SQLParserActionKind.BEGIN_BLOCK,
                 tt.sequence("CREATE", tt.optional("OR", "REPLACE"),

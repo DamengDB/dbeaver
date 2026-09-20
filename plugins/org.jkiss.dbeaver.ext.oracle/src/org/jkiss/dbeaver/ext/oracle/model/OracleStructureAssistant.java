@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,9 @@ import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBDatabaseException;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
-import org.jkiss.dbeaver.model.*;
+import org.jkiss.dbeaver.model.DBConstants;
+import org.jkiss.dbeaver.model.DBPEvaluationContext;
+import org.jkiss.dbeaver.model.DBUtils;
 import org.jkiss.dbeaver.model.exec.DBCExecutionPurpose;
 import org.jkiss.dbeaver.model.exec.jdbc.JDBCPreparedStatement;
 import org.jkiss.dbeaver.model.exec.jdbc.JDBCResultSet;
@@ -180,8 +182,9 @@ public class OracleStructureAssistant implements DBSStructureAssistant<OracleExe
                         null,
                         type == DBSEntityConstraintType.FOREIGN_KEY ? OracleTableForeignKey.class : OracleTableConstraint.class,
                         type == DBSEntityConstraintType.FOREIGN_KEY ? OracleObjectType.FOREIGN_KEY : OracleObjectType.CONSTRAINT) {
+                        @NotNull
                         @Override
-                        public DBSObject resolveObject(DBRProgressMonitor monitor) throws DBException {
+                        public DBSObject resolveObject(@NotNull DBRProgressMonitor monitor) throws DBException {
                             OracleSchema tableSchema = schema != null ? schema : dataSource.getSchema(monitor, schemaName);
                             if (tableSchema == null) {
                                 throw new DBException("Constraint schema '" + schemaName + "' not found");
@@ -330,7 +333,7 @@ public class OracleStructureAssistant implements DBSStructureAssistant<OracleExe
                     if (objectType != null && objectType.isBrowsable() && oracleObjectTypes.contains(objectType)) {
                         OracleSchema objectSchema = this.dataSource.getSchema(session.getProgressMonitor(), schemaName);
                         if (objectSchema == null) {
-                            log.debug("Schema '" + schemaName + "' not found. Probably was filtered");
+                            log.trace("Schema '" + schemaName + "' not found. Probably was filtered");
                             continue;
                         }
                         addObjectReference(objects, objectName, objectSchema, objectType, objectTypeName, schemaName, session);
@@ -344,8 +347,9 @@ public class OracleStructureAssistant implements DBSStructureAssistant<OracleExe
                                     @NotNull OracleObjectType objectType, String objectTypeName, String schemaName, @NotNull JDBCSession session) {
         references.add(
             new AbstractObjectReference<>(objectName, objectSchema, null, objectType.getTypeClass(), objectType) {
+                @NotNull
                 @Override
-                public DBSObject resolveObject(DBRProgressMonitor monitor) throws DBException {
+                public DBSObject resolveObject(@NotNull DBRProgressMonitor monitor) throws DBException {
                     OracleSchema tableSchema = getContainer();
                     DBSObject object = objectType.findObject(session.getProgressMonitor(), tableSchema, objectName);
                     if (object == null) {
@@ -356,7 +360,7 @@ public class OracleStructureAssistant implements DBSStructureAssistant<OracleExe
 
                 @NotNull
                 @Override
-                public String getFullyQualifiedName(DBPEvaluationContext context) {
+                public String getFullyQualifiedName(@NotNull DBPEvaluationContext context) {
                     if (objectType == OracleObjectType.SYNONYM && OracleConstants.USER_PUBLIC.equals(schemaName)) {
                         return DBUtils.getQuotedIdentifier(dataSource, objectName);
                     }
@@ -401,7 +405,7 @@ public class OracleStructureAssistant implements DBSStructureAssistant<OracleExe
                     }
                     OracleSchema objectSchema = dataSource.getSchema(session.getProgressMonitor(), owner);
                     if (objectSchema == null) {
-                        log.debug("Schema '" + owner + "' not found. Probably was filtered");
+                        log.trace("Schema '" + owner + "' not found. Probably was filtered");
                         continue;
                     }
                     addObjectReference(objects, tableName, objectSchema, oracleObjectType, tableType, owner, session);

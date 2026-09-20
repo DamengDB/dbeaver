@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,16 @@
  */
 package org.jkiss.dbeaver.ui.navigator.database.load;
 
+import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Tree;
+import org.jkiss.code.NotNull;
 import org.jkiss.dbeaver.model.navigator.DBNNode;
 import org.jkiss.dbeaver.runtime.DBWorkbench;
 import org.jkiss.dbeaver.ui.DBeaverIcons;
 import org.jkiss.dbeaver.ui.UIIcon;
 import org.jkiss.dbeaver.ui.navigator.NavigatorPreferences;
+import org.jkiss.dbeaver.ui.navigator.database.DatabaseNavigatorContent;
 import org.jkiss.dbeaver.ui.navigator.database.DatabaseNavigatorTree;
 
 
@@ -54,7 +57,7 @@ public class TreeNodeLazyExpander extends TreeNodeSpecial {
     }
 
     @Override
-    public boolean handleDefaultAction(DatabaseNavigatorTree tree) {
+    public boolean handleDefaultAction(@NotNull DatabaseNavigatorTree tree) {
         int longListFetchSize = Math.max(NavigatorPreferences.MIN_LONG_LIST_FETCH_SIZE, DBWorkbench.getPlatform().getPreferenceStore().getInt(NavigatorPreferences.NAVIGATOR_LONG_LIST_FETCH_SIZE));
         boolean lastSegment = visibleChildren + longListFetchSize > allChildren.length;
         int nextSegmentSize = lastSegment ? allChildren.length - visibleChildren : longListFetchSize;
@@ -66,8 +69,15 @@ public class TreeNodeLazyExpander extends TreeNodeSpecial {
         Tree treeControl = tree.getViewer().getTree();
         treeControl.setRedraw(false);
         try {
-            tree.getViewer().remove(this);
-            tree.getViewer().add(getParent(), nodes);
+            TreeViewer viewer = tree.getViewer();
+            viewer.remove(this);
+            Object root = viewer.getInput();
+            DBNNode directParent = getParent();
+            Object parent = directParent;
+            if (root instanceof DatabaseNavigatorContent dnc && directParent == dnc.getRootNode()) {
+                parent = dnc;
+            }
+            viewer.add(parent, nodes);
         } finally {
             treeControl.setRedraw(true);
         }

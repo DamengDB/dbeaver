@@ -114,7 +114,7 @@
         <handler commandId="org.jkiss.dbeaver.debug.ui.command.debugConfigurationMenu" class="org.jkiss.dbeaver.debug.ui.actions.OpenDebugConfigurationHandler">
             <enabledWhen>
                 <and>
-                    <test property="org.jkiss.dbeaver.core.global.hasPermission" value="database-developer"/>
+                    <test property="org.jkiss.dbeaver.core.global.ui.hasPermission" value="database-developer"/>
                     <with variable="activePart">
                         <adapt type="org.jkiss.dbeaver.debug.DBGDebugObject"/>
                     </with>
@@ -197,6 +197,24 @@
 
         </perspectiveExtension>
 
+    </extension>
+
+    <extension point="org.jkiss.dbeaver.app.config">
+        <feature
+            id="debug"
+            label="Procedure debugger"
+            description="Enables debugging of stored procedures and functions in PostgreSQL and its derivatives (Greenplum, TimescaleDB, etc.)"
+            enabledByDefault="false"/>
+    </extension>
+
+    <extension point="org.eclipse.ui.activities">
+        <activity id="dbeaver.activity.debug" name="Dashboards Activity">
+            <enabledWhen>
+                <test property="org.jkiss.dbeaver.app.config.isFeatureEnabled" value="debug"/>
+            </enabledWhen>
+        </activity>
+
+        <activityPatternBinding activityId="dbeaver.activity.debug" pattern="org\.jkiss\.dbeaver\.debug.*"/>
     </extension>
 
 </plugin>

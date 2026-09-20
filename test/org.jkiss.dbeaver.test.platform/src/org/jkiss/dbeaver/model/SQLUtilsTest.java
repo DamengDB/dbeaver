@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,46 +16,182 @@
  */
 package org.jkiss.dbeaver.model;
 
+import org.jkiss.dbeaver.ext.oracle.model.OracleSQLDialect;
 import org.jkiss.dbeaver.model.sql.SQLUtils;
 import org.jkiss.junit.DBeaverUnitTest;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class SQLUtilsTest extends DBeaverUnitTest {
+
+    private static final OracleSQLDialect ORACLE_SQL_DIALECT = new OracleSQLDialect();
+
     @Test
     public void makeRegexFromLikeTest() {
-        Assert.assertEquals("^ABC$", SQLUtils.makeRegexFromLike("ABC"));
-        Assert.assertEquals("^A.*C$", SQLUtils.makeRegexFromLike("A%C"));
-        Assert.assertEquals("^ABC", SQLUtils.makeRegexFromLike("ABC%"));
-        Assert.assertEquals("ABC$", SQLUtils.makeRegexFromLike("%ABC"));
-        Assert.assertEquals("ABC", SQLUtils.makeRegexFromLike("%ABC%"));
-        Assert.assertEquals("^A.C$", SQLUtils.makeRegexFromLike("A_C"));
-        Assert.assertEquals("A.C", SQLUtils.makeRegexFromLike("%A_C%"));
+        Assertions.assertEquals("^ABC$", SQLUtils.makeRegexFromLike("ABC"));
+        Assertions.assertEquals("^A.*C$", SQLUtils.makeRegexFromLike("A%C"));
+        Assertions.assertEquals("^ABC", SQLUtils.makeRegexFromLike("ABC%"));
+        Assertions.assertEquals("ABC$", SQLUtils.makeRegexFromLike("%ABC"));
+        Assertions.assertEquals("ABC", SQLUtils.makeRegexFromLike("%ABC%"));
+        Assertions.assertEquals("^A.C$", SQLUtils.makeRegexFromLike("A_C"));
+        Assertions.assertEquals("A.C", SQLUtils.makeRegexFromLike("%A_C%"));
     }
-    
+
     @Test
     public void fixLineFeedsTest() {
-        Assert.assertEquals(
+        Assertions.assertEquals(
             "SELECT LastName -- x\r\n"
-            + "FROM Persons drai where PersonID  = 1\r\n"
-            + "-- AND ResourceId  = 1\n\r"
-            + "ORDER BY PersonID ;",
+                + "FROM Persons drai where PersonID  = 1\r\n"
+                + "-- AND ResourceId  = 1\n\r"
+                + "ORDER BY PersonID ;",
             SQLUtils.fixLineFeeds("SELECT LastName -- x\r"
-            + "FROM Persons drai where PersonID  = 1\r\n"
-            + "-- AND ResourceId  = 1\n\r"
-            + "ORDER BY PersonID ;"));
+                + "FROM Persons drai where PersonID  = 1\r\n"
+                + "-- AND ResourceId  = 1\n\r"
+                + "ORDER BY PersonID ;")
+        );
     }
 
     @Test
-    public void makeGlobFromSqlLikePattern_whenWithNoSpecialSymbols_thenSuccess(){
-
+    public void makeGlobFromSqlLikePattern_whenWithNoSpecialSymbols_thenSuccess() {
         String source = "key1234";
-        Assert.assertEquals(source, SQLUtils.makeGlobFromSqlLikePattern(source));
+        Assertions.assertEquals(source, SQLUtils.makeGlobFromSqlLikePattern(source));
     }
 
     @Test
-    public void makeGlobFromSqlLikePattern_whenWithSpecialSymbols_thenSuccess(){
+    public void makeGlobFromSqlLikePattern_whenWithSpecialSymbols_thenSuccess() {
+        Assertions.assertEquals("key?*\\?*\\", SQLUtils.makeGlobFromSqlLikePattern("key_%?*\\"));
+    }
 
-        Assert.assertEquals("key?*\\?*\\", SQLUtils.makeGlobFromSqlLikePattern("key_%?*\\"));
+    @Test
+    public void extractProcedureParameterTypes_whenNullOrEmpty_thenParens() {
+        Assertions.assertEquals("()", SQLUtils.extractProcedureParameterTypes(null));
+        Assertions.assertEquals("()", SQLUtils.extractProcedureParameterTypes(""));
+        Assertions.assertEquals("()", SQLUtils.extractProcedureParameterTypes("   "));
+        Assertions.assertEquals("()", SQLUtils.extractProcedureParameterTypes("()"));
+        Assertions.assertEquals("()", SQLUtils.extractProcedureParameterTypes("(   )"));
+    }
+
+    @Test
+    public void extractProcedureParameterTypes_whenNamesPresent_thenRemoved() {
+        Assertions.assertEquals(
+            "(NUMBER(38,0), VARCHAR)",
+            SQLUtils.extractProcedureParameterTypes("(a NUMBER(38,0), b VARCHAR)")
+        );
+        Assertions.assertEquals(
+            "(ARRAY, OBJECT)",
+            SQLUtils.extractProcedureParameterTypes("(x ARRAY, y OBJECT)")
+        );
+    }
+
+    @Test
+    public void extractTypesOnly_whenNestedProcedureParameterTypes_thenKeepInnerParens() {
+        Assertions.assertEquals(
+            "(DECIMAL(10,2), ARRAY(VARCHAR))",
+            SQLUtils.extractProcedureParameterTypes("(price DECIMAL(10,2), tags ARRAY(VARCHAR))")
+        );
+        Assertions.assertEquals(
+            "(ARRAY(OBJECT), VARIANT)",
+            SQLUtils.extractProcedureParameterTypes("(p ARRAY(OBJECT), v VARIANT)")
+        );
+    }
+
+    @Test
+    public void extractProcedureParameterTypes_whenNoOuterParens_thenSingleType() {
+        Assertions.assertEquals(
+            "(NUMBER)",
+            SQLUtils.extractProcedureParameterTypes("id NUMBER")
+        );
+        Assertions.assertEquals(
+            "(ARRAY(VARCHAR))",
+            SQLUtils.extractProcedureParameterTypes("arr ARRAY(VARCHAR)")
+        );
+    }
+
+    @Test
+    public void extractProcedureParameterTypes_whenWhitespaceAndCase_thenCanonicalUpper() {
+        Assertions.assertEquals(
+            "(NUMBER, VARCHAR)",
+            SQLUtils.extractProcedureParameterTypes("(  a   number  ,   b   varchar  )")
+        );
+        Assertions.assertEquals(
+            "(ARRAY, OBJECT, VARIANT)",
+            SQLUtils.extractProcedureParameterTypes("( arr  array , obj   object , v   variant )")
+        );
+    }
+
+    @Test
+    public void extractProcedureParameterTypes_whenComplexSignature_thenCorrectSplit() {
+        Assertions.assertEquals(
+            "(DECIMAL(38,0), ARRAY(DECIMAL(10,2)), OBJECT)",
+            SQLUtils.extractProcedureParameterTypes("(a DECIMAL(38,0), b ARRAY(DECIMAL(10,2)), c OBJECT)")
+        );
+    }
+
+    @Test
+    public void addMultiStatementDDL_whenNullOrEmpty_thenNoChange() {
+        StringBuilder sb = new StringBuilder();
+        SQLUtils.addMultiStatementDDL(ORACLE_SQL_DIALECT, sb, null);
+        Assertions.assertEquals("", sb.toString());
+
+        SQLUtils.addMultiStatementDDL(ORACLE_SQL_DIALECT, sb, "   ");
+        Assertions.assertEquals("", sb.toString());
+    }
+
+    @Test
+    public void addMultiStatementDDL_oracleUserAndGrants_examples() {
+        String ddl =
+            "GRANT CREATE TABLE TO \"TEST_USER_DECL\"\n" +
+            "GRANT CREATE SESSION TO \"TEST_USER_DECL\"\n" +
+            "GRANT \"ROLE1\" TO \"TEST_USER_DECL\"\n" +
+            "GRANT \"ROLE2\" TO \"TEST_USER_DECL\"\n" +
+            "GRANT \"ROLE3\" TO \"TEST_USER_DECL\";\n";
+
+        StringBuilder sb = new StringBuilder();
+        SQLUtils.addMultiStatementDDL(ORACLE_SQL_DIALECT, sb, ddl);
+
+        Assertions.assertEquals(
+            "GRANT CREATE TABLE TO \"TEST_USER_DECL\";\n" +
+                "GRANT CREATE SESSION TO \"TEST_USER_DECL\";\n" +
+                "GRANT \"ROLE1\" TO \"TEST_USER_DECL\";\n" +
+                "GRANT \"ROLE2\" TO \"TEST_USER_DECL\";\n" +
+                "GRANT \"ROLE3\" TO \"TEST_USER_DECL\";\n\n",
+            sb.toString()
+        );
+    }
+
+    @Test
+    public void addMultiStatementDDL_whenNoDelimiters_thenAppendDelimiterPerLineAndTrailingLF() {
+        String ddl = "CREATE TABLE A(id INT)\nCREATE INDEX I ON A(id)";
+        StringBuilder sb = new StringBuilder();
+        SQLUtils.addMultiStatementDDL(ORACLE_SQL_DIALECT, sb, ddl);
+        Assertions.assertEquals(
+            "CREATE TABLE A(id INT);\n" +
+                "CREATE INDEX I ON A(id);\n\n",
+            sb.toString()
+        );
+    }
+
+    @Test
+    public void addMultiStatementDDL_whenAlreadyDelimited_thenDoNotDuplicateDelimiter() {
+        String ddl = "CREATE TABLE A(id INT);\nCREATE INDEX I ON A(id);";
+        StringBuilder sb = new StringBuilder();
+        SQLUtils.addMultiStatementDDL(ORACLE_SQL_DIALECT, sb, ddl);
+        Assertions.assertEquals(
+            "CREATE TABLE A(id INT);\n" +
+                "CREATE INDEX I ON A(id);\n\n",
+            sb.toString()
+        );
+    }
+
+    @Test
+    public void addMultiStatementDDL_whenHasEmptyLines_thenSkipThem() {
+        String ddl = "\n\n  \nCREATE TABLE A(id INT)\n   \nCREATE INDEX I ON A(id)  \n\n";
+        StringBuilder sb = new StringBuilder();
+        SQLUtils.addMultiStatementDDL(ORACLE_SQL_DIALECT, sb, ddl);
+        Assertions.assertEquals(
+            "CREATE TABLE A(id INT);\n" +
+                "CREATE INDEX I ON A(id);\n\n",
+            sb.toString()
+        );
     }
 }

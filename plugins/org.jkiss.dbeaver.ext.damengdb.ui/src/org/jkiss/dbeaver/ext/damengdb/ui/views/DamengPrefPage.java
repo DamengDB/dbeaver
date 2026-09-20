@@ -19,6 +19,7 @@ package org.jkiss.dbeaver.ext.damengdb.ui.views;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.*;
 import org.jkiss.code.NotNull;
 import org.jkiss.dbeaver.ext.damengdb.model.DamengConstants;
@@ -92,8 +93,10 @@ public class DamengPrefPage extends TargetPrefPage {
         Composite composite = UIUtils.createPlaceholder(parent, 1);
 
         {
-            Group planGroup = UIUtils.createControlGroup(composite,
-                DamengUIMessages.pref_page_dameng_legend_execution_plan, 2, GridData.FILL_HORIZONTAL, 0);
+            Group planGroup = new Group(composite, SWT.NONE);
+            planGroup.setText(DamengUIMessages.pref_page_dameng_legend_execution_plan);
+            planGroup.setLayout(new GridLayout(2, false));
+            planGroup.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
             Label descLabel = new Label(planGroup, SWT.WRAP);
             descLabel.setText(DamengUIMessages.pref_page_dameng_label_by_default_plan_table);
@@ -106,8 +109,10 @@ public class DamengPrefPage extends TargetPrefPage {
         }
 
         {
-            Group miscGroup = UIUtils.createControlGroup(composite, DamengUIMessages.pref_page_dameng_legend_misc, 1,
-                GridData.FILL_HORIZONTAL, 0);
+            Group miscGroup = new Group(composite, SWT.NONE);
+            miscGroup.setText(DamengUIMessages.pref_page_dameng_legend_misc);
+            miscGroup.setLayout(new GridLayout(1, false));
+            miscGroup.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
             rowidSupportCheck = UIUtils.createCheckbox(miscGroup,
                 DamengUIMessages.pref_page_dameng_checkbox_use_rowid_to_identify_rows, true);
             enableDbmsOutputCheck = UIUtils.createCheckbox(miscGroup,
@@ -123,8 +128,10 @@ public class DamengPrefPage extends TargetPrefPage {
         DBPPreferenceStore globalPreferences = DBWorkbench.getPlatform().getPreferenceStore();
 
         {
-            Composite performanceGroup = UIUtils.createControlGroup(composite,
-                DamengUIMessages.pref_page_dameng_legend_performance, 1, GridData.FILL_HORIZONTAL, 0);
+            Group performanceGroup = new Group(composite, SWT.NONE);
+            performanceGroup.setText(DamengUIMessages.pref_page_dameng_legend_performance);
+            performanceGroup.setLayout(new GridLayout(1, false));
+            performanceGroup.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
             useRuleHint = UIUtils.createCheckbox(performanceGroup, DamengUIMessages.edit_create_checkbox_group_use_rule,
                 globalPreferences.getBoolean(DamengConstants.PROP_USE_RULE_HINT));
@@ -154,8 +161,10 @@ public class DamengPrefPage extends TargetPrefPage {
         }
 
         {
-            final Group dataGroup = UIUtils.createControlGroup(composite, DamengUIMessages.pref_page_dameng_group_data,
-                1, GridData.HORIZONTAL_ALIGN_BEGINNING, 0);
+            final Group dataGroup = new Group(composite, SWT.NONE);
+            dataGroup.setText(DamengUIMessages.pref_page_dameng_group_data);
+            dataGroup.setLayout(new GridLayout(1, false));
+            dataGroup.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_BEGINNING));
 
             showDateAsDate = UIUtils.createCheckbox(dataGroup,
                 DamengUIMessages.pref_page_dameng_checkbox_show_date_as_date,

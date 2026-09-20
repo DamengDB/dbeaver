@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package org.jkiss.dbeaver.model.security;
 import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
+import org.jkiss.dbeaver.model.auth.SMObjectType;
 import org.jkiss.dbeaver.model.security.user.*;
 
 import java.util.List;
@@ -59,7 +60,8 @@ public interface SMAdminController extends SMController {
         @Nullable String defaultAuthRole
     ) throws DBException;
 
-    void importUsers(@NotNull SMUserImportList userImportList) throws DBException;
+    @NotNull
+    List<SMUserProvisioning> importUsers(@NotNull SMUserImportList userImportList) throws DBException;
 
     void deleteUser(String userId) throws DBException;
 
@@ -91,7 +93,15 @@ public interface SMAdminController extends SMController {
 
     int countUsers(@NotNull SMUserFilter filter) throws DBException;
 
-    void enableUser(String userId, boolean enabled) throws DBException;
+    /**
+     * Method for enabling/disabling user.
+     */
+    void enableUser(
+        @NotNull String userId,
+        boolean enabled,
+        @Nullable String disabledBy,
+        @Nullable String disableReason
+    ) throws DBException;
 
     void setUserAuthRole(@NotNull String userId, @Nullable String authRole) throws DBException;
 
@@ -224,5 +234,11 @@ public interface SMAdminController extends SMController {
 
     @NotNull
     List<SMTeamMemberInfo> getTeamMembersInfo(@NotNull String teamId) throws DBException;
+
+    void deleteObject(
+        @NotNull String projectId,
+        @NotNull String objectId,
+        @NotNull SMObjectType objectType
+    ) throws DBException;
 
 }

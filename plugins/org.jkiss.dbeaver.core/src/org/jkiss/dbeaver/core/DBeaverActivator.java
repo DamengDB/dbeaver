@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2025 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,24 +18,22 @@ package org.jkiss.dbeaver.core;
 
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.swt.internal.image.FileFormat;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.jkiss.awt.injector.ProxyInjector;
-import org.jkiss.dbeaver.DBeaverPreferences;
 import org.jkiss.dbeaver.ModelPreferences;
 import org.jkiss.dbeaver.model.impl.preferences.BundlePreferenceStore;
 import org.jkiss.dbeaver.model.preferences.DBPPreferenceStore;
 import org.jkiss.dbeaver.model.runtime.features.DBRFeatureRegistry;
+import org.jkiss.dbeaver.ui.AWTUtils;
 import org.jkiss.dbeaver.ui.ConnectionFeatures;
+import org.jkiss.dbeaver.ui.ShellUtils;
 import org.jkiss.dbeaver.ui.browser.BrowsePeerMethods;
-import org.jkiss.utils.ArrayUtils;
+import org.jkiss.dbeaver.ui.preferences.UIPreferences;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 
 import java.awt.*;
 import java.io.PrintStream;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
@@ -76,60 +74,34 @@ public class DBeaverActivator extends AbstractUIPlugin {
         } catch (MissingResourceException x) {
             coreResourceBundle = null;
         }
-        if (getPreferenceStore().getBoolean(DBeaverPreferences.UI_USE_EMBEDDED_AUTH)) {
-            try {
-                if (Desktop.isDesktopSupported()) {
-                    injectProxyPeer();
-                } else {
-                    getLog().warn("Desktop interface not available");
-                    getPreferenceStore().setValue(DBeaverPreferences.UI_USE_EMBEDDED_AUTH, false);
-                }
-            } catch (Throwable e) {
-                getLog().warn(e.getMessage());
-                getPreferenceStore().setValue(DBeaverPreferences.UI_USE_EMBEDDED_AUTH, false);
-            }
-        }
-
         try {
-            injectSvgFileFormat();
+            injectProxyPeer();
         } catch (Throwable e) {
-            getLog().error("Unable to inject SVG file format support", e);
+            getLog().warn(e.getMessage());
+            getPreferenceStore().setValue(UIPreferences.UI_USE_EMBEDDED_AUTH, false);
         }
     }
 
     private void injectProxyPeer() throws NoSuchFieldException, IllegalAccessException {
+        if (!AWTUtils.isDesktopSupported()) {
+            getLog().warn("Desktop interface not available");
+            getPreferenceStore().setValue(UIPreferences.UI_USE_EMBEDDED_AUTH, false);
+            return;
+        }
         ProxyInjector proxyInjector = new ProxyInjector();
-        proxyInjector.injectBrowseInteraction(BrowsePeerMethods::canBrowseInSWTBrowser, BrowsePeerMethods::browseInSWTBrowser);
-    }
-
-    /**
-     * Registers {@code SVGFileFormat} as a file format for SWT {@link org.eclipse.swt.graphics.ImageLoader}.
-     *
-     * @throws Throwable if the registration fails
-     */
-    @SuppressWarnings("JavaReflectionInvocation")
-    private static void injectSvgFileFormat() throws Throwable {
-        Field FileFormat_formats = FileFormat.class.getDeclaredField("FORMATS"); //$NON-NLS-1$
-        FileFormat_formats.setAccessible(true);
-
-        String[] formats = (String[]) FileFormat_formats.get(null);
-        String[] patched = ArrayUtils.add(String.class, formats, "SVG");
-
-        Class<?> Unsafe = Class.forName("sun.misc.Unsafe"); //$NON-NLS-1$
-        Method Unsafe_staticFieldBase = Unsafe.getDeclaredMethod("staticFieldBase", Field.class); //$NON-NLS-1$
-        Method Unsafe_staticFieldOffset = Unsafe.getDeclaredMethod("staticFieldOffset", Field.class); //$NON-NLS-1$
-        Method Unsafe_putObject = Unsafe.getDeclaredMethod("putObject", Object.class, long.class, Object.class); //$NON-NLS-1$
-
-        Field theUnsafe = Unsafe.getDeclaredField("theUnsafe"); //$NON-NLS-1$
-        theUnsafe.setAccessible(true);
-        Object unsafe = theUnsafe.get(null);
-
-        Unsafe_putObject.invoke(
-            unsafe,
-            Unsafe_staticFieldBase.invoke(unsafe, FileFormat_formats),
-            Unsafe_staticFieldOffset.invoke(unsafe, FileFormat_formats),
-            patched
-        );
+        if (getPreferenceStore().getBoolean(UIPreferences.UI_USE_EMBEDDED_AUTH)) {
+            // Redirect BROWSE requests to the embedded browser
+            proxyInjector.injectBrowseInteraction(
+                BrowsePeerMethods::canBrowseInSWTBrowser,
+                BrowsePeerMethods::browseInSWTBrowser
+            );
+        } else if (!Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+            // Redirect BROWSE requests to the system browser if it's not supported by AWT
+            proxyInjector.injectBrowseInteraction(
+                () -> true,
+                uri -> ShellUtils.launchProgram(uri.toString())
+            );
+        }
     }
 
     @Override
@@ -142,13 +114,17 @@ public class DBeaverActivator extends AbstractUIPlugin {
             debugWriter.close();
             debugWriter = null;
         }
-        instance = null;
+        // Do not nullify instance as it can be used during shutdown by late-activating services
+        // code activator is needed to obtain main app preferences.
+        //instance = null;
 
         super.stop(context);
     }
 
     private void shutdownUI() {
-        DesktopUI.disposeUI();
+        if (DesktopPlatform.instance != null) {
+            DesktopUI.disposeUI();
+        }
     }
 
     /**

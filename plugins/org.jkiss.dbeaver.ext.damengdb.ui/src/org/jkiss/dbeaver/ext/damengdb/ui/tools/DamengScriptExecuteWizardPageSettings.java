@@ -21,6 +21,7 @@ import java.util.List;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Group;
@@ -57,16 +58,18 @@ class DamengScriptExecuteWizardPageSettings extends AbstractNativeToolWizardPage
     public void createControl(Composite parent) {
         Composite composite = UIUtils.createPlaceholder(parent, 1);
 
-        Group outputGroup = UIUtils.createControlGroup(composite,
-            DamengUIMessages.tools_script_execute_wizard_page_settings_group_input, 3, GridData.FILL_HORIZONTAL, 0);
+        Group outputGroup = new Group(composite, SWT.NONE);
+        outputGroup.setText(DamengUIMessages.tools_script_execute_wizard_page_settings_group_input);
+        outputGroup.setLayout(new GridLayout(3, false));
         outputGroup.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
         inputFileText = new TextWithOpenFile(outputGroup,
             DamengUIMessages.tools_script_execute_wizard_page_settings_label_input_file,
             new String[] {"*.sql", "*.txt", "*"});
         inputFileText.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
-        Group consoleEncodingGroup = UIUtils.createControlGroup(composite,
-            DamengUIMessages.task_script_execute_encoding, 1, GridData.FILL_HORIZONTAL, 0);
+        Group consoleEncodingGroup = new Group(composite, SWT.NONE);
+        consoleEncodingGroup.setText(DamengUIMessages.task_script_execute_encoding);
+        consoleEncodingGroup.setLayout(new GridLayout(1, false));
         consoleEncodingGroup.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
         consoleEncodingCombo = new Combo(consoleEncodingGroup, SWT.READ_ONLY);
         consoleEncodingCombo.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));

@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2025 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,11 +31,9 @@ import org.jkiss.dbeaver.tools.transfer.stream.IStreamDataExporterSite;
 import org.jkiss.dbeaver.utils.ContentUtils;
 import org.jkiss.utils.Base64;
 import org.jkiss.utils.CommonUtils;
+import org.jkiss.utils.xml.XMLUtils;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintWriter;
-import java.io.Reader;
+import java.io.*;
 import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.Time;
@@ -56,6 +54,7 @@ public class DataExporterDbUnit extends StreamExporterAbstract {
     private static final String PROP_UPPER_CASE_COLUMN_NAMES = "upperCaseColumnNames";
     private static final String PROP_INCLUDE_NULL_VALUES = "includeNullValues";
 
+
     private DBDAttributeBinding[] columns;
     private String tableName;
     private boolean upperCaseTableName;
@@ -72,11 +71,9 @@ public class DataExporterDbUnit extends StreamExporterAbstract {
     }
 
     @Override
-    public void dispose()
-    {
+    public void dispose() {
         tableName = null;
         columns = null;
-        super.dispose();
     }
 
     private String getTableName()
@@ -183,11 +180,9 @@ public class DataExporterDbUnit extends StreamExporterAbstract {
         getWriter().write("</dataset>\n");
     }
 
-    private void writeTextCell(@Nullable String value)
-    {
+    private void writeTextCell(@Nullable String value) throws IOException {
         if (value != null) {
-            value = value.replace("<", "&lt;").replace(">", "&gt;").replace("&", "&amp;");
-            getWriter().write(value);
+            writeCellValue(new StringReader(value));
         }
     }
 
@@ -202,13 +197,9 @@ public class DataExporterDbUnit extends StreamExporterAbstract {
                 break;
             }
             for (int i = 0; i < count; i++) {
-                if (buffer[i] == '<') {
-                    out.write("&lt;");
-                }
-                else if (buffer[i] == '>') {
-                    out.write("&gt;");
-                } else if (buffer[i] == '&') {
-                    out.write("&amp;");
+                String escaped = XMLUtils.encodeXMLChar(buffer[i]);
+                if (escaped != null) {
+                    out.write(escaped);
                 } else {
                     out.write(buffer[i]);
                 }

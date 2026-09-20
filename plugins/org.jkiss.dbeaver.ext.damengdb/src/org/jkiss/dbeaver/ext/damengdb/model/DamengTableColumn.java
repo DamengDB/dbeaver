@@ -223,6 +223,8 @@ public class DamengTableColumn extends JDBCTableColumn<DamengTableBase>
         return hidden;
     }
 
+    private static final java.util.Map<String, String> classNameResolveCache = new java.util.concurrent.ConcurrentHashMap<>();
+
     /**
      * Modify the type name which starts with 'CLASS','JCLASS','TYPE'
      *
@@ -232,35 +234,75 @@ public class DamengTableColumn extends JDBCTableColumn<DamengTableBase>
      * @return Type name after modify
      */
     public String getClassName(@NotNull JDBCSession session, String name, boolean withSchema) {
-        String classId = new String();
-        for (int i = 5; i < name.length(); i++) {
-            classId = name.substring(i);
-            StringBuilder sql = new StringBuilder();
+        if (name == null || name.isEmpty()) {
+            return name;
+        }
 
-            sql.append("SELECT  PKG.NAME, SCH.NAME FROM SYSOBJECTS PKG, SYSOBJECTS SCH  " + "WHERE PKG.SCHID = SCH.ID "
-                + "AND PKG.TYPE$ = \'SCHOBJ\' " + "AND ( " + "PKG.SUBTYPE$ = \'CLASS\' "
-                + "OR PKG.SUBTYPE$ = \'JCLASS\' " + "OR PKG.SUBTYPE$ = \'TYPE\' ) " + "AND PKG.ID = " + classId);
+        String cacheKey = withSchema ? name + ":ws" : name + ":ns";
+        String cached = classNameResolveCache.get(cacheKey);
+        if (cached != null) {
+            return cached;
+        }
 
-            JDBCPreparedStatement dbStat;
-            try {
-                dbStat = (session).prepareStatement(sql.toString());
-                JDBCResultSet dbResult = dbStat.executeQuery();
-                while (dbResult.next()) {
-                    if (withSchema) {
-                        name = dbResult.getString(2) + "." + dbResult.getString(1);
-                    } else {
-                        name = dbResult.getString(1);
-                    }
+        int prefixLen = -1;
+        if (name.startsWith("JCLASS")) {
+            prefixLen = 6;
+        } else if (name.startsWith("CLASS")) {
+            prefixLen = 5;
+        } else if (name.startsWith("TYPE")) {
+            prefixLen = 4;
+        } else if (isAllDigits(name)) {
+            prefixLen = 0;
+        }
+
+        if (prefixLen < 0) {
+            classNameResolveCache.put(cacheKey, name);
+            return name;
+        }
+
+        String classId = name.substring(prefixLen).trim();
+        if (classId.isEmpty()) {
+            classNameResolveCache.put(cacheKey, name);
+            return name;
+        }
+
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT  PKG.NAME, SCH.NAME FROM SYSOBJECTS PKG, SYSOBJECTS SCH  " + "WHERE PKG.SCHID = SCH.ID "
+            + "AND PKG.TYPE$ = \'SCHOBJ\' " + "AND ( " + "PKG.SUBTYPE$ = \'CLASS\' "
+            + "OR PKG.SUBTYPE$ = \'JCLASS\' " + "OR PKG.SUBTYPE$ = \'TYPE\' ) " + "AND PKG.ID = " + classId);
+
+        String result = name;
+        JDBCPreparedStatement dbStat;
+        try {
+            dbStat = (session).prepareStatement(sql.toString());
+            JDBCResultSet dbResult = dbStat.executeQuery();
+            while (dbResult.next()) {
+                if (withSchema) {
+                    result = dbResult.getString(2) + "." + dbResult.getString(1);
+                } else {
+                    result = dbResult.getString(1);
                 }
-                dbStat.close();
-                // if selecting substring matched,return name immediately
-                return name;
-            } catch (SQLException e) {
-                // if selecting substring didn't match,do nothing
+            }
+            dbStat.close();
+        } catch (SQLException e) {
+            // if selecting substring didn't match,do nothing
+        }
+
+        classNameResolveCache.put(cacheKey, result);
+        return result;
+    }
+
+    private static boolean isAllDigits(String str) {
+        if (str == null || str.isEmpty()) {
+            return false;
+        }
+        for (int i = 0; i < str.length(); i++) {
+            char c = str.charAt(i);
+            if (c < '0' || c > '9') {
+                return false;
             }
         }
-        return name; // match failed,return original name
-
+        return true;
     }
 
     public static class CommentLoadValidator implements IPropertyCacheValidator<DamengTableColumn> {

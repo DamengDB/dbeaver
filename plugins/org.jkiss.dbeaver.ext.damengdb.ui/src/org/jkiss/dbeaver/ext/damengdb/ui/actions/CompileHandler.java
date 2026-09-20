@@ -35,6 +35,7 @@ import org.eclipse.ui.menus.UIElement;
 import org.jkiss.dbeaver.ext.damengdb.model.DamengSequence;
 import org.jkiss.dbeaver.ext.damengdb.model.source.DamengSourceObject;
 import org.jkiss.dbeaver.ext.damengdb.ui.internal.DamengUIMessages;
+import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.model.DBPEvent;
 import org.jkiss.dbeaver.model.DBUtils;
 import org.jkiss.dbeaver.model.edit.DBEPersistAction;
@@ -60,7 +61,7 @@ import org.jkiss.utils.CommonUtils;
 public class CompileHandler extends DamengTaskHandler {
 	
     public static boolean compileUnit(DBRProgressMonitor monitor, DBCCompileLog compileLog, DamengSourceObject unit)
-        throws DBCException {
+        throws DBException {
         final DBEPersistAction[] compileActions = unit.getCompileActions(monitor);
         if (ArrayUtils.isEmpty(compileActions)) {
             if (unit instanceof DamengSequence) {
@@ -86,9 +87,9 @@ public class CompileHandler extends DamengTaskHandler {
                         dbStat.executeStatement();
                     }
                     action.afterExecute(session, null);
-                } catch (DBCException e) {
+                } catch (DBException e) {
                     action.afterExecute(session, e);
-                    throw e;
+                    throw new DBCException("Error compiling " + unit.getName(), e);
                 }
             }
             final DBSObjectState oldState = unit.getObjectState();
@@ -130,7 +131,7 @@ public class CompileHandler extends DamengTaskHandler {
                         monitor.beginTask("Compile", 1);
                         try {
                             compileUnit(monitor, compileLog, unit);
-                        } catch (DBCException e) {
+                        } catch (DBException e) {
                             throw new InvocationTargetException(e);
                         } finally {
                             monitor.done();

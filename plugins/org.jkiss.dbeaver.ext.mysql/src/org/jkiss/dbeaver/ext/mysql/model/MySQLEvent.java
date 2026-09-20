@@ -243,9 +243,10 @@ public class MySQLEvent implements MySQLSourceObject, DBPSaveableObject, DBPQual
         return databaseCollation;
     }
 
+    @NotNull
     @Override
     @Property(hidden = true, editable = true, updatable = true, order = -1)
-    public String getObjectDefinitionText(DBRProgressMonitor monitor, Map<String, Object> options) throws DBException {
+    public String getObjectDefinitionText(@NotNull DBRProgressMonitor monitor, @NotNull Map<String, Object> options) throws DBException {
         if (eventFullDefinitionText != null) {
             return eventFullDefinitionText;
         }
@@ -320,7 +321,7 @@ public class MySQLEvent implements MySQLSourceObject, DBPSaveableObject, DBPQual
 
     @NotNull
     @Override
-    public String getFullyQualifiedName(DBPEvaluationContext context) {
+    public String getFullyQualifiedName(@NotNull DBPEvaluationContext context) {
         return DBUtils.getFullQualifiedName(getDataSource(),
                 catalog,
                 this);

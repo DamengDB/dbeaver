@@ -255,6 +255,7 @@ ARRAY: A R R A Y;
 AS: A S ;
 ASC: A S C ;
 AUTHORIZATION: A U T H O R I Z A T I O N ;
+AUTO_INCREMENT: A U T O '_' I N C R E M E N T ;
 BETWEEN: B E T W E E N ;
 BY: B Y ;
 CALL: C A L L;
@@ -299,6 +300,7 @@ FOREIGN: F O R E I G N ;
 FROM: F R O M ;
 FULL: F U L L ;
 FUNCTION: F U N C T I O N ;
+GENERATED: G E N E R A T E D;
 GLOBAL: G L O B A L ;
 GROUP: G R O U P ;
 HAVING: H A V I N G ;
@@ -318,6 +320,7 @@ IS: I S ;
 ISOLATION: I S O L A T I O N ;
 JOIN: J O I N ;
 KEY: K E Y ;
+LATERAL: L A T E R A L;
 LEFT: L E F T ;
 LEVEL: L E V E L ;
 LIKE: L I K E ;
@@ -369,6 +372,7 @@ SESSION: S E S S I O N ;
 SESSION_USER: S E S S I O N '_'U S E R ;
 SET: S E T ;
 SOME: S O M E ;
+STRAIGHT_JOIN: S T R A I G H T '_' J O I N ;
 SYSTEM_USER: S Y S T E M '_'U S E R ;
 TABLE: T A B L E ;
 TEMP: T E M P ;
@@ -400,6 +404,9 @@ WORK: W O R K ;
 WRITE: W R I T E ;
 YEAR: Y E A R ;
 ZONE: Z O N E ;
+TOP: T O P ;
+PERCENT: P E R C E N T ;
+TIES: T I E S ;
 
 
 // symbols
@@ -438,6 +445,7 @@ QuestionMark: '?';
 Underscore: '_';
 VerticalBar: '|';
 Tilda: '~';
+Hashtag: '#';
 
 
 // characters
@@ -459,10 +467,6 @@ ApproximateNumericLiteral: (UnsignedInteger|DecimalLiteral) 'E' SignedInteger;
 fragment SignedInteger: (PlusSign|MinusSign)? UnsignedInteger;
 
 
-Comment: (LineComment | MultilineComment) -> channel (HIDDEN);
-LineComment : ('--'|'#') ~ [\r\n]*;
-MultilineComment: ('/*' .*? '*/');
-
 // special characters and character sequences
 fragment NonquoteCharacter: ~'\'';
 fragment QuoteSymbol: SingleQuote SingleQuote;
@@ -473,10 +477,13 @@ Space: [ \t]+;
 
 
 Identifier: IdentifierBody;
-fragment IdentifierBody: IdentifierStart ((Underscore|IdentifierPart)+)?;
-fragment IdentifierStart: SimpleLatinLetter|Underscore;
-fragment IdentifierPart: (IdentifierStart|Digit);
+fragment IdentifierBody:  IdentifierStart IdentifierPart*;
+fragment IdentifierStart: SimpleLatinLetter|Underscore|Hashtag;
+fragment IdentifierPart:  SimpleLatinLetter|Underscore|Digit;
 
+Comment: (LineComment | MultilineComment) -> channel (HIDDEN);
+LineComment : ('--'|'#') ~ [\r\n]*;
+MultilineComment: ('/*' .*? '*/');
 
 // string literals
 fragment CharacterRepresentation: (NonquoteCharacter|QuoteSymbol);

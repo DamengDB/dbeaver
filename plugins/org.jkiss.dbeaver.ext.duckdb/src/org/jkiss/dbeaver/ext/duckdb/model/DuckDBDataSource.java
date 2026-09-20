@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,35 +19,46 @@ package org.jkiss.dbeaver.ext.duckdb.model;
 import org.jkiss.code.NotNull;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.ext.generic.model.GenericDataSource;
-import org.jkiss.dbeaver.ext.generic.model.GenericSQLDialect;
 import org.jkiss.dbeaver.ext.generic.model.meta.GenericMetaModel;
 import org.jkiss.dbeaver.model.DBPDataKind;
+import org.jkiss.dbeaver.model.DBPDataSourceInfo;
 import org.jkiss.dbeaver.model.DBPDataSourceContainer;
+import org.jkiss.dbeaver.model.exec.jdbc.JDBCDatabaseMetaData;
+import org.jkiss.dbeaver.model.impl.jdbc.JDBCExecutionContext;
+import org.jkiss.dbeaver.model.impl.jdbc.JDBCRemoteInstance;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
-import org.jkiss.dbeaver.model.sql.SQLDialect;
 
-import java.util.Locale;
+import java.util.regex.Pattern;
 
 /**
  * DuckDB Data source
  */
 public class DuckDBDataSource extends GenericDataSource {
-    public DuckDBDataSource(DBRProgressMonitor monitor, DBPDataSourceContainer container, GenericMetaModel metaModel) throws DBException {
-        super(monitor, container, metaModel, new GenericSQLDialect());
-    }
+    private static final Pattern ARRAY_TYPE_NAME_PATTERN = Pattern.compile("\\[\\s*\\d*\\s*\\]\\s*$");
 
-    @NotNull
-    @Override
-    public SQLDialect getSQLDialect() {
-        return DuckDBSQLDialect.INSTANCE;
+    public DuckDBDataSource(DBRProgressMonitor monitor, DBPDataSourceContainer container, GenericMetaModel metaModel) throws DBException {
+        super(monitor, container, metaModel, new DuckDBSQLDialect());
     }
 
     @NotNull
     @Override
     public DBPDataKind resolveDataKind(@NotNull String typeName, int valueType) {
-        return switch (typeName.toUpperCase(Locale.ROOT)) {
-            case DuckDBConstants.TYPE_GEOMETRY -> DBPDataKind.OBJECT;
-            default -> super.resolveDataKind(typeName, valueType);
-        };
+        if (DuckDBConstants.isGeometryType(typeName)) {
+            return DBPDataKind.OBJECT;
+        } else if (ARRAY_TYPE_NAME_PATTERN.matcher(typeName).find()) {
+            return DBPDataKind.ARRAY;
+        } else {
+            return super.resolveDataKind(typeName, valueType);
+        }
+    }
+
+    @Override
+    protected DBPDataSourceInfo createDataSourceInfo(DBRProgressMonitor monitor, @NotNull JDBCDatabaseMetaData metaData) {
+        return new DuckDBDataSourceInfo(getContainer().getDriver(), metaData);
+    }
+
+    @Override
+    protected JDBCExecutionContext createExecutionContext(JDBCRemoteInstance instance, String type) {
+        return new DuckDBExecutionContext(instance, type);
     }
 }

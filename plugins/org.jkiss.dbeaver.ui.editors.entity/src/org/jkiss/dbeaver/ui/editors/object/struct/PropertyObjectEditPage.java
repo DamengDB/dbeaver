@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Text;
 import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
@@ -33,6 +32,7 @@ import org.jkiss.dbeaver.model.preferences.DBPPropertyDescriptor;
 import org.jkiss.dbeaver.model.struct.DBSObject;
 import org.jkiss.dbeaver.runtime.properties.ObjectPropertyDescriptor;
 import org.jkiss.dbeaver.runtime.properties.PropertySourceEditable;
+import org.jkiss.dbeaver.ui.ConComposite;
 import org.jkiss.dbeaver.ui.UIUtils;
 import org.jkiss.dbeaver.ui.controls.CustomFormEditor;
 import org.jkiss.dbeaver.ui.editors.object.internal.ObjectEditorMessages;
@@ -81,13 +81,12 @@ public class PropertyObjectEditPage<OBJECT extends DBSObject> extends BaseObject
         final Composite composite;
         String groupTitle = getPropertiesGroupTitle();
         if (CommonUtils.isEmpty(groupTitle)) {
-            composite = new Composite(parent, SWT.NONE);
+            composite = new ConComposite(parent, SWT.NONE);
+            composite.setLayout(new GridLayout(2, false));
+            composite.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
         } else {
-            composite = new Group(parent, SWT.NONE);
-            ((Group)composite).setText(groupTitle);
+            composite = UIUtils.createTitledComposite(parent, groupTitle, 2, GridData.FILL_HORIZONTAL);
         }
-        composite.setLayout(new GridLayout(2, false));
-        composite.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
         createDefaultEditControls(composite);
         createAdditionalEditControls(parent);
@@ -99,31 +98,26 @@ public class PropertyObjectEditPage<OBJECT extends DBSObject> extends BaseObject
 
     }
 
-    private void createDefaultEditControls(Composite composite) {
-        final Text nameText = UIUtils.createLabelText(composite, ObjectEditorMessages.dialog_struct_label_text_name, object.getName());
+    private void createDefaultEditControls(@NotNull Composite composite) {
+        Text nameText = UIUtils.createLabelText(
+            composite,
+            ObjectEditorMessages.dialog_struct_label_text_name,
+            object.getName()
+        );
         nameText.selectAll();
         nameText.addModifyListener(e -> {
-            if (object instanceof DBPNamedObject2 && object.getDataSource() != null) {
+            if (object instanceof DBPNamedObject2 namedObject && object.getDataSource() != null) {
                 String objectName = nameText.getText().trim();
-                final String transformed = DBObjectNameCaseTransformer.transformName(object.getDataSource(), objectName);
-                ((DBPNamedObject2) object).setName(transformed);
+                String transformed = DBObjectNameCaseTransformer.transformName(object.getDataSource(), objectName);
+                namedObject.setName(transformed);
                 validateProperties();
             }
         });
-
-//        UIUtils
-//            .createControlLabel(composite, ObjectEditorMessages.dialog_struct_label_text_properties)
-//            .setLayoutData(new GridData(GridData.VERTICAL_ALIGN_BEGINNING));
 
         propertyEditor = new CustomFormEditor(getObject(), getCommandContext(), propertySource);
         for (DBPPropertyDescriptor prop : propertySource.getProperties()) {
             propertyEditor.createPropertyEditor(composite, prop);
         }
-
-//        propertyViewer = new PropertyTreeViewer(composite, SWT.BORDER);
-//        propertyViewer.getControl().setLayoutData(GridDataFactory.fillDefaults().hint(400, SWT.DEFAULT).create());
-//        propertyViewer.loadProperties(propertySource);
-//        propertyViewer.addPropertyChangeListener(event -> validateProperties());
     }
 
     protected String getEditError() {

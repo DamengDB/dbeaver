@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
  */
 package org.jkiss.dbeaver.registry;
 
-import org.eclipse.equinox.app.IApplicationContext;
 import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.core.DBeaverActivator;
@@ -25,10 +24,7 @@ import org.jkiss.dbeaver.core.DesktopUI;
 import org.jkiss.dbeaver.model.app.DBPPlatform;
 import org.jkiss.dbeaver.model.preferences.DBPPreferenceStore;
 import org.jkiss.dbeaver.model.rcp.DesktopApplicationImpl;
-import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 import org.jkiss.dbeaver.runtime.ui.DBPPlatformUI;
-
-import java.nio.file.Path;
 
 /**
  * EclipseApplicationImpl
@@ -55,29 +51,14 @@ public abstract class EclipsePluginApplicationImpl extends DesktopApplicationImp
     }
 
     @Override
-    public String getInfoDetails(DBRProgressMonitor monitor) {
+    public String getInfoDetails() {
         return "Eclipse";
-    }
-
-    @Override
-    public String getDefaultProjectName() {
-        return "DBeaver";
-    }
-
-    @Override
-    public Object start(IApplicationContext context) throws Exception {
-        return null;
     }
 
     @Nullable
     @Override
-    public Path getDefaultWorkingFolder() {
-        return null;
-    }
-
-    @Override
-    public void stop() {
-
+    public String getDefaultProjectName() {
+        return "DBeaver";
     }
 
     @NotNull
@@ -90,11 +71,6 @@ public abstract class EclipsePluginApplicationImpl extends DesktopApplicationImp
     @Override
     public Class<? extends DBPPlatformUI> getPlatformUIClass() {
         return DesktopUI.class;
-    }
-
-    @Override
-    public long getLastUserActivityTime() {
-        return -1;
     }
 
     @NotNull

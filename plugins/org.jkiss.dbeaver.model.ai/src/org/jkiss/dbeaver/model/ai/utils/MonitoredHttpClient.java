@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2025 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
  */
 package org.jkiss.dbeaver.model.ai.utils;
 
+import org.jkiss.code.NotNull;
+import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 
@@ -25,12 +27,49 @@ import java.net.http.HttpResponse;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 public class MonitoredHttpClient implements AutoCloseable {
-    private final HttpClient client;
 
-    public MonitoredHttpClient(HttpClient client) {
+    /**
+     * Maps an HTTP status code and response body to a {@link DBException}.
+     */
+    @FunctionalInterface
+    public interface ErrorMapper {
+        @NotNull
+        DBException map(int statusCode, @NotNull String body);
+    }
+
+    /**
+     * Handles errors that occur during the processing of an HTTP response.
+     */
+    @FunctionalInterface
+    public interface ErrorProcessor {
+        boolean process(
+            @NotNull ErrorMapper mapper,
+            @NotNull Consumer<Throwable> errorHandler,
+            @NotNull HttpResponse<Stream<String>> response,
+            @NotNull AtomicBoolean suppressCompletion,
+            @Nullable Consumer<String> backupOption,
+            int statusCode
+        );
+    }
+
+    private final HttpClient client;
+    private final ErrorMapper errorMapper;
+    private final ErrorProcessor errorProcessor;
+
+    public MonitoredHttpClient(@NotNull HttpClient client, @NotNull ErrorMapper errorMapper, @NotNull ErrorProcessor processor) {
         this.client = client;
+        this.errorMapper = errorMapper;
+        this.errorProcessor = processor;
+    }
+
+    @NotNull
+    public HttpClient getHttpClient() {
+        return client;
     }
 
     /**
@@ -38,14 +77,14 @@ public class MonitoredHttpClient implements AutoCloseable {
      * The request is sent asynchronously and the method will block until the response is received.
      * The method will also check if the progress monitor is cancelled and cancel the request if it is.
      */
-    public <T> HttpResponse<T> send(
-        DBRProgressMonitor monitor,
-        HttpRequest request,
-        HttpResponse.BodyHandler<T> responseBodyHandler
+    @NotNull
+    public String send(
+        @NotNull DBRProgressMonitor monitor,
+        @NotNull HttpRequest request
     ) throws DBException {
         monitor.beginTask("Request AI completion", 1);
 
-        CompletableFuture<HttpResponse<T>> responseCompletableFuture = client.sendAsync(request, responseBodyHandler);
+        CompletableFuture<HttpResponse<String>> responseCompletableFuture = client.sendAsync(request, HttpResponse.BodyHandlers.ofString());
 
         try {
             monitor.subTask("Sending request to " + request.uri());
@@ -62,7 +101,12 @@ public class MonitoredHttpClient implements AutoCloseable {
                 TimeUnit.MILLISECONDS.sleep(100);
             }
 
-            return responseCompletableFuture.get();
+            HttpResponse<String> response = responseCompletableFuture.get();
+            if (response.statusCode() == 200) {
+                return response.body();
+            } else {
+                throw errorMapper.map(response.statusCode(), response.body());
+            }
         } catch (InterruptedException e) {
             throw new DBException("Request was cancelled", e);
         } catch (ExecutionException e) {
@@ -72,10 +116,47 @@ public class MonitoredHttpClient implements AutoCloseable {
         }
     }
 
+    @NotNull
+    public CompletableFuture<Void> sendAsync(
+        @NotNull HttpRequest request,
+        @NotNull Consumer<String> eventHandler,
+        @NotNull Consumer<Throwable> errorHandler,
+        @NotNull Runnable completionHandler
+    ) {
+        return sendAsync(request, eventHandler, errorHandler, completionHandler, null);
+    }
+
+    @NotNull
+    public CompletableFuture<Void> sendAsync(
+        @NotNull HttpRequest request,
+        @NotNull Consumer<String> eventHandler,
+        @NotNull Consumer<Throwable> errorHandler,
+        @NotNull Runnable completionHandler,
+        @Nullable Consumer<String> backupOption
+    ) {
+        AtomicBoolean suppressCompletion = new AtomicBoolean(false);
+        return client.sendAsync(request, HttpResponse.BodyHandlers.ofLines())
+            .thenAccept(response -> {
+                int statusCode = response.statusCode();
+                if (errorProcessor.process(errorMapper, errorHandler, response, suppressCompletion, backupOption, statusCode)) {
+                    return;
+                }
+
+                response.body().forEach(eventHandler);
+            })
+            .whenComplete((v, e) -> {
+                if (e != null) {
+                    errorHandler.accept(e);
+                } else {
+                    if (!suppressCompletion.get()) {
+                        completionHandler.run();
+                    }
+                }
+            });
+    }
 
     @Override
     public void close() {
-        //TODO should be uncommented when transition to java 21 is complete
-        //client.close();
+        client.close();
     }
 }

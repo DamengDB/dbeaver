@@ -1,0 +1,278 @@
+/*
+ * DBeaver - Universal Database Manager
+ * Copyright (C) 2010-2026 DBeaver Corp and others
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.jkiss.dbeaver.model.ai;
+
+import org.jkiss.code.NotNull;
+import org.jkiss.code.Nullable;
+import org.jkiss.dbeaver.model.ai.internal.AIMessages;
+import org.jkiss.dbeaver.model.ai.utils.AIUtils;
+import org.jkiss.utils.CommonUtils;
+
+import java.net.SocketTimeoutException;
+import java.net.http.HttpTimeoutException;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.concurrent.TimeoutException;
+
+/**
+ * Represents a single AI message
+ */
+public class AIMessage {
+    @NotNull
+    private final AIMessageType role;
+    @NotNull
+    private final String content;
+    @Nullable
+    private final String displayMessage;
+    @NotNull
+    private final LocalDateTime time;
+    @Nullable
+    private final AIFunctionCall functionCall;
+    @Nullable
+    private final AIFunctionResult functionResult;
+    @Nullable
+    private final AIConfirmation confirmation;
+    @Nullable
+    private final List<AIMessageMeta> meta;
+    private final Throwable error;
+
+    public AIMessage(
+        @NotNull AIMessageType role,
+        @NotNull String content,
+        @Nullable String displayMessage,
+        @NotNull LocalDateTime time,
+        @Nullable List<AIMessageMeta> meta,
+        @Nullable Throwable error
+    ) {
+        this.role = role;
+        this.content = content;
+        this.displayMessage = displayMessage;
+        this.time = time;
+        this.meta = meta;
+        this.functionCall = null;
+        this.functionResult = null;
+        this.confirmation = null;
+        this.error = error;
+    }
+
+    /**
+     * Creates AI message
+     */
+    public AIMessage(
+        @NotNull AIMessageType role,
+        @NotNull String content,
+        @Nullable String displayMessage,
+        @NotNull LocalDateTime time,
+        @Nullable List<AIMessageMeta> meta
+    ) {
+        this.role = role;
+        this.content = content;
+        this.displayMessage = displayMessage;
+        this.time = time;
+        this.meta = meta;
+        this.functionCall = null;
+        this.functionResult = null;
+        this.confirmation = null;
+        this.error = null;
+    }
+
+    // Function call + result
+    public AIMessage(
+        @NotNull AIFunctionCall functionCall,
+        @NotNull AIFunctionResult result,
+        @NotNull LocalDateTime time,
+        @Nullable List<AIMessageMeta> meta
+    ) {
+        this.meta = meta;
+        this.role = AIMessageType.FUNCTION;
+        String resultValue = CommonUtils.toString(result.getValue());
+        StringBuilder strResult = new StringBuilder();
+        if (result.getException() != null) {
+            strResult.append(resultValue);
+        } else {
+            strResult.append(functionCall.getFunctionName()).append(" was completed.\n");
+            if (resultValue.isEmpty()) {
+                strResult.append("Empty result");
+            } else {
+                strResult.append(resultValue);
+            }
+        }
+        this.content = strResult.toString();
+        this.time = time;
+        this.functionCall = functionCall;
+        this.functionResult = result;
+        this.confirmation = null;
+        this.displayMessage = resultValue;
+        this.error = result.getException();
+    }
+
+    // Function call confirmation
+    public AIMessage(@NotNull AIConfirmation confirmation) {
+        this(confirmation, LocalDateTime.now());
+    }
+
+    public AIMessage(@NotNull AIConfirmation confirmation, @NotNull LocalDateTime time) {
+        this.meta = null;
+        this.role = AIMessageType.CONFIRMATION;
+        this.content = confirmation.getMessage();
+        this.time = time;
+        this.functionCall = null;
+        this.functionResult = null;
+        this.confirmation = confirmation;
+        this.displayMessage = content;
+        this.error = null;
+    }
+
+    public AIMessage(@NotNull Throwable error) {
+        this(
+            AIMessageType.ERROR,
+            getErrorMessage(error),
+            getErrorMessage(error),
+            LocalDateTime.now(),
+            null,
+            error);
+    }
+
+    @NotNull
+    private static String getErrorMessage(@NotNull Throwable error) {
+        for (Throwable t = error; t != null; t = t.getCause()) {
+            if (t instanceof HttpTimeoutException || t instanceof SocketTimeoutException || t instanceof TimeoutException) {
+                return AIUtils.getSettingsAccessMessage(
+                    AIMessages.ai_error_request_timed_out,
+                    AIMessages.ai_error_request_timed_out_linked,
+                    AIMessages.ai_error_request_timed_out_admin);
+            }
+    }
+        return CommonUtils.getAllExceptionMessages(error);
+    }
+
+    public AIMessage(
+        @NotNull AIMessageType role,
+        @NotNull String content,
+        @Nullable List<AIMessageMeta> meta
+    ) {
+        this(role, content, content, LocalDateTime.now(), meta);
+    }
+
+    public boolean isAutoGenerated() {
+        return displayMessage != null && !CommonUtils.equalObjects(displayMessage, content);
+    }
+
+    @NotNull
+    public String getDisplayMessage() {
+        return displayMessage != null ? displayMessage : content;
+    }
+
+    @Nullable
+    public String getRawDisplayMessage() {
+        return displayMessage;
+    }
+
+    @NotNull
+    public AIMessageType getRole() {
+        return role;
+    }
+
+    @NotNull
+    public String getContent() {
+        return content;
+    }
+
+    @NotNull
+    public LocalDateTime getTime() {
+        return time;
+    }
+
+    @Nullable
+    public AIFunctionCall getFunctionCall() {
+        return functionCall;
+    }
+
+    @Nullable
+    public AIFunctionResult getFunctionResult() {
+        return functionResult;
+    }
+
+    @Nullable
+    public AIConfirmation getConfirmation() {
+        return confirmation;
+    }
+
+    @Nullable
+    public List<AIMessageMeta> getMeta() {
+        return meta;
+    }
+
+    @Nullable
+    public Throwable getError() {
+        return error;
+    }
+
+    @NotNull
+    public AIMessage withContent(String newContent) {
+        return new AIMessage(role, newContent, displayMessage, time, meta);
+    }
+
+    @Override
+    public String toString() {
+        return "Message (" + role + "): " + content;
+    }
+
+    @NotNull
+    public static AIMessage systemMessage(@NotNull String message) {
+        return new AIMessage(AIMessageType.SYSTEM, message, null);
+    }
+
+    @NotNull
+    public static AIMessage userMessage(@NotNull String message) {
+        return new AIMessage(AIMessageType.USER, message, null);
+    }
+
+    @NotNull
+    public static AIMessage assistantMessage(
+        @NotNull String message,
+        @Nullable List<AIMessageMeta> meta
+    ) {
+        return new AIMessage(AIMessageType.ASSISTANT, message, meta);
+    }
+
+    @NotNull
+    public static AIMessage functionCall(@NotNull AIFunctionCall functionCall, @NotNull AIFunctionResult result) {
+        return new AIMessage(functionCall, result, LocalDateTime.now(), null);
+    }
+
+    @NotNull
+    public static AIMessage warningMessage(@NotNull String message) {
+        return new AIMessage(AIMessageType.WARNING, message, null);
+    }
+
+    @NotNull
+    public static AIMessage errorMessage(@NotNull Throwable throwable) {
+        return new AIMessage(throwable);
+    }
+
+    @NotNull
+    public static AIMessage userAutoMessage(@NotNull String prompt, @NotNull String uiMessage) {
+        return new AIMessage(AIMessageType.USER, prompt, uiMessage, LocalDateTime.now(), null);
+    }
+
+    @NotNull
+    public static AIMessage functionConfirmation(@NotNull List<AIFunctionCall> functionCalls) {
+        return new AIMessage(new AIFunctionCallConfirmation(functionCalls));
+    }
+
+}

@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package org.jkiss.dbeaver.model.impl;
 
 import org.jkiss.code.NotNull;
+import org.jkiss.code.NotNullWhen;
 import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.ModelPreferences;
 import org.jkiss.dbeaver.model.DBPDataSource;
@@ -31,8 +32,9 @@ import org.jkiss.dbeaver.model.struct.DBSObject;
  */
 public class DBObjectNameCaseTransformer implements IPropertyValueTransformer<DBSObject, String> {
 
+    @Nullable
     @Override
-    public String transform(DBSObject object, String value)
+    public String transform(@NotNull DBSObject object, @Nullable String value)
     {
         return transformName(object.getDataSource(), value);
     }
@@ -42,7 +44,7 @@ public class DBObjectNameCaseTransformer implements IPropertyValueTransformer<DB
         return transformName(object.getDataSource(), value);
     }
 
-    @Nullable
+    @NotNullWhen("value != null")
     public static String transformName(@NotNull DBPDataSource dataSource, @Nullable String value)
     {
         if (value == null) {

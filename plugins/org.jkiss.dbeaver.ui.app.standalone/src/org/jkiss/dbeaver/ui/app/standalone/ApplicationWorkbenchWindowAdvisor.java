@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2025 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,18 +21,20 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Platform;
+import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.preference.IPreferenceStore;
-import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.swt.dnd.DropTargetAdapter;
 import org.eclipse.swt.dnd.FileTransfer;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.*;
 import org.eclipse.ui.application.ActionBarAdvisor;
 import org.eclipse.ui.application.IActionBarConfigurer;
 import org.eclipse.ui.application.IWorkbenchWindowConfigurer;
+import org.eclipse.ui.internal.WorkbenchPlugin;
 import org.eclipse.ui.internal.ide.IDEInternalPreferences;
 import org.eclipse.ui.internal.ide.IDEWorkbenchPlugin;
 import org.eclipse.ui.internal.ide.application.IDEWorkbenchWindowAdvisor;
@@ -42,86 +44,34 @@ import org.eclipse.ui.part.EditorInputTransfer;
 import org.eclipse.ui.part.MarkerTransfer;
 import org.eclipse.ui.part.ResourceTransfer;
 import org.jkiss.code.NotNull;
+import org.jkiss.dbeaver.DBException;
+import org.jkiss.dbeaver.DBeaverPreferences;
 import org.jkiss.dbeaver.Log;
+import org.jkiss.dbeaver.core.DesktopPlatform;
 import org.jkiss.dbeaver.model.DBPDataSourceContainer;
 import org.jkiss.dbeaver.model.app.*;
+import org.jkiss.dbeaver.model.config.ProductConfigRegistry;
+import org.jkiss.dbeaver.model.impl.config.ProductConfigUtils;
+import org.jkiss.dbeaver.model.runtime.features.DBRFeatureRegistry;
 import org.jkiss.dbeaver.registry.DataSourceProviderRegistry;
 import org.jkiss.dbeaver.registry.WorkbenchHandlerRegistry;
 import org.jkiss.dbeaver.runtime.DBWorkbench;
-import org.jkiss.dbeaver.ui.IWorkbenchWindowInitializer;
 import org.jkiss.dbeaver.ui.UIExecutionQueue;
 import org.jkiss.dbeaver.ui.UIUtils;
 import org.jkiss.dbeaver.ui.actions.datasource.DataSourceHandler;
+import org.jkiss.dbeaver.ui.app.config.ProductConfigWizard;
+import org.jkiss.dbeaver.ui.app.config.ProductConfigWizardDialog;
+import org.jkiss.dbeaver.ui.app.standalone.internal.WorkbenchPatcher;
 import org.jkiss.dbeaver.ui.editors.DatabaseEditorPreferences;
 import org.jkiss.dbeaver.ui.editors.EditorUtils;
 import org.jkiss.dbeaver.utils.GeneralUtils;
+import org.jkiss.dbeaver.utils.RuntimeUtils;
 
 import java.util.StringJoiner;
 
 public class ApplicationWorkbenchWindowAdvisor extends IDEWorkbenchWindowAdvisor implements DBPProjectListener, IResourceChangeListener {
     private static final Log log = Log.getLog(ApplicationWorkbenchWindowAdvisor.class);
-    
-    // Eclipse fonts
-    
-    /**
-     * Compare text font
-     */
-    public static String COMPARE_TEXT_FONT = "org.eclipse.compare.contentmergeviewer.TextMergeViewer";
-    
-    /**
-     * Detail pane text font
-     */
-    public static String DETAIL_PANE_TEXT_FONT = "org.eclipse.debug.ui.DetailPaneFont";
-    
-    /**
-     * Memory view table font
-     */
-    public static String MEMORY_VIEW_TABLE_FONT = "org.eclipse.debug.ui.MemoryViewTableFont";
 
-    /**
-     * Variable text font
-     */
-    public static String VARIABLE_TEXT_FONT = "org.eclipse.debug.ui.VariableTextFont";
- 
-    /**
-     * Console font
-     */
-    public static String CONSOLE_FONT = "org.eclipse.debug.ui.consoleFont";
-
-    /**
-     * Part title font
-     */
-    public static String PART_TITLE_FONT = "org.eclipse.ui.workbench.TAB_TEXT_FONT";
-
-    /**
-     * Tree and Table font for views
-     */
-    public static String TREE_AND_TABLE_FONT_FOR_VIEWS = "org.eclipse.ui.workbench.TREE_TABLE_FONT";
-
-    /**
-     * Header Font
-     */
-    public static String HEADER_FONT = "org.eclipse.jface.headerfont";
-
-    /**
-     * Text Font
-     */
-    public static String TEXT_FONT = "org.eclipse.jface.textfont";
-
-    /**
-     * Text Editor Block Selection Font
-     */
-    public static String TEXT_EDITOR_BLOCK_SELECTION_FONT = "org.eclipse.ui.workbench.texteditor.blockSelectionModeFont";
-
-    /**
-     * Banner font
-     */
-    public static String BANNER_FONT = JFaceResources.BANNER_FONT;
-
-    /**
-     * Dialog font
-     */
-    public static String DIALOG_FONT = JFaceResources.DIALOG_FONT;
 
     private IEditorPart lastActiveEditor = null;
     private IPerspectiveDescriptor lastPerspective = null;
@@ -137,7 +87,10 @@ public class ApplicationWorkbenchWindowAdvisor extends IDEWorkbenchWindowAdvisor
         }
     };
 
-    public ApplicationWorkbenchWindowAdvisor(ApplicationWorkbenchAdvisor advisor, IWorkbenchWindowConfigurer configurer) {
+    public ApplicationWorkbenchWindowAdvisor(
+        @NotNull ApplicationWorkbenchAdvisor advisor,
+        @NotNull IWorkbenchWindowConfigurer configurer
+    ) {
         super(advisor, configurer);
 
         if (DBeaverApplication.WORKSPACE_MIGRATED) {
@@ -150,7 +103,6 @@ public class ApplicationWorkbenchWindowAdvisor extends IDEWorkbenchWindowAdvisor
     }
 
     private void refreshProjects() {
-
         // Refresh all projects
         for (IProject project : ResourcesPlugin.getWorkspace().getRoot().getProjects()) {
             try {
@@ -179,8 +131,9 @@ public class ApplicationWorkbenchWindowAdvisor extends IDEWorkbenchWindowAdvisor
         super.dispose();
     }
 
+    @NotNull
     @Override
-    public ActionBarAdvisor createActionBarAdvisor(IActionBarConfigurer configurer) {
+    public ActionBarAdvisor createActionBarAdvisor(@NotNull IActionBarConfigurer configurer) {
         log.debug("Create actions");
         return new ApplicationActionBarAdvisor(configurer);
     }
@@ -193,6 +146,13 @@ public class ApplicationWorkbenchWindowAdvisor extends IDEWorkbenchWindowAdvisor
     @Override
     public void preWindowOpen() {
         log.debug("Configure workbench window");
+
+        // Show Product Config, if applicable
+        showProductConfigDialog();
+
+        DesktopPlatform platform = DBWorkbench.getPlatform(DesktopPlatform.class);
+        platform.postInitialize();
+
         //super.preWindowOpen();
         // Set timeout for short jobs (like SQL queries)
         // Jobs longer than this will show progress dialog
@@ -223,10 +183,42 @@ public class ApplicationWorkbenchWindowAdvisor extends IDEWorkbenchWindowAdvisor
         DataSourceProviderRegistry.getInstance();
     }
 
+    private void showProductConfigDialog() {
+        if (!ProductConfigUtils.isAvailable() || !ProductConfigRegistry.getInstance().hasNewFeatures()) {
+            // Only show when the persisted configuration lacks any features defined in the registry, e.g. fresh start
+            return;
+        }
+        runWithSplashHidden(() -> {
+            var dialog = new ProductConfigWizardDialog(
+                getWindowConfigurer().getWindow(),
+                ProductConfigWizard.Origin.AUTOMATIC
+            );
+            if (dialog.open() == IDialogConstants.CANCEL_ID) {
+                DBRFeatureRegistry.getInstance().endTracking();
+                System.exit(0);
+            }
+        });
+    }
+
+    private static void runWithSplashHidden(@NotNull Runnable runnable) {
+        var splash = WorkbenchPlugin.getSplashShell(Display.getCurrent());
+        if (splash != null && !splash.isDisposed()) {
+            splash.setVisible(false);
+        }
+        try {
+            runnable.run();
+        } finally {
+            // Don't show splash back on Linux because setVisible blocks indefinitely for some reason
+            if (splash != null && !splash.isDisposed() && !RuntimeUtils.isLinux()) {
+                splash.setVisible(true);
+            }
+        }
+    }
+
     /**
      * Hooks the listeners needed on the window
      */
-    private void hookTitleUpdateListeners(IWorkbenchWindowConfigurer configurer) {
+    private void hookTitleUpdateListeners(@NotNull IWorkbenchWindowConfigurer configurer) {
         // hook up the listeners to update the window title
         configurer.getWindow().addPageListener(new IPageListener() {
             @Override
@@ -343,10 +335,12 @@ public class ApplicationWorkbenchWindowAdvisor extends IDEWorkbenchWindowAdvisor
 
 
         try {
-            DBeaverCommandLine.executeCommandLineCommands(
-                DBeaverCommandLine.getCommandLine(),
+            DBeaverCommandLine.getInstance().executeCommandLineCommands(
                 DBeaverApplication.getInstance().getInstanceServer(),
-                true);
+                true,
+                false,
+                Platform.getApplicationArgs()
+            );
         } catch (Exception e) {
             log.error("Error processing command line", e);
         }
@@ -354,8 +348,12 @@ public class ApplicationWorkbenchWindowAdvisor extends IDEWorkbenchWindowAdvisor
 
     protected void initWorkbenchWindows() {
         UIExecutionQueue.queueExec(() -> {
-            for (IWorkbenchWindowInitializer wwInit : WorkbenchHandlerRegistry.getInstance().getWorkbenchWindowInitializers()) {
-                wwInit.initializeWorkbenchWindow(getWindowConfigurer().getWindow());
+            for (var descriptor : WorkbenchHandlerRegistry.getInstance().getWorkbenchWindowInitializers()) {
+                try {
+                    descriptor.newInstance().initializeWorkbenchWindow(getWindowConfigurer());
+                } catch (DBException e) {
+                    log.error("Error creating workbench window initializer", e);
+                }
             }
         });
     }
@@ -372,31 +370,15 @@ public class ApplicationWorkbenchWindowAdvisor extends IDEWorkbenchWindowAdvisor
         } catch (Throwable e) {
             log.warn(e);
         }
-        if (isRunWorkbenchInitializers()) {
-            // Open New Connection wizard
-                initWorkbenchWindows();
+
+        if (!DBWorkbench.getPlatform().getPreferenceStore().getBoolean(DBeaverPreferences.UI_SHOW_ZOOM_RESTART_PROMPT)) {
+            Shell shell = getWindowConfigurer().getWindow().getShell();
+            if (shell != null) {
+                WorkbenchPatcher.removeZoomRestartPrompt(shell);
+            }
         }
 
-        UIUtils.asyncExec(() -> {
-            // FIXME: dirty hack of standard commands handle (e.g. CTRL+C)
-            // Re-activate active part to trigger keybindings refresh for it
-            IWorkbenchPage activePage = getWindowConfigurer().getWindow().getActivePage();
-            IWorkbenchPart activePart = activePage.getActivePart();
-            if (activePart != null) {
-                for (IViewReference viewReference : activePage.getViewReferences()) {
-                    IViewPart view = viewReference.getView(false);
-                    if (view != null && view != activePart) {
-                        activePage.activate(view);
-                        activePage.activate(activePart);
-                        break;
-                    }
-                }
-            }
-        });
-    }
-
-    protected boolean isRunWorkbenchInitializers() {
-        return true;
+        initWorkbenchWindows();
     }
 
     @Override

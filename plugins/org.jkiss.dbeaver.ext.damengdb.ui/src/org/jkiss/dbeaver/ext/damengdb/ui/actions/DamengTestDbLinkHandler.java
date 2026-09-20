@@ -32,6 +32,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.handlers.HandlerUtil;
 import org.eclipse.ui.menus.UIElement;
+import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.ext.damengdb.model.DamengDBLink;
 import org.jkiss.dbeaver.ext.damengdb.model.DamengObjectPersistAction;
 import org.jkiss.dbeaver.ext.damengdb.model.source.DamengSourceObject;
@@ -39,7 +40,6 @@ import org.jkiss.dbeaver.ext.damengdb.ui.internal.DamengUIMessages;
 import org.jkiss.dbeaver.model.DBPEvent;
 import org.jkiss.dbeaver.model.DBUtils;
 import org.jkiss.dbeaver.model.edit.DBEPersistAction;
-import org.jkiss.dbeaver.model.exec.DBCException;
 import org.jkiss.dbeaver.model.exec.DBCStatement;
 import org.jkiss.dbeaver.model.exec.DBCStatementType;
 import org.jkiss.dbeaver.model.exec.compile.DBCCompileError;
@@ -62,7 +62,7 @@ public class DamengTestDbLinkHandler extends DamengTaskHandler {
      * DBLink Test
      */
     public static boolean testDblink(DBRProgressMonitor monitor, DBCCompileLog compileLog, DamengDBLink dblink)
-        throws DBCException {
+        throws DBException {
         final DBEPersistAction[] testActions = dblink.getRunActions();
         if (ArrayUtils.isEmpty(testActions)) {
             return true;
@@ -84,7 +84,7 @@ public class DamengTestDbLinkHandler extends DamengTaskHandler {
                         dbStat.executeStatement();
                     }
                     action.afterExecute(session, null);
-                } catch (DBCException e) {
+                } catch (DBException e) {
                     action.afterExecute(session, e);
                     throw e;
                 }
@@ -135,8 +135,7 @@ public class DamengTestDbLinkHandler extends DamengTaskHandler {
                         // monitor.beginTask("Test", 1);
                         try {
                             testDblink(monitor, compileLog, dbLink);
-
-                        } catch (DBCException e) {
+                        } catch (DBException e) {
                             throw new InvocationTargetException(e);
                         } finally {
                             monitor.done();

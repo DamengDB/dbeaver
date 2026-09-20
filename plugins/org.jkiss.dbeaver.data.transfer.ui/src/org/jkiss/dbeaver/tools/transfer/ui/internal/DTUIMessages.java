@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2025 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
  */
 package org.jkiss.dbeaver.tools.transfer.ui.internal;
 
-import org.jkiss.dbeaver.utils.NLS;
+import org.eclipse.osgi.util.NLS;
 
 public class DTUIMessages extends NLS {
     static final String BUNDLE_NAME = "org.jkiss.dbeaver.tools.transfer.ui.internal.DTUIMessages"; //$NON-NLS-1$
@@ -24,8 +24,10 @@ public class DTUIMessages extends NLS {
     public static String data_transfer_wizard_name;
     public static String data_transfer_wizard_final_column_source;
     public static String data_transfer_wizard_final_column_source_container;
+    public static String data_transfer_wizard_final_column_source_format;
     public static String data_transfer_wizard_final_column_target;
     public static String data_transfer_wizard_final_column_target_container;
+    public static String data_transfer_wizard_final_column_target_format;
     public static String data_transfer_wizard_final_description;
     public static String data_transfer_wizard_final_group_tables;
     public static String data_transfer_wizard_final_group_objects;
@@ -65,6 +67,8 @@ public class DTUIMessages extends NLS {
     public static String database_consumer_wizard_on_duplicate_key_insert_method_text;
     public static String database_consumer_wizard_link_label_replace_method_wiki;
     public static String database_consumer_wizard_label_replace_method_not_supported;
+    public static String database_consumer_wizard_log_insert_queries_check;
+    public static String database_consumer_wizard_log_insert_queries_check_tip;
 
     public static String columns_mapping_dialog_shell_text;
     public static String columns_mapping_dialog_composite_label_text_source_container;
@@ -83,6 +87,9 @@ public class DTUIMessages extends NLS {
 
     public static String database_consumer_page_mapping_name_and_title;
     public static String database_consumer_page_mapping_description;
+    public static String database_consumer_page_mapping_button_recreate;
+    public static String database_consumer_page_mapping_button_transform_tip;
+    public static String database_consumer_page_mapping_target_unspecified;
     public static String database_consumer_page_mapping_column_source_text;
     public static String database_consumer_page_mapping_column_target_text;
     public static String database_consumer_page_mapping_column_mapping_text;
@@ -199,6 +206,7 @@ public class DTUIMessages extends NLS {
     public static String database_consumer_page_mapping_error_no_schema_changes_info;
     public static String database_consumer_page_mapping_error_schema_save_title;
     public static String database_consumer_page_mapping_error_schema_save_info;
+    public static String database_consumer_page_mapping_browse_button_tooltip;
     public static String database_consumer_page_mapping_create_target_object_confirmation_title;
     public static String database_consumer_page_mapping_create_target_object_confirmation_question;
     public static String sql_script_task_page_settings_error_message_you_must_select_script_execute;
@@ -208,6 +216,8 @@ public class DTUIMessages extends NLS {
     public static String page_configure_table_properties_tab_title;
     public static String page_configure_table_DDL_button_execute;
     public static String page_configure_table_DDL_button_copy;
+    public static String page_configure_table_DDL_full_tab_title;
+    public static String page_configure_table_DDL_foreign_keys_comment;
     public static String page_configure_table_properties_text;
     public static String page_configure_table_properties_no_properties;
     public static String page_configure_table_properties_info_text;
@@ -233,6 +243,8 @@ public class DTUIMessages extends NLS {
     public static String pref_data_transfer_replacing_combo_tip;
     public static String pref_data_transfer_spanner_max_length;
     public static String pref_data_transfer_spanner_max_length_tip;
+    public static String pref_open_fs_browser_on_enter;
+    public static String pref_open_fs_browser_on_enter_tooltip;
 
     public static String mappings_rules_dialog_title;
     public static String mappings_rules_dialog_save_settings_checkbox;

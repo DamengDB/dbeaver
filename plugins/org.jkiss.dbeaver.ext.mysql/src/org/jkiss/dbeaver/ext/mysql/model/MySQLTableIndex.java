@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -128,8 +128,9 @@ public class MySQLTableIndex extends JDBCTableIndex<MySQLCatalog, MySQLTable> im
         return additionalInfo;
     }
 
+    @Nullable
     @Override
-    public List<MySQLTableIndexColumn> getAttributeReferences(@NotNull DBRProgressMonitor monitor)
+    public List<MySQLTableIndexColumn> getAttributeReferences(@Nullable DBRProgressMonitor monitor)
     {
         return columns;
     }
@@ -154,7 +155,7 @@ public class MySQLTableIndex extends JDBCTableIndex<MySQLCatalog, MySQLTable> im
 
     @NotNull
     @Override
-    public String getFullyQualifiedName(DBPEvaluationContext context)
+    public String getFullyQualifiedName(@NotNull DBPEvaluationContext context)
     {
         return DBUtils.getFullQualifiedName(getDataSource(),
             getTable().getContainer(),
@@ -200,6 +201,7 @@ public class MySQLTableIndex extends JDBCTableIndex<MySQLCatalog, MySQLTable> im
             return false;
         }
 
+        @Nullable
         @Override
         public Object[] getPossibleValues(MySQLTableIndex object) {
             return object.getDataSource().supportedIndexTypes().toArray();

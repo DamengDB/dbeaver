@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,8 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
+import org.jkiss.dbeaver.DBException;
+import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.core.CoreMessages;
 import org.jkiss.dbeaver.model.DBIcon;
 import org.jkiss.dbeaver.model.DBIconComposite;
@@ -53,8 +55,10 @@ import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
 public class NewConnectionFromUrlDialog extends BaseDialog {
+
+    private static final Log log = Log.getLog(NewConnectionFromUrlDialog.class);
+
     private static final int INPUT_DELAY_BEFORE_REFRESH = 300;
-    private static final String GENERIC_URL_TEMPLATE = "[jdbc:]{driver}://[{user}:{password}@]{host}[:{port}][/{database}]";
 
     private TreeViewer driverViewer;
     private CLabel errorLabel;
@@ -98,8 +102,9 @@ public class NewConnectionFromUrlDialog extends BaseDialog {
             errorLabel.setVisible(false);
 
             final AbstractJob refreshJob = new AbstractJob("Refresh suitable drivers timeout") {
+                @NotNull
                 @Override
-                protected IStatus run(DBRProgressMonitor monitor) {
+                protected IStatus run(@NotNull DBRProgressMonitor monitor) {
                     UIUtils.asyncExec(() -> {
                         final var drivers = getSuitableDrivers(urlText.getText());
 
@@ -172,17 +177,25 @@ public class NewConnectionFromUrlDialog extends BaseDialog {
                     continue;
                 }
 
-                if (DatabaseURL.getPattern(driver.getSampleURL()).matcher(url).matches()) {
-                    drivers.add(new DriverInfo(driver, driver.getSampleURL(), true));
-                    scores.put(provider, scores.computeIfAbsent(provider, x -> 0) + 1);
-                    continue;
+                try {
+                    if (DatabaseURL.getUrlPattern(driver.getSampleURL()).tryRecognize(url) != null) {
+                        drivers.add(new DriverInfo(driver, driver.getSampleURL(), true));
+                        scores.put(provider, scores.computeIfAbsent(provider, x -> 0) + 1);
+                        continue;
+                    }
+                } catch (DBException e) {
+                    log.debug(e);
                 }
 
-                final Matcher matcher = DatabaseURL.getPattern(GENERIC_URL_TEMPLATE).matcher(url);
+                try {
+                    final Map<String, String> params = DatabaseURL.getUrlPattern(DatabaseURL.Generic.TEMPLATE).tryRecognize(url);
 
-                if (matcher.matches() && driver.getId().contains(matcher.group("driver"))) {
-                    drivers.add(new DriverInfo(driver, GENERIC_URL_TEMPLATE, false));
-                    scores.put(provider, scores.computeIfAbsent(provider, x -> 0) + 1);
+                    if (params != null && driver.getId().contains(params.get("driver"))) {
+                        drivers.add(new DriverInfo(driver, DatabaseURL.Generic.TEMPLATE, false));
+                        scores.put(provider, scores.computeIfAbsent(provider, x -> 0) + 1);
+                    }
+                } catch (DBException ex) {
+                    log.debug(ex);
                 }
             }
 

@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,12 @@ package org.jkiss.dbeaver.ext.wmi.model;
 import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
-import org.jkiss.dbeaver.model.exec.*;
+import org.jkiss.dbeaver.model.exec.DBCException;
+import org.jkiss.dbeaver.model.exec.DBCExecutionSource;
+import org.jkiss.dbeaver.model.exec.DBCResultSet;
+import org.jkiss.dbeaver.model.exec.DBCStatementType;
+import org.jkiss.dbeaver.model.impl.AbstractStatement;
+import org.jkiss.dbeaver.model.qm.QMUtils;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 import org.jkiss.wmi.service.WMIConstants;
 import org.jkiss.wmi.service.WMIException;
@@ -31,76 +36,68 @@ import java.util.List;
 /**
  * WMI statement
  */
-public class WMIStatement implements DBCStatement {
-    private WMISession session;
+public class WMIStatement extends AbstractStatement<WMISession> {
     private DBCStatementType type;
-    private String query;
+    private final String query;
     private List<WMIObject> queryResult;
     private long firstRow;
     private long maxRows;
     private DBCExecutionSource source;
 
-    public WMIStatement(WMISession session, DBCStatementType type, String query)
-    {
-        this.session = session;
+    public WMIStatement(@NotNull WMISession session, @NotNull DBCStatementType type, @NotNull String query) {
+        super(session);
         this.type = type;
         this.query = query;
-    }
 
-    WMIService getService()
-    {
-        return session.getDataSource().getService();
+        if (isQMLoggingEnabled()) {
+            QMUtils.getDefaultHandler().handleStatementOpen(this);
+        }
     }
 
     @NotNull
-    @Override
-    public DBCSession getSession()
-    {
-        return session;
+    WMIService getService() {
+        return getSession().getDataSource().getService();
     }
 
     @Nullable
     @Override
-    public String getQueryString()
-    {
+    public String getQueryString() {
         return query;
     }
 
     @Override
-    public boolean executeStatement() throws DBCException
-    {
+    public boolean executeStatement() throws DBCException {
         try {
             WMIObjectCollectorSink sink = new WMIObjectCollectorSink(
-                session.getProgressMonitor(),
+                getSession().getProgressMonitor(),
                 getService(),
                 firstRow,
-                maxRows);
+                maxRows
+            );
             getService().executeQuery(query, sink, WMIConstants.WBEM_FLAG_SEND_STATUS);
             sink.waitForFinish();
             queryResult = sink.getObjectList();
             return true;
         } catch (WMIException e) {
-            throw new DBCException(e, session.getExecutionContext());
+            throw new DBCException(e, getSession().getExecutionContext());
         }
     }
 
     @Nullable
     @Override
-    public DBCResultSet openResultSet() throws DBCException
-    {
+    public DBCResultSet openResultSet() throws DBCException {
         if (queryResult == null) {
             return null;
         }
         try {
-            return new WMIResultSet(session, null, queryResult);
+            return new WMIResultSet(getSession(), this, queryResult);
         } catch (WMIException e) {
-            throw new DBCException(e, session.getExecutionContext());
+            throw new DBCException(e, getSession().getExecutionContext());
         }
     }
 
     @Override
-    public long getUpdateRowCount() throws DBCException
-    {
+    public long getUpdateRowCount() throws DBCException {
         return -1;
     }
 
@@ -110,14 +107,7 @@ public class WMIStatement implements DBCStatement {
     }
 
     @Override
-    public void close()
-    {
-
-    }
-
-    @Override
-    public void setLimit(long offset, long limit) throws DBCException
-    {
+    public void setLimit(long offset, long limit) throws DBCException {
         this.firstRow = offset;
         this.maxRows = limit;
     }
@@ -140,20 +130,17 @@ public class WMIStatement implements DBCStatement {
 
     @Nullable
     @Override
-    public DBCExecutionSource getStatementSource()
-    {
+    public DBCExecutionSource getStatementSource() {
         return source;
     }
 
     @Override
-    public void setStatementSource(DBCExecutionSource source)
-    {
+    public void setStatementSource(DBCExecutionSource source) {
         this.source = source;
     }
 
     @Override
-    public void cancelBlock(@NotNull DBRProgressMonitor monitor, @Nullable Thread blockThread) throws DBException
-    {
+    public void cancelBlock(@NotNull DBRProgressMonitor monitor, @Nullable Thread blockThread) throws DBException {
     }
 
 }

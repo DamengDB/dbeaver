@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ import java.util.Map;
 public class SQLServerDataTypeManager extends SQLObjectEditor<SQLServerDataType, SQLServerSchema> {
 
     @Override
-    public boolean canEditObject(SQLServerDataType object) {
+    public boolean canEditObject(@NotNull SQLServerDataType object) {
         return false;
     }
 
@@ -53,7 +53,13 @@ public class SQLServerDataTypeManager extends SQLObjectEditor<SQLServerDataType,
     }
 
     @Override
-    protected SQLServerDataType createDatabaseObject(@NotNull DBRProgressMonitor monitor, @NotNull DBECommandContext context, Object container, Object copyFrom, @NotNull Map<String, Object> options) throws DBException {
+    protected SQLServerDataType createDatabaseObject(
+        @NotNull DBRProgressMonitor monitor,
+        @NotNull DBECommandContext context,
+        @NotNull Object container,
+        @Nullable Object copyFrom,
+        @NotNull Map<String, Object> options
+    ) throws DBException {
         throw new IllegalStateException("Not implemented");
     }
 

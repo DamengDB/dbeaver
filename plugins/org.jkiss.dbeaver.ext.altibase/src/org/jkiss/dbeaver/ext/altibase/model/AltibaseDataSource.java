@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,6 +83,8 @@ public class AltibaseDataSource extends GenericDataSource implements DBPObjectSt
     private String dbName;
     String queryGetActiveDB;
 
+    private int lobCacheThreshold;
+
     public AltibaseDataSource(DBRProgressMonitor monitor, DBPDataSourceContainer container, AltibaseMetaModel metaModel)
             throws DBException {
         super(monitor, container, metaModel, new AltibaseSQLDialect());
@@ -97,6 +99,7 @@ public class AltibaseDataSource extends GenericDataSource implements DBPObjectSt
     @Override
     public void initialize(@NotNull DBRProgressMonitor monitor) throws DBException {
         super.initialize(monitor);
+        loadLobThreshold(monitor);
 
         // PublicSchema is for global objects such as public synonym.
         publicSchema = new GenericSchema(this, null, AltibaseConstants.USER_PUBLIC);
@@ -183,7 +186,7 @@ public class AltibaseDataSource extends GenericDataSource implements DBPObjectSt
 
     @Nullable
     @Override
-    public <T> T getAdapter(Class<T> adapter) {
+    public <T> T getAdapter(@NotNull Class<T> adapter) {
         if (adapter == DBCServerOutputReader.class) {
             return adapter.cast(outputReader);
         } else if (adapter == DBCQueryPlanner.class) {
@@ -560,8 +563,8 @@ public class AltibaseDataSource extends GenericDataSource implements DBPObjectSt
     static class JobCache extends JDBCObjectLookupCache<GenericStructContainer, AltibaseJob> {
         
         @Override
-        protected AltibaseJob fetchObject(@NotNull JDBCSession session, GenericStructContainer owner, 
-                @NotNull JDBCResultSet dbResult) throws SQLException, DBException {
+        protected AltibaseJob fetchObject(@NotNull JDBCSession session, @NotNull GenericStructContainer owner,
+                                          @NotNull JDBCResultSet dbResult) throws SQLException, DBException {
             return new AltibaseJob(owner, dbResult);
         }
 
@@ -630,8 +633,8 @@ public class AltibaseDataSource extends GenericDataSource implements DBPObjectSt
     static class DbLinkCache extends JDBCObjectLookupCache<GenericStructContainer, AltibaseDbLink> {
 
         @Override
-        protected AltibaseDbLink fetchObject(@NotNull JDBCSession session, GenericStructContainer owner, 
-                @NotNull JDBCResultSet dbResult) throws SQLException, DBException {
+        protected AltibaseDbLink fetchObject(@NotNull JDBCSession session, @NotNull GenericStructContainer owner,
+                                             @NotNull JDBCResultSet dbResult) throws SQLException, DBException {
             return new AltibaseDbLink(owner, dbResult);
         }
 
@@ -671,7 +674,7 @@ public class AltibaseDataSource extends GenericDataSource implements DBPObjectSt
     }
 
     @Override
-    public void collectObjectStatistics(DBRProgressMonitor monitor, boolean totalSizeOnly, boolean forceRefresh) throws DBException {
+    public void collectObjectStatistics(@NotNull DBRProgressMonitor monitor, boolean totalSizeOnly, boolean forceRefresh) throws DBException {
         if (hasStatistics && !forceRefresh) {
             return;
         }
@@ -814,5 +817,35 @@ public class AltibaseDataSource extends GenericDataSource implements DBPObjectSt
                 callBackMsg.delete(0, callBackMsg.length());
             }
         }
+    }
+
+    ///////////////////////////////////////////////
+    // Server Property: LOB_CACHE_THRESHOLD
+    private void loadLobThreshold(@NotNull DBRProgressMonitor monitor) {
+        try (JDBCSession session = DBUtils.openMetaSession(monitor, this, "Load LOB Threshold")) {
+            try (JDBCPreparedStatement dbStat = session.prepareStatement(
+                    "SELECT VALUE1 FROM V$PROPERTY WHERE NAME = 'LOB_CACHE_THRESHOLD'")) {
+                try (JDBCResultSet dbResult = dbStat.executeQuery()) {
+                    if (dbResult.next()) {
+                        this.lobCacheThreshold = dbResult.getInt(1);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Could not load LOB_CACHE_THRESHOLD, using default.", e);
+            this.lobCacheThreshold = AltibaseConstants.PROP_LOB_CACHE_THRESHOLD_DEFAULT;
+        }
+    }
+
+    /**
+     * Returns the safe character length threshold for LOB value handler.
+     *
+     * LOB_CACHE_THRESHOLD is defined in bytes. Although Java String uses UTF-16 internally,
+     * character data is often handled or stored in UTF-8 where a character may take up to
+     * 3 bytes (or more). To avoid underestimation, the value is conservatively divided by 3
+     * to approximate a safe character-based threshold.
+     */
+    public long getLobCacheThreshold4Char() {
+        return (lobCacheThreshold / 3);
     }
 }

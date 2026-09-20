@@ -43,11 +43,11 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 
-import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.ext.damengdb.internal.DamengMessages;
 import org.jkiss.dbeaver.ext.damengdb.model.plan.DamengExecutionPlan;
 import org.jkiss.dbeaver.model.data.json.JSONUtils;
+import org.jkiss.dbeaver.model.exec.jdbc.JDBCObjectSupplier;
 import org.jkiss.dbeaver.model.exec.jdbc.JDBCResultSet;
 import org.jkiss.dbeaver.model.exec.jdbc.JDBCSession;
 import org.jkiss.dbeaver.model.exec.jdbc.JDBCStatement;
@@ -55,20 +55,20 @@ import org.jkiss.dbeaver.model.impl.jdbc.exec.JDBCFactoryDefault;
 import org.jkiss.dbeaver.model.impl.jdbc.exec.JDBCStatementImpl;
 
 public class DamengJDBCFactory extends JDBCFactoryDefault {
-	
-    @Override
-    public JDBCStatement createStatement(@NotNull JDBCSession session, @NotNull Statement original,
-                                         boolean disableLogging) throws SQLException {
-        return new DmJDBCStatement<>(session, original, disableLogging);
-    }
+
+	@Override
+	public JDBCStatement createStatement(JDBCSession session, JDBCObjectSupplier<Statement> stmtSupplier,
+			boolean disableLogging) throws SQLException {
+		return new DmJDBCStatement<>(session, stmtSupplier, disableLogging);
+	}
 }
 
 @SuppressWarnings(value = {"rawtypes", "unchecked"})
 class DmJDBCStatement<STATEMENT extends Statement> extends JDBCStatementImpl {
     private JDBCSession session;
 
-    public DmJDBCStatement(@NotNull JDBCSession connection, @NotNull STATEMENT original, boolean disableLogging) {
-        super(connection, original, disableLogging);
+    public DmJDBCStatement(JDBCSession connection, JDBCObjectSupplier<Statement> stmtSupplier, boolean disableLogging) throws SQLException {
+        super(connection, stmtSupplier, null, disableLogging);
         this.session = connection;
     }
 

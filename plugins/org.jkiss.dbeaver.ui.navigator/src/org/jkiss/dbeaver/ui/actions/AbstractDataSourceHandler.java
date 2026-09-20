@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,9 +55,11 @@ public abstract class AbstractDataSourceHandler extends AbstractHandler {
         }
 
         ISelection selection = HandlerUtil.getCurrentSelection(event);
-        DBSObject selectedObject = NavigatorUtils.getSelectedObject(selection);
-        if (selectedObject != null) {
-            return DBUtils.getDefaultContext(selectedObject, false);
+        if (selection != null) {
+            DBSObject selectedObject = NavigatorUtils.getSelectedObject(selection);
+            if (selectedObject != null) {
+                return DBUtils.getDefaultContext(selectedObject, false);
+            }
         }
 
         return null;
@@ -94,22 +96,25 @@ public abstract class AbstractDataSourceHandler extends AbstractHandler {
     }
 
     @Nullable
-    public static DBPDataSourceContainer getActiveDataSourceContainer(IEditorPart activeEditor, IWorkbenchPart activePart, ISelection selection) {
+    public static DBPDataSourceContainer getActiveDataSourceContainer(
+        @Nullable IEditorPart activeEditor,
+        @Nullable IWorkbenchPart activePart,
+        @Nullable ISelection selection
+    ) {
         if (activeEditor != null) {
-            DBPDataSourceContainer container = getDataSourceContainerFromPart(activeEditor);
-            if (container != null) {
-                return container;
-            }
-            return null;
+            return getDataSourceContainerFromPart(activeEditor);
         }
         DBPDataSourceContainer container = getDataSourceContainerFromPart(activePart);
         if (container != null) {
             return container;
         }
 
+        if (selection == null) {
+            return null;
+        }
         DBSObject selectedObject = NavigatorUtils.getSelectedObject(selection);
-        if (selectedObject instanceof DBPDataSourceContainer) {
-            return (DBPDataSourceContainer) selectedObject;
+        if (selectedObject instanceof DBPDataSourceContainer selectedContainer) {
+            return selectedContainer;
         } else if (selectedObject != null) {
             DBPDataSource dataSource = selectedObject.getDataSource();
             return dataSource == null ? null : dataSource.getContainer();
@@ -118,12 +123,13 @@ public abstract class AbstractDataSourceHandler extends AbstractHandler {
         return null;
     }
 
-    public static DBPDataSourceContainer getDataSourceContainerFromPart(IWorkbenchPart activePart) {
-        if (activePart instanceof DBPDataSourceContainerProvider) {
-            return ((DBPDataSourceContainerProvider) activePart).getDataSourceContainer();
+    @Nullable
+    public static DBPDataSourceContainer getDataSourceContainerFromPart(@Nullable IWorkbenchPart activePart) {
+        if (activePart instanceof DBPDataSourceContainerProvider sourceContainerProvider) {
+            return sourceContainerProvider.getDataSourceContainer();
         }
-        if (activePart instanceof DBPContextProvider) {
-            DBCExecutionContext context = ((DBPContextProvider) activePart).getExecutionContext();
+        if (activePart instanceof DBPContextProvider activeContextProvider) {
+            DBCExecutionContext context = activeContextProvider.getExecutionContext();
             return context == null ? null : context.getDataSource().getContainer();
         }
         return null;

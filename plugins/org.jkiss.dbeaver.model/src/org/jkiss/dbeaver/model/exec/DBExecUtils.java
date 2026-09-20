@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2025 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import org.jkiss.dbeaver.model.data.*;
 import org.jkiss.dbeaver.model.edit.DBECommand;
 import org.jkiss.dbeaver.model.edit.DBECommandContext;
 import org.jkiss.dbeaver.model.edit.DBEPersistAction;
+import org.jkiss.dbeaver.model.impl.AbstractExecutionContext;
 import org.jkiss.dbeaver.model.impl.DBObjectNameCaseTransformer;
 import org.jkiss.dbeaver.model.impl.edit.SQLDatabasePersistAction;
 import org.jkiss.dbeaver.model.impl.edit.SQLDatabasePersistActionComment;
@@ -56,6 +57,7 @@ import org.jkiss.dbeaver.model.struct.rdb.DBSTableIndex;
 import org.jkiss.dbeaver.model.virtual.DBVEntity;
 import org.jkiss.dbeaver.model.virtual.DBVEntityConstraint;
 import org.jkiss.dbeaver.model.virtual.DBVUtils;
+import org.jkiss.dbeaver.runtime.DBInterruptedException;
 import org.jkiss.dbeaver.runtime.DBWorkbench;
 import org.jkiss.dbeaver.runtime.jobs.DefaultInvalidationFeedbackHandler;
 import org.jkiss.dbeaver.runtime.jobs.InvalidateJob;
@@ -64,6 +66,7 @@ import org.jkiss.utils.CommonUtils;
 
 import java.lang.reflect.InvocationTargetException;
 import java.net.Authenticator;
+import java.nio.channels.ClosedByInterruptException;
 import java.util.*;
 
 /**
@@ -88,17 +91,19 @@ public class DBExecUtils {
         boolean recoveryFailed;
     }
 
+    @Nullable
     public static DBPDataSourceContainer getCurrentThreadContext() {
         return ACTIVE_CONTEXT.get();
     }
 
+    @NotNull
     public static List<DBPDataSourceContainer> getActiveContexts() {
         synchronized (ACTIVE_CONTEXTS) {
             return new ArrayList<>(ACTIVE_CONTEXTS);
         }
     }
 
-    public static void startContextInitiation(DBPDataSourceContainer context) {
+    public static void startContextInitiation(@NotNull DBPDataSourceContainer context) {
         ACTIVE_CONTEXT.set(context);
         synchronized (ACTIVE_CONTEXTS) {
             ACTIVE_CONTEXTS.add(context);
@@ -118,14 +123,15 @@ public class DBExecUtils {
         }
     }
 
-    public static void finishContextInitiation(DBPDataSourceContainer context) {
+    public static void finishContextInitiation(@NotNull DBPDataSourceContainer context) {
         ACTIVE_CONTEXT.remove();
         synchronized (ACTIVE_CONTEXTS) {
             ACTIVE_CONTEXTS.remove(context);
         }
     }
 
-    public static DBPDataSourceContainer findConnectionContext(String host, int port, String path) {
+    @Nullable
+    public static DBPDataSourceContainer findConnectionContext(@NotNull String host, int port, @Nullable String path) {
         DBPDataSourceContainer curContext = getCurrentThreadContext();
         if (curContext != null) {
             return contextMatches(host, port, curContext) ? curContext : null;
@@ -140,7 +146,7 @@ public class DBExecUtils {
         return null;
     }
 
-    private static boolean contextMatches(String host, int port, DBPDataSourceContainer ctx) {
+    private static boolean contextMatches(@NotNull String host, int port, @NotNull DBPDataSourceContainer ctx) {
         DBPConnectionConfiguration cfg = ctx.getConnectionConfiguration();
         if (CommonUtils.equalObjects(cfg.getHostName(), host) && String.valueOf(port).equals(cfg.getHostPort())) {
             return true;
@@ -163,11 +169,33 @@ public class DBExecUtils {
         return DBPErrorAssistant.ErrorType.NORMAL;
     }
 
+    public static boolean isExecutionCanceled(@Nullable DBPDataSource dataSource, @NotNull Throwable error) {
+        for (Throwable t = error; t != null; t = t.getCause()) {
+            if (t instanceof InterruptedException ||
+                t instanceof DBInterruptedException ||
+                t instanceof ClosedByInterruptException) {
+                return true;
+            }
+            if (dataSource != null &&
+                discoverErrorType(dataSource, t) == DBPErrorAssistant.ErrorType.EXECUTION_CANCELED) {
+                return true;
+            }
+            if (t.getCause() == t) {
+                break;
+            }
+        }
+        return false;
+    }
+
     /**
      * @param param DBRProgressProgress monitor or DBCSession
      *
      */
-    public static <T> boolean tryExecuteRecover(@NotNull T param, @NotNull DBPDataSource dataSource, @NotNull DBRRunnableParametrized<T> runnable) throws DBException {
+    public static <T> boolean tryExecuteRecover(
+        @NotNull T param,
+        @NotNull DBPDataSource dataSource,
+        @NotNull DBRRunnableParametrized<T> runnable
+    ) throws DBException {
         RecoveryState recoveryState = DBExecUtils.recoveryStack.get();
         if (recoveryState == null) {
             recoveryState = new RecoveryState();
@@ -191,56 +219,59 @@ public class DBExecUtils {
                     break;
                 } catch (InvocationTargetException e) {
                     lastError = e.getTargetException();
-                    if (!recoverEnabled || recoveryState.recoveryFailed) {
-                        // Can't recover
-                        break;
-                    }
-                    DBPErrorAssistant.ErrorType errorType = discoverErrorType(dataSource, lastError);
-                    if (errorType != DBPErrorAssistant.ErrorType.TRANSACTION_ABORTED && errorType != DBPErrorAssistant.ErrorType.CONNECTION_LOST) {
-                        // Some other error
-                        break;
-                    }
-                    DBRProgressMonitor monitor;
-                    if (param instanceof DBRProgressMonitor) {
-                        monitor = (DBRProgressMonitor) param;
-                    } else if (param instanceof DBCSession) {
-                        monitor = ((DBCSession) param).getProgressMonitor();
-                    } else {
-                        monitor = new VoidProgressMonitor();
-                    }
-                    if (!monitor.isCanceled()) {
-
-                        if (errorType == DBPErrorAssistant.ErrorType.TRANSACTION_ABORTED) {
-                            // Transaction aborted
-                            DBCExecutionContext executionContext = null;
-                            if (lastError instanceof DBCException) {
-                                executionContext = ((DBCException) lastError).getExecutionContext();
-                            }
-                            if (executionContext != null) {
-                                log.debug("Invalidate context [" + executionContext.getDataSource().getContainer().getName() + "/" + executionContext.getContextName() + "] transactions");
-                            } else {
-                                log.debug("Invalidate datasource [" + dataSource.getContainer().getName() + "] transactions");
-                            }
-                            InvalidateJob.invalidateTransaction(monitor, dataSource, executionContext);
-                        } else {
-                            // Do not recover if connection was canceled
-                            log.debug("Invalidate datasource '" + dataSource.getContainer().getName() + "' connections...");
-                            InvalidateJob.invalidateDataSource(
-                                monitor,
-                                dataSource,
-                                false,
-                                true,
-                                new DefaultInvalidationFeedbackHandler()
-                            );
-                            if (i < tryCount - 1) {
-                                log.error("Operation failed. Retry count remains = " + (tryCount - i - 1), lastError);
-                            }
-                        }
-                    }
                 } catch (InterruptedException e) {
                     log.error("Operation interrupted");
                     return false;
+                } catch (Exception e) {
+                    lastError = e;
                 }
+                if (!recoverEnabled || recoveryState.recoveryFailed) {
+                    // Can't recover
+                    break;
+                }
+                DBPErrorAssistant.ErrorType errorType = discoverErrorType(dataSource, lastError);
+                if (errorType != DBPErrorAssistant.ErrorType.TRANSACTION_ABORTED && errorType != DBPErrorAssistant.ErrorType.CONNECTION_LOST) {
+                    // Some other error
+                    break;
+                }
+                DBRProgressMonitor monitor;
+                if (param instanceof DBRProgressMonitor) {
+                    monitor = (DBRProgressMonitor) param;
+                } else if (param instanceof DBCSession) {
+                    monitor = ((DBCSession) param).getProgressMonitor();
+                } else {
+                    monitor = new VoidProgressMonitor();
+                }
+                if (!monitor.isCanceled()) {
+
+                    if (errorType == DBPErrorAssistant.ErrorType.TRANSACTION_ABORTED) {
+                        // Transaction aborted
+                        DBCExecutionContext executionContext = null;
+                        if (lastError instanceof DBCException) {
+                            executionContext = ((DBCException) lastError).getExecutionContext();
+                        }
+                        if (executionContext != null) {
+                            log.debug("Invalidate context [" + executionContext.getDataSource().getContainer().getName() + "/" + executionContext.getContextName() + "] transactions");
+                        } else {
+                            log.debug("Invalidate datasource [" + dataSource.getContainer().getName() + "] transactions");
+                        }
+                        InvalidateJob.invalidateTransaction(monitor, dataSource, executionContext);
+                    } else {
+                        // Do not recover if connection was canceled
+                        log.debug("Invalidate datasource '" + dataSource.getContainer().getName() + "' connections...");
+                        InvalidateJob.invalidateDataSource(
+                            monitor,
+                            dataSource,
+                            false,
+                            true,
+                            new DefaultInvalidationFeedbackHandler()
+                        );
+                        if (i < tryCount - 1) {
+                            log.error("Operation failed. Retry count remains = " + (tryCount - i - 1), lastError);
+                        }
+                    }
+                }
+
             }
             if (lastError != null) {
                 recoveryState.recoveryFailed = true;
@@ -259,7 +290,7 @@ public class DBExecUtils {
         }
     }
 
-    public static void setStatementFetchSize(DBCStatement dbStat, long firstRow, long maxRows, int fetchSize) {
+    public static void setStatementFetchSize(@NotNull DBCStatement dbStat, long firstRow, long maxRows, int fetchSize) {
         boolean useFetchSize = fetchSize > 0 || dbStat.getSession().getDataSource().getContainer().getPreferenceStore().getBoolean(ModelPreferences.RESULT_SET_USE_FETCH_SIZE);
         if (useFetchSize) {
             if (fetchSize <= 0) {
@@ -274,13 +305,18 @@ public class DBExecUtils {
         }
     }
 
-    public static void executeScript(DBRProgressMonitor monitor, DBCExecutionContext executionContext, String jobName, List<DBEPersistAction> persistActions) {
+    public static void executeScript(
+        @NotNull DBRProgressMonitor monitor,
+        @NotNull DBCExecutionContext executionContext,
+        @NotNull String jobName,
+        @NotNull List<DBEPersistAction> persistActions
+    ) throws DBException {
         try (DBCSession session = executionContext.openSession(monitor, DBCExecutionPurpose.UTIL, jobName)) {
             executeScript(session, persistActions.toArray(new DBEPersistAction[0]));
         }
     }
 
-    public static void executeScript(DBCSession session, DBEPersistAction[] persistActions) {
+    public static void executeScript(@NotNull DBCSession session, @NotNull DBEPersistAction[] persistActions) {
         DBRProgressMonitor monitor = session.getProgressMonitor();
         boolean ignoreErrors = false;
         monitor.beginTask(session.getTaskTitle(), persistActions.length);
@@ -326,7 +362,10 @@ public class DBExecUtils {
         }
     }
 
-    public static void executePersistActions(DBCSession session, DBEPersistAction[] persistActions) throws DBCException {
+    public static void executePersistActions(
+        @NotNull DBCSession session,
+        @NotNull DBEPersistAction[] persistActions
+    ) throws DBException {
         DBRProgressMonitor monitor = session.getProgressMonitor();
         monitor.beginTask(session.getTaskTitle(), persistActions.length);
         try {
@@ -344,33 +383,38 @@ public class DBExecUtils {
         }
     }
 
-    public static void executePersistAction(DBCSession session, DBEPersistAction action) throws DBCException {
+    public static void executePersistAction(@NotNull DBCSession session, @NotNull DBEPersistAction action) throws DBException {
         if (action instanceof SQLDatabasePersistActionComment) {
             return;
         }
         String script = action.getScript();
-        if (script == null) {
+        if (CommonUtils.isEmpty(script)) {
             action.afterExecute(session, null);
-        } else {
-            DBCStatement dbStat = DBUtils.createStatement(session, script, false);
-            try {
-                action.beforeExecute(session);
-                dbStat.executeStatement();
-                if (action instanceof SQLDatabasePersistAction) {
-                    ((SQLDatabasePersistAction) action).afterExecute(session, dbStat, null);
-                } else {
-                    action.afterExecute(session, null);
-                }
-            } catch (DBCException e) {
-                action.afterExecute(session, e);
-                throw e;
-            } finally {
-                dbStat.close();
+            return;
+        }
+        boolean statementProcessed = false;
+        try (DBCStatement dbStat = DBUtils.createStatement(session, script, false)) {
+            action.beforeExecute(session);
+            dbStat.executeStatement();
+            statementProcessed = true;
+            if (action instanceof SQLDatabasePersistAction persistAction) {
+                persistAction.afterExecute(session, dbStat, null);
+            } else {
+                action.afterExecute(session, null);
             }
+        } catch (Throwable e) {
+            if (!statementProcessed) {
+                try {
+                    action.afterExecute(session, e);
+                } catch (Throwable ex) {
+                    log.debug("Error during error handle", ex);
+                }
+            }
+            throw e;
         }
     }
 
-    public static boolean checkSmartAutoCommit(DBCSession session, String queryText) {
+    public static boolean checkSmartAutoCommit(@NotNull DBCSession session, @NotNull String queryText) {
         DBCTransactionManager txnManager = DBUtils.getTransactionManager(session.getExecutionContext());
         if (txnManager != null) {
             try {
@@ -394,13 +438,20 @@ public class DBExecUtils {
         return false;
     }
 
-    public static void setExecutionContextDefaults(DBRProgressMonitor monitor, DBPDataSource dataSource, DBCExecutionContext executionContext, @Nullable String newInstanceName, @Nullable String curInstanceName, @Nullable String newObjectName) throws DBException {
+    public static void setExecutionContextDefaults(
+        @NotNull DBRProgressMonitor monitor,
+        @NotNull DBPDataSource dataSource,
+        @Nullable DBCExecutionContext executionContext,
+        @Nullable String newInstanceName,
+        @Nullable String curInstanceName,
+        @Nullable String newObjectName
+    ) throws DBException {
         DBSObjectContainer rootContainer = DBUtils.getAdapter(DBSObjectContainer.class, dataSource);
         if (rootContainer == null) {
             return;
         }
 
-        DBCExecutionContextDefaults contextDefaults = null;
+        DBCExecutionContextDefaults<?,?> contextDefaults = null;
         if (executionContext != null) {
             contextDefaults = executionContext.getContextDefaults();
         }
@@ -423,8 +474,8 @@ public class DBExecUtils {
 
         if (newCatalogName != null) {
             DBSObject newInstance = rootContainer.getChild(monitor, newCatalogName);
-            if (newInstance instanceof DBSCatalog) {
-                newCatalog = (DBSCatalog) newInstance;
+            if (newInstance instanceof DBSCatalog catalog) {
+                newCatalog = catalog;
             }
         }
         DBSObject newObject;
@@ -434,10 +485,10 @@ public class DBExecUtils {
             } else {
                 newObject = newCatalog.getChild(monitor, newObjectName);
             }
-            if (newObject instanceof DBSSchema) {
-                newSchema = (DBSSchema) newObject;
-            } else if (newObject instanceof DBSCatalog) {
-                newCatalog = (DBSCatalog) newObject;
+            if (newObject instanceof DBSSchema schema) {
+                newSchema = schema;
+            } else if (newObject instanceof DBSCatalog catalog) {
+                newCatalog = catalog;
             }
         }
 
@@ -452,7 +503,7 @@ public class DBExecUtils {
         }
     }
 
-    public static void recoverSmartCommit(DBCExecutionContext executionContext) {
+    public static void recoverSmartCommit(@NotNull DBCExecutionContext executionContext) {
         DBPDataSourceContainer container = executionContext.getDataSource().getContainer();
         DBPPreferenceStore preferenceStore = container.getPreferenceStore();
         DBPConnectionType connectionType = container.getConnectionConfiguration().getConnectionType();
@@ -470,8 +521,9 @@ public class DBExecUtils {
             DBCTransactionManager transactionManager = DBUtils.getTransactionManager(executionContext);
             if (transactionManager != null) {
                 new AbstractJob("Recover smart commit mode") {
+                    @NotNull
                     @Override
-                    protected IStatus run(DBRProgressMonitor monitor) {
+                    protected IStatus run(@NotNull DBRProgressMonitor monitor) {
                         if (!executionContext.isConnected()) {
                             return Status.OK_STATUS;
                         }
@@ -493,24 +545,47 @@ public class DBExecUtils {
         }
     }
 
-    public static DBSEntityConstraint getBestIdentifier(@Nullable DBRProgressMonitor monitor, @NotNull DBSEntity table, DBDAttributeBinding[] bindings)
-        throws DBException
-    {
-        if (table instanceof DBSDocumentContainer) {
-            return new DBSDocumentConstraint((DBSDocumentContainer) table);
+    /**
+     * Commit a transaction within the active context. If the context is in auto-commit mode, this method does nothing.
+     *
+     * @param monitor progress monitor
+     * @param context execution context to commit the transaction for
+     * @throws DBCException on any DB error during commit
+     */
+    public static void commitContextTransaction(
+        @NotNull DBRProgressMonitor monitor,
+        @NotNull DBCExecutionContext context
+    ) throws DBCException {
+        var manager = DBUtils.getTransactionManager(context);
+        if (manager == null || manager.isAutoCommit()) {
+            return;
+        }
+        try (DBCSession session = context.openSession(monitor, DBCExecutionPurpose.UTIL, "Commit transaction")) {
+            manager.commit(session);
+        }
+    }
+
+    @Nullable
+    public static DBSEntityConstraint getBestIdentifier(
+        @NotNull DBRProgressMonitor monitor,
+        @NotNull DBSEntity table,
+        @NotNull DBDAttributeBinding[] bindings
+    ) throws DBException {
+        if (table instanceof DBSDocumentContainer documentContainer) {
+            return new DBSDocumentConstraint(documentContainer);
         }
         List<DBSEntityConstraint> identifiers = new ArrayList<>(2);
         //List<DBSEntityConstraint> nonIdentifyingConstraints = null;
 
         {
-            if (table instanceof DBSTable && ((DBSTable) table).isView()) {
+            if (table instanceof DBSTable dbsTable && dbsTable.isView()) {
                 // Skip physical identifiers for views. There are nothing anyway
 
             } else {
                 // Check indexes first.
-                if (table instanceof DBSTable) {
+                if (table instanceof DBSTable dbsTable) {
                     try {
-                        Collection<? extends DBSTableIndex> indexes = ((DBSTable) table).getIndexes(monitor);
+                        Collection<? extends DBSTableIndex> indexes = dbsTable.getIndexes(monitor);
                         if (!CommonUtils.isEmpty(indexes)) {
                             // First search for primary index
                             for (DBSTableIndex index : indexes) {
@@ -557,8 +632,7 @@ public class DBExecUtils {
             // Find PK or unique key
             DBSEntityConstraint uniqueId = null;
             for (DBSEntityConstraint constraint : identifiers) {
-                if (constraint instanceof DBSEntityReferrer) {
-                    DBSEntityReferrer referrer = (DBSEntityReferrer) constraint;
+                if (constraint instanceof DBSEntityReferrer referrer) {
                     if (isGoodReferrer(monitor, bindings, referrer)) {
                         if (referrer.getConstraintType() == DBSEntityConstraintType.PRIMARY_KEY) {
                             return referrer;
@@ -591,11 +665,14 @@ public class DBExecUtils {
         // No physical identifiers or row ids
         // Make new or use existing virtual identifier
         DBVEntity virtualEntity = DBVUtils.getVirtualEntity(table, true);
-        return virtualEntity.getBestIdentifier();
+        return virtualEntity == null ? null : virtualEntity.getBestIdentifier();
     }
 
-    private static boolean isGoodReferrer(DBRProgressMonitor monitor, DBDAttributeBinding[] bindings, DBSEntityReferrer referrer) throws DBException
-    {
+    private static boolean isGoodReferrer(
+        @NotNull DBRProgressMonitor monitor,
+        @NotNull DBDAttributeBinding[] bindings,
+        @NotNull DBSEntityReferrer referrer
+    ) throws DBException {
         if (referrer instanceof DBDPseudoReferrer) {
             return true;
         }
@@ -618,19 +695,20 @@ public class DBExecUtils {
         return true;
     }
 
-    public static DBSEntityAssociation getAssociationByAttribute(DBDAttributeBinding attr) throws DBException {
+    @NotNull
+    public static DBSEntityAssociation getAssociationByAttribute(@NotNull DBDAttributeBinding attr) throws DBException {
         List<DBSEntityReferrer> referrers = attr.getReferrers();
         if (referrers != null) {
             for (final DBSEntityReferrer referrer : referrers) {
-                if (referrer instanceof DBSEntityAssociation) {
-                    return (DBSEntityAssociation) referrer;
+                if (referrer instanceof DBSEntityAssociation association) {
+                    return association;
                 }
             }
         }
         throw new DBException("Association not found in attribute [" + attr.getName() + "]");
     }
 
-    public static boolean equalAttributes(DBCAttributeMetaData attr1, DBCAttributeMetaData attr2) {
+    public static boolean equalAttributes(@Nullable DBCAttributeMetaData attr1, @Nullable DBCAttributeMetaData attr2) {
         return
             attr1 != null && attr2 != null &&
             SQLUtils.compareAliases(attr1.getLabel(), attr2.getLabel()) &&
@@ -645,16 +723,16 @@ public class DBExecUtils {
             CommonUtils.equalObjects(attr1.getTypeName(), attr2.getTypeName());
     }
 
-    public static double makeNumericValue(Object value) {
+    public static double makeNumericValue(@Nullable Object value) {
         if (value == null) {
             return 0;
-        } else if (value instanceof Number) {
-            return ((Number) value).doubleValue();
-        } else if (value instanceof Date) {
-            return ((Date) value).getTime();
-        } else if (value instanceof String) {
+        } else if (value instanceof Number number) {
+            return number.doubleValue();
+        } else if (value instanceof Date date) {
+            return date.getTime();
+        } else if (value instanceof String string) {
             try {
-                return Double.parseDouble((String) value);
+                return Double.parseDouble(string);
             } catch (NumberFormatException e) {
                 return 0.0;
             }
@@ -668,8 +746,8 @@ public class DBExecUtils {
         @Nullable DBSEntity sourceEntity,
         @Nullable DBCResultSet resultSet,
         @NotNull DBDAttributeBinding[] bindings,
-        @Nullable List<Object[]> rows) throws DBException
-    {
+        @Nullable List<Object[]> rows
+    ) throws DBException {
         DBRProgressMonitor monitor = session.getProgressMonitor();
         DBPDataSource dataSource = session.getDataSource();
         DBPDataSourceContainer container = dataSource.getContainer();
@@ -692,15 +770,15 @@ public class DBExecUtils {
 
                     monitor.subTask("Discover owner entity");
                     DBSDataContainer dataContainer = executionSource.getDataContainer();
-                    if (dataContainer instanceof DBSEntity) {
-                        entity = (DBSEntity) dataContainer;
+                    if (dataContainer instanceof DBSEntity entity1) {
+                        entity = entity1;
                     }
                     DBCEntityMetaData entityMeta = null;
                     if (entity == null) {
                         // Discover from entity metadata
                         Object sourceDescriptor = executionSource.getSourceDescriptor();
-                        if (sourceDescriptor instanceof SQLQuery) {
-                            sqlQuery = (SQLQuery) sourceDescriptor;
+                        if (sourceDescriptor instanceof SQLQuery query) {
+                            sqlQuery = query;
                             entityMeta = sqlQuery.getEntityMetadata(false);
                         }
                         if (entityMeta != null) {
@@ -715,8 +793,6 @@ public class DBExecUtils {
             }
 
             boolean needsTableMetaForColumnResolution = dataSource.getInfo().needsTableMetaForColumnResolution();
-
-            final Map<DBSEntity, DBDRowIdentifier> locatorMap = new IdentityHashMap<>();
 
             monitor.subTask("Discover attributes");
             for (DBDAttributeBinding binding : bindings) {
@@ -813,13 +889,16 @@ public class DBExecUtils {
                     if (bindingMeta.getPseudoAttribute() != null) {
                         tableColumn = bindingMeta.getPseudoAttribute().createFakeAttribute(attrEntity, attrMeta);
                     } else if (columnName != null) {
-                        if (sqlQuery == null) {
+                        boolean isAllColumns = sqlQuery != null && sqlQuery.getSelectItemAsteriskIndex() != -1;
+                        boolean isPlainOrAsterisk = selectItem != null && (selectItem.isPlainColumn() || selectItem.getName().equals("*"));
+                        if (sqlQuery == null || isAllColumns || isPlainOrAsterisk) {
+                            // Ensure all attributes are cached.
+                            // Some implementations of DBSEntity use struct caches that provide granular
+                            // caching for children (attributes), which is good in some cases, but awful
+                            // here, since we might end up querying one attribute at a time
+                            attrEntity.getAttributes(monitor);
+
                             tableColumn = attrEntity.getAttribute(mdMonitor, columnName);
-                        } else {
-                            boolean isAllColumns = sqlQuery.getSelectItemAsteriskIndex() != -1;
-                            if (isAllColumns || (selectItem != null && (selectItem.isPlainColumn() || selectItem.getName().equals("*")))) {
-                                tableColumn = attrEntity.getAttribute(mdMonitor, columnName);
-                            }
                         }
                     }
 
@@ -855,38 +934,10 @@ public class DBExecUtils {
             }
             monitor.worked(1);
 
-            {
-                // Init row identifiers
-                monitor.subTask("Detect unique identifiers");
-                for (DBDAttributeBinding binding : bindings) {
-                    if (!(binding instanceof DBDAttributeBindingMeta bindingMeta)) {
-                        continue;
-                    }
-                    //monitor.subTask("Find attribute '" + binding.getName() + "' identifier");
-                    DBSEntityAttribute attr = binding.getEntityAttribute();
-                    if (attr == null) {
-                        bindingMeta.setRowIdentifierStatus(ModelMessages.no_corresponding_table_column_text);
-                        continue;
-                    }
-                    DBSEntity attrEntity = attr.getParentObject();
-                    if (attrEntity != null) {
-                        DBDRowIdentifier rowIdentifier = locatorMap.get(attrEntity);
-                        if (rowIdentifier == null) {
-                            DBSEntityConstraint entityIdentifier = getBestIdentifier(mdMonitor, attrEntity, bindings);
-                            if (entityIdentifier != null) {
-                                rowIdentifier = new DBDRowIdentifier(
-                                    attrEntity,
-                                    entityIdentifier);
-                                locatorMap.put(attrEntity, rowIdentifier);
-                            } else {
-                                bindingMeta.setRowIdentifierStatus(ModelMessages.cannot_determine_unique_row_identifier_text);
-                            }
-                        }
-                        bindingMeta.setRowIdentifier(rowIdentifier);
-                    }
-                }
-                monitor.worked(1);
-            }
+            // Init row identifiers
+            monitor.subTask("Detect unique identifiers");
+            final Map<DBSEntity, DBDRowIdentifier> locatorMap = bindUniqueIdentifiers(bindings, mdMonitor);
+            monitor.worked(1);
 
             if (rows != null && !mdMonitor.isForceCacheUsage()) {
                 monitor.subTask("Read results metadata");
@@ -916,6 +967,39 @@ public class DBExecUtils {
             monitor.done();
         }
     }
+
+    @NotNull
+    public static Map<DBSEntity, DBDRowIdentifier> bindUniqueIdentifiers(
+        @NotNull DBDAttributeBinding[] bindings,
+        @NotNull DBRProgressMonitor mdMonitor
+    ) throws DBException {
+        Map<DBSEntity, DBDRowIdentifier> locatorMap = new IdentityHashMap<>();
+
+        for (DBDAttributeBinding binding : bindings) {
+            if (!(binding instanceof DBDAttributeBindingMeta bindingMeta)) {
+                continue;
+            }
+            //monitor.subTask("Find attribute '" + binding.getName() + "' identifier");
+            DBSEntityAttribute attr = binding.getEntityAttribute();
+            if (attr == null) {
+                bindingMeta.setRowIdentifierStatus(ModelMessages.no_corresponding_table_column_text);
+                continue;
+            }
+            DBSEntity attrEntity = attr.getParentObject();
+            DBDRowIdentifier rowIdentifier = locatorMap.get(attrEntity);
+            if (rowIdentifier == null) {
+                DBSEntityConstraint entityIdentifier = getBestIdentifier(mdMonitor, attrEntity, bindings);
+                if (entityIdentifier != null) {
+                    rowIdentifier = new DBDRowIdentifier(attrEntity, entityIdentifier);
+                    locatorMap.put(attrEntity, rowIdentifier);
+                }
+            }
+            bindingMeta.setRowIdentifier(rowIdentifier);
+        }
+
+        return locatorMap;
+    }
+
 
     private static boolean isSameDataTypes(@NotNull DBSEntityAttribute tableColumn, @NotNull DBCAttributeMetaData resultSetAttributeMeta) {
         if (tableColumn instanceof DBSTypedObjectEx) {
@@ -951,12 +1035,14 @@ public class DBExecUtils {
         return !dataContainer.isFeatureSupported(DBSDataManipulator.FEATURE_DATA_UPDATE);
     }
 
+    @Nullable
     public static String getAttributeReadOnlyStatus(@NotNull DBDAttributeBinding attribute) {
         return getAttributeReadOnlyStatus(attribute, true);
     }
 
+    @Nullable
     public static String getAttributeReadOnlyStatus(@NotNull DBDAttributeBinding attribute, boolean checkValidKey) {
-        if (attribute == null || attribute.getMetaAttribute() == null) {
+        if (attribute.getMetaAttribute() == null) {
             return "Null meta attribute";
         }
         if (attribute.getMetaAttribute().isReadOnly()) {
@@ -969,7 +1055,7 @@ public class DBExecUtils {
         }
         if (checkValidKey) {
             if (rowIdentifier.isIncomplete()) {
-                return "No valid row identifier found";
+                return "No unique key. Row modification is not available.";
             }
         }
         DBSEntity dataContainer = rowIdentifier.getEntity();
@@ -1013,11 +1099,12 @@ public class DBExecUtils {
         return null;
     }
 
+    @NotNull
     public static List<DBEPersistAction> getActionsListFromCommandContext(@NotNull DBRProgressMonitor monitor, DBECommandContext commandContext, DBCExecutionContext executionContext, Map<String, Object> options, @Nullable List<DBEPersistAction> actions) throws DBException {
         if (actions == null) {
             actions = new ArrayList<>();
         }
-        for (DBECommand cmd : commandContext.getFinalCommands()) {
+        for (DBECommand<?> cmd : commandContext.getFinalCommands()) {
             DBEPersistAction[] persistActions = cmd.getPersistActions(monitor, executionContext, options);
             if (persistActions != null) {
                 Collections.addAll(actions, persistActions);
@@ -1064,4 +1151,23 @@ public class DBExecUtils {
         }
         return false;
     }
+
+    @NotNull
+    public static <CONTEXT extends AbstractExecutionContext<?,?>> CONTEXT tryOpenContext(
+        @NotNull CONTEXT executionContext,
+        @NotNull DBRRunnableWithParam<CONTEXT> runnable
+    ) throws DBException {
+        try {
+            runnable.run(executionContext);
+        } catch (Exception e) {
+            try {
+                executionContext.close();
+            } catch (Exception ex) {
+                log.debug("Error while closing just opened context");
+            }
+            throw e;
+        }
+        return executionContext;
+    }
+
 }

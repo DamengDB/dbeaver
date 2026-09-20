@@ -266,12 +266,6 @@ public abstract class SQLEditorBase extends BaseTextEditor implements
         return this.getActivePreferenceStore().getBoolean(SQLModelPreferences.ADVANCED_HIGHLIGHTING_ENABLE);
     }
 
-    public boolean isReadMetadataForQueryAnalysisEnabled() {
-        DBPPreferenceStore prefStore = this.getActivePreferenceStore();
-        return prefStore.getBoolean(SQLModelPreferences.READ_METADATA_FOR_SEMANTIC_ANALYSIS)
-            && !prefStore.getBoolean(ModelPreferences.META_DISABLE_EXTRA_READ);
-    }
-
     private void handleInputChange(IEditorInput input) {
         occurrencesHighlighter.updateInput(input);
     }
@@ -286,8 +280,7 @@ public abstract class SQLEditorBase extends BaseTextEditor implements
         return new String[]{
             TEXT_EDITOR_CONTEXT,
             SQLEditorContributions.SQL_EDITOR_CONTEXT,
-            SQLEditorContributions.SQL_EDITOR_SCRIPT_CONTEXT,
-            SQLEditorContributions.SQL_EDITOR_CONTROL_CONTEXT};
+            SQLEditorContributions.SQL_EDITOR_SCRIPT_CONTEXT};
     }
 
     @Override
@@ -396,16 +389,13 @@ public abstract class SQLEditorBase extends BaseTextEditor implements
 
             loadActivePreferenceSettings();
 
-            if (sourceViewer instanceof ITextViewerExtension) {
+            if (sourceViewer instanceof ITextViewerExtension && sqlSymbolInserter != null) {
                 ((ITextViewerExtension) sourceViewer).prependVerifyKeyListener(sqlSymbolInserter);
             }
         }
 
         if (sourceViewer != null) {
             final StyledText widget = sourceViewer.getTextWidget();
-
-            // Context listener
-            EditorUtils.trackControlContext(getSite(), widget, SQLEditorContributions.SQL_EDITOR_CONTROL_CONTEXT);
 
             // Mouse listener that moves cursor upon clicking with the right mouse button
             widget.addMouseListener(new MouseAdapter() {
@@ -650,7 +640,8 @@ public abstract class SQLEditorBase extends BaseTextEditor implements
             overviewRuler,
             true,
             styles,
-            this::getActivePreferenceStore
+            this::getActivePreferenceStore,
+            this
         );
     }
 
@@ -810,6 +801,8 @@ public abstract class SQLEditorBase extends BaseTextEditor implements
             formatMenu.add(getAction(ITextEditorActionConstants.UPPER_CASE));
             formatMenu.add(getAction(ITextEditorActionConstants.LOWER_CASE));
             formatMenu.add(ActionUtils.makeCommandContribution(getSite(), "org.jkiss.dbeaver.ui.editors.sql.trim.spaces"));
+            formatMenu.add(ActionUtils.makeCommandContribution(getSite(), "org.jkiss.dbeaver.ui.editors.sql.trim.leading.spaces"));
+            formatMenu.add(ActionUtils.makeCommandContribution(getSite(), "org.jkiss.dbeaver.ui.editors.sql.trim.trailing.spaces"));
             formatMenu.add(new Separator());
             formatMenu.add(ActionUtils.makeCommandContribution(getSite(), "org.jkiss.dbeaver.ui.editors.sql.word.wrap"));
             formatMenu.add(ActionUtils.makeCommandContribution(getSite(), "org.jkiss.dbeaver.ui.editors.sql.comment.single"));
@@ -948,7 +941,7 @@ public abstract class SQLEditorBase extends BaseTextEditor implements
     }
 
     public SQLScriptElement extractQueryAtPos(int currentPos) {
-        return parserContext == null ? null : SQLScriptParser.extractQueryAtPos(parserContext, currentPos);
+        return parserContext == null ? null : SQLScriptParser.extractQueryAtPos(parserContext, currentPos, false);
     }
 
     public SQLScriptElement extractNextQuery(boolean next) {
@@ -1380,5 +1373,4 @@ public abstract class SQLEditorBase extends BaseTextEditor implements
             return editorInput.isReadOnly();
         }
     }
-
 }

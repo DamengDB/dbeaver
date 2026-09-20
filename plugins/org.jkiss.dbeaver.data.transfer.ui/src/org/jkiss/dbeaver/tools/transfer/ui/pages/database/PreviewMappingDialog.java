@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,11 +27,8 @@ import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.model.DBUtils;
 import org.jkiss.dbeaver.model.DBValueFormatting;
 import org.jkiss.dbeaver.model.data.DBDDisplayFormat;
-import org.jkiss.dbeaver.model.exec.DBCException;
-import org.jkiss.dbeaver.model.exec.DBCResultSet;
 import org.jkiss.dbeaver.model.exec.DBCSession;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
-import org.jkiss.dbeaver.model.runtime.ProxyProgressMonitor;
 import org.jkiss.dbeaver.model.struct.DBSAttributeBase;
 import org.jkiss.dbeaver.model.struct.DBSObject;
 import org.jkiss.dbeaver.runtime.DBWorkbench;
@@ -40,8 +37,6 @@ import org.jkiss.dbeaver.tools.transfer.database.DatabaseConsumerSettings;
 import org.jkiss.dbeaver.tools.transfer.database.DatabaseMappingContainer;
 import org.jkiss.dbeaver.tools.transfer.database.DatabaseTransferConsumer;
 import org.jkiss.dbeaver.tools.transfer.internal.DTMessages;
-import org.jkiss.dbeaver.tools.transfer.registry.DataTransferNodeDescriptor;
-import org.jkiss.dbeaver.tools.transfer.registry.DataTransferRegistry;
 import org.jkiss.dbeaver.tools.transfer.ui.internal.DTUIMessages;
 import org.jkiss.dbeaver.ui.DBeaverIcons;
 import org.jkiss.dbeaver.ui.UIUtils;
@@ -80,10 +75,11 @@ class PreviewMappingDialog extends BaseProgressDialog {
     }
 
     @Override
-    protected void createButtonsForButtonBar(Composite parent) {
+    protected void createButtonsForButtonBar(@NotNull Composite parent) {
         createButton(parent, IDialogConstants.OK_ID, IDialogConstants.CLOSE_LABEL, true);
     }
 
+    @NotNull
     @Override
     protected Composite createDialogArea(Composite parent) {
         Composite main = super.createDialogArea(parent);
@@ -145,9 +141,9 @@ class PreviewMappingDialog extends BaseProgressDialog {
         PreviewConsumer previewConsumer = new PreviewConsumer(monitor, mappingContainer);
 
         IDataTransferProducer producer = pipe.getProducer();
-        IDataTransferSettings producerSettings = getNodeSettings(producer);
+        IDataTransferSettings producerSettings = dtSettings.getNodeSettings(producer);
 
-        IDataTransferSettings consumerSettings = getNodeSettings(pipe.getConsumer());
+        IDataTransferSettings consumerSettings = dtSettings.getNodeSettings(pipe.getConsumer());
 
         try {
 
@@ -161,7 +157,9 @@ class PreviewMappingDialog extends BaseProgressDialog {
                     previewConsumer,
                     dtSettings.getProcessor() == null ? null : dtSettings.getProcessor().getInstance(),
                     producerSettings,
-                    null);
+                    null,
+                    previewRowCount
+                );
             } finally {
                 pipe.setConsumer(realConsumer);
             }
@@ -173,8 +171,8 @@ class PreviewMappingDialog extends BaseProgressDialog {
         List<String[]> strRows = new ArrayList<>(rows.size());
         DBSObject target = mappingContainer.getTarget();
         if (target == null) {
-            if (consumerSettings instanceof DatabaseConsumerSettings) {
-                target = ((DatabaseConsumerSettings) consumerSettings).getContainer();
+            if (consumerSettings instanceof DatabaseConsumerSettings dcs) {
+                target = dcs.getContainer();
             }
         }
         if (target == null) {
@@ -239,52 +237,4 @@ class PreviewMappingDialog extends BaseProgressDialog {
             }
         });
     }
-
-    @NotNull
-    private IDataTransferSettings getNodeSettings(IDataTransferNode node) throws DBException {
-        DataTransferNodeDescriptor producerNode = DataTransferRegistry.getInstance().getNodeByType(node.getClass());
-        if (producerNode == null) {
-            throw new DBException("Cannot find node descriptor for " + node.getClass().getName());
-        }
-        IDataTransferSettings producerSettings = dtSettings.getNodeSettings(producerNode);
-        if (producerSettings == null) {
-            throw new DBException("Cannot find node settings for " + producerNode.getName());
-        }
-        return producerSettings;
-    }
-
-    private class PreviewConsumer extends DatabaseTransferConsumer {
-
-        private final DBRProgressMonitor ctlMonitor;
-        private boolean fetchEnded;
-
-        PreviewConsumer(DBRProgressMonitor monitor, DatabaseMappingContainer mappingContainer) {
-            super(mappingContainer.getTarget());
-            ctlMonitor = new ProxyProgressMonitor(monitor) {
-                @Override
-                public boolean isCanceled() {
-                    return super.isCanceled() || fetchEnded;
-                }
-            };
-            setPreview(true);
-        }
-
-        DBRProgressMonitor getCtlMonitor() {
-            return ctlMonitor;
-        }
-
-        public List<Object[]> getRows() {
-            return getPreviewRows();
-        }
-
-        @Override
-        public void fetchRow(@NotNull DBCSession session, @NotNull DBCResultSet resultSet) throws DBCException {
-            if (getPreviewRows().size() >= previewRowCount) {
-                fetchEnded = true;
-                return;
-            }
-            super.fetchRow(session, resultSet);
-        }
-    }
-
 }

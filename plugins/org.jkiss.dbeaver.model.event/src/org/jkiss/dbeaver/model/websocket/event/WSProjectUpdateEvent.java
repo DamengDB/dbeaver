@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,25 +18,32 @@ package org.jkiss.dbeaver.model.websocket.event;
 
 import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
+import org.jkiss.dbeaver.model.rm.RMProjectInfo;
 import org.jkiss.dbeaver.model.websocket.WSConstants;
 
 public class WSProjectUpdateEvent extends WSAbstractEvent implements WSProjectEvent {
     public static final String ADDED = "cb_rm_project_added";
+    public static final String UPDATED = "cb_rm_project_updated";
     public static final String REMOVED = "cb_rm_project_removed";
 
     @NotNull
     protected final String projectId;
+    @Nullable
+    protected final RMProjectInfo projectInfo;
 
     public WSProjectUpdateEvent(
         @NotNull String eventId,
         @Nullable String sessionId,
         @Nullable String userId,
-        @NotNull String projectId
+        @NotNull String projectId,
+        @Nullable RMProjectInfo projectInfo
     ) {
         super(eventId, WSConstants.TOPIC_PROJECTS, sessionId, userId);
         this.projectId = projectId;
+        this.projectInfo = projectInfo;
     }
 
+    @NotNull
     public static WSProjectUpdateEvent create(
         @Nullable String sessionId,
         @Nullable String userId,
@@ -46,10 +53,28 @@ public class WSProjectUpdateEvent extends WSAbstractEvent implements WSProjectEv
             ADDED,
             sessionId,
             userId,
-            projectId
+            projectId,
+            null
         );
     }
 
+    @NotNull
+    public static WSProjectUpdateEvent update(
+        @Nullable String sessionId,
+        @Nullable String userId,
+        @NotNull String projectId,
+        @NotNull RMProjectInfo projectInfo
+    ) {
+        return new WSProjectUpdateEvent(
+            UPDATED,
+            sessionId,
+            userId,
+            projectId,
+            projectInfo
+        );
+    }
+
+    @NotNull
     public static WSProjectUpdateEvent delete(
         @Nullable String sessionId,
         @Nullable String userId,
@@ -59,7 +84,8 @@ public class WSProjectUpdateEvent extends WSAbstractEvent implements WSProjectEv
             REMOVED,
             sessionId,
             userId,
-            projectId
+            projectId,
+            null
         );
     }
 
@@ -67,5 +93,10 @@ public class WSProjectUpdateEvent extends WSAbstractEvent implements WSProjectEv
     @Override
     public String getProjectId() {
         return projectId;
+    }
+
+    @Nullable
+    public RMProjectInfo getProjectInfo() {
+        return projectInfo;
     }
 }

@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,16 @@ package org.jkiss.dbeaver.model.net;
 
 import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
+import org.jkiss.dbeaver.DBException;
+import org.jkiss.dbeaver.model.DBConstants;
 import org.jkiss.dbeaver.model.DBPDataSourceContainer;
+import org.jkiss.dbeaver.model.DatabaseURL;
 import org.jkiss.dbeaver.model.connection.DBPConnectionConfiguration;
+import org.jkiss.dbeaver.model.connection.DBPDriver;
 import org.jkiss.utils.CommonUtils;
+
+import java.net.URI;
+import java.util.List;
 
 public class DBWUtils {
 
@@ -30,18 +37,19 @@ public class DBWUtils {
     public static final String LOOPBACK_IPV6_FULL_HOST_NAME = "0:0:0:0:0:0:0:1";
     public static final String LOCALHOST_NAME = "localhost";
     public static final String LOCAL_NAME = "local";
+    public static final String SSH_TUNNEL = "ssh_tunnel";
 
     public static void updateConfigWithTunnelInfo(
-        DBWHandlerConfiguration configuration,
-        DBPConnectionConfiguration connectionInfo,
-        String localHost,
+        @NotNull DBWHandlerConfiguration configuration,
+        @NotNull DBPConnectionConfiguration connectionInfo,
+        @Nullable String localHost,
         int localPort
-    ) {
+    ) throws DBException {
         // Replace database host/port and URL
-        if (CommonUtils.isEmpty(localHost)) {
-            connectionInfo.setHostName(LOOPBACK_HOST_NAME);
-        } else {
+        if (CommonUtils.isNotEmpty(localHost)) {
             connectionInfo.setHostName(localHost);
+        } else if (!LOCALHOST_NAME.equals(connectionInfo.getHostName()) && !LOCAL_NAME.equals(connectionInfo.getHostName())) {
+            connectionInfo.setHostName(LOOPBACK_HOST_NAME);
         }
         connectionInfo.setHostPort(Integer.toString(localPort));
         if (configuration.getDriver() != null) {
@@ -52,7 +60,10 @@ public class DBWUtils {
     }
 
     @NotNull
-    public static String getTargetTunnelHostName(@Nullable DBPDataSourceContainer dataSourceContainer, @NotNull DBPConnectionConfiguration cfg) {
+    public static String getTargetTunnelHostName(
+        @Nullable DBPDataSourceContainer dataSourceContainer,
+        @NotNull DBPConnectionConfiguration cfg
+    ) {
         String hostText = cfg.getHostName();
         // For localhost ry to get real host name from tunnel configuration
         if (isLocalAddress(hostText)) {
@@ -79,7 +90,8 @@ public class DBWUtils {
         return CommonUtils.notEmpty(hostText);
     }
 
-    public static @Nullable String getTunnelHostFromConfig(DBWHandlerConfiguration hc) {
+    @Nullable
+    public static String getTunnelHostFromConfig(@NotNull DBWHandlerConfiguration hc) {
         String host = hc.getStringProperty(DBWHandlerConfiguration.PROP_HOST);
         if (CommonUtils.isEmpty(host)) {
             return null;
@@ -87,7 +99,7 @@ public class DBWUtils {
         return host;
     }
 
-    public static boolean isLocalAddress(String hostText) {
+    public static boolean isLocalAddress(@Nullable String hostText) {
         return CommonUtils.isEmpty(hostText) ||
             hostText.equals(LOCALHOST_NAME) ||
             hostText.equals(LOCAL_NAME) ||
@@ -96,11 +108,145 @@ public class DBWUtils {
             hostText.equals(LOOPBACK_IPV6_FULL_HOST_NAME);
     }
 
-    public static @Nullable DBWNetworkProfile getNetworkProfile(@NotNull DBPDataSourceContainer dataSourceContainer) {
+    @Nullable
+    public static DBWNetworkProfile getNetworkProfile(@NotNull DBPDataSourceContainer dataSourceContainer) {
         DBPConnectionConfiguration cfg = dataSourceContainer.getConnectionConfiguration();
         return CommonUtils.isEmpty(cfg.getConfigProfileName())
             ? null
-            : dataSourceContainer.getRegistry().getNetworkProfile(cfg.getConfigProfileSource(), cfg.getConfigProfileName());
+            : dataSourceContainer.getRegistry().getNetworkProfiles().getProfile(
+                cfg.getConfigProfileSource(), cfg.getConfigProfileName());
+    }
+
+    /**
+     * Retrieves a list of effectively enabled network handlers
+     * for a connection, possible from an active network profile.
+     *
+     * @param container data source container to retrieve network handlers for
+     * @return a list of enabled network handlers
+     */
+    @NotNull
+    public static List<DBWHandlerConfiguration> getActualNetworkHandlers(@NotNull DBPDataSourceContainer container) {
+        DBWNetworkProfile profile = getNetworkProfile(container);
+
+        List<DBWHandlerConfiguration> configurations;
+        if (profile != null) {
+            configurations = profile.getConfigurations();
+        } else {
+            configurations = container.getConnectionConfiguration().getHandlers();
+        }
+
+        return configurations.stream()
+            .filter(DBWHandlerConfiguration::isEnabled)
+            .toList();
+    }
+
+    @Nullable
+    public static DBWHandlerConfiguration getTunnelConfiguration(@NotNull DBPConnectionConfiguration configuration) {
+        for (DBWHandlerConfiguration handler : configuration.getHandlers()) {
+            if (handler.isEnabled() && handler.getType() == DBWHandlerType.TUNNEL) {
+                return handler;
+            }
+        }
+        return null;
+    }
+
+
+    public record ConnectivityParameters(
+        @Nullable String hostName,
+        @Nullable String hostPort,
+        @Nullable String databaseName,
+        @Nullable String userName,
+        @Nullable String server
+    ) {
+    }
+
+    @NotNull
+    private static ConnectivityParameters getExplicitConnectivityParameters(@NotNull DBPConnectionConfiguration configuration) {
+        String defaultCatalogName = configuration.getBootstrap().getDefaultCatalogName();
+        return new ConnectivityParameters(
+            configuration.getHostName(),
+            configuration.getHostPort(),
+            CommonUtils.isNotEmpty(defaultCatalogName) ? defaultCatalogName : configuration.getDatabaseName(),
+            configuration.getUserName(),
+            configuration.getServerName()
+        );
+    }
+
+    /**
+     * Returns information about connection by its configuration.
+     * If the configuration type is URL, it extracts information
+     * according to the sample URL template in the driver properties
+     * or generic URL template, if sample URL template is empty.
+     */
+    @NotNull
+    public static ConnectivityParameters getConnectivityParameters(
+        @NotNull DBPConnectionConfiguration configuration,
+        @NotNull DBPDriver driver
+    ) throws DBException {
+        ConnectivityParameters explicitConfiguration = getExplicitConnectivityParameters(configuration);
+        return switch (configuration.getConfigurationType()) {
+            case MANUAL -> explicitConfiguration;
+            case URL -> {
+                String activeUrl = driver.getConnectionURL(configuration);
+                if (CommonUtils.isNotEmpty(activeUrl)) {
+                    ConnectivityParameters urlConnectivityParams = null;
+                    DBPConnectionConfiguration urlConfiguration = null;
+                    DatabaseURL.Pattern urlPattern = null;
+                    if (CommonUtils.isNotEmpty(driver.getSampleURL())) {
+                        urlConfiguration = DatabaseURL.extractConfigurationFromUrl(driver.getSampleURL(), activeUrl);
+                        if (urlConfiguration != null) {
+                            urlPattern = DatabaseURL.getUrlPattern(driver.getSampleURL());
+                        }
+                    }
+                    if (urlConfiguration == null) {
+                        urlConfiguration = DatabaseURL.extractConfigurationFromUrl(DatabaseURL.Generic.TEMPLATE, activeUrl);
+                        if (urlConfiguration != null) {
+                            urlPattern = DatabaseURL.getUrlPattern(DatabaseURL.Generic.TEMPLATE);
+                        }
+                    }
+                    if (urlConfiguration != null) {
+                        urlConnectivityParams = getExplicitConnectivityParameters(urlConfiguration);
+                    }
+                    if (urlConnectivityParams == null) {
+                        final String jdbcPrefix = "jdbc:";
+                        URI url = URI.create(activeUrl.startsWith(jdbcPrefix) ? activeUrl.substring(jdbcPrefix.length()) : activeUrl);
+                        urlConnectivityParams = new ConnectivityParameters(
+                            url.getHost(),
+                            url.getPort() != -1 ? Integer.toString(url.getPort()) : null,
+                            url.getPath() != null && url.getPath().startsWith("/") ? url.getPath().substring(1) : url.getPath(),
+                            url.getUserInfo(),
+                            null
+                        );
+                    }
+
+                    String databaseName = urlPattern != null && urlPattern.hasMandatoryProperty(DBConstants.PROP_DATABASE)
+                        ? urlConnectivityParams.databaseName()
+                        : CommonUtils.isNotEmpty(urlConnectivityParams.databaseName())
+                            ? urlConnectivityParams.databaseName()
+                            : explicitConfiguration.databaseName();
+                    String userName =  urlPattern != null && urlPattern.hasMandatoryProperty(DBConstants.PROP_USER)
+                        ? urlConnectivityParams.userName()
+                        : CommonUtils.isNotEmpty(urlConnectivityParams.userName())
+                            ? urlConnectivityParams.userName()
+                            : explicitConfiguration.userName();
+                    yield new ConnectivityParameters(
+                        urlConnectivityParams.hostName(),
+                        urlConnectivityParams.hostPort(),
+                        databaseName,
+                        userName,
+                        urlConnectivityParams.server()
+                    );
+                } else {
+                    yield new ConnectivityParameters(
+                        driver.getDefaultHost(),
+                        driver.getDefaultPort(),
+                        explicitConfiguration.databaseName(),
+                        explicitConfiguration.userName(),
+                        null
+                    );
+                }
+            }
+        };
     }
 }
 

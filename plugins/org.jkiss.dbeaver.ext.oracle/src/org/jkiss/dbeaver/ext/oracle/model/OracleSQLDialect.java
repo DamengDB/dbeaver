@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2025 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,8 +34,6 @@ import org.jkiss.dbeaver.model.preferences.DBPPreferenceStore;
 import org.jkiss.dbeaver.model.runtime.VoidProgressMonitor;
 import org.jkiss.dbeaver.model.sql.*;
 import org.jkiss.dbeaver.model.sql.parser.SQLParserActionKind;
-import org.jkiss.dbeaver.model.sql.parser.SQLRuleManager;
-import org.jkiss.dbeaver.model.sql.parser.SQLTokenPredicateSet;
 import org.jkiss.dbeaver.model.sql.parser.tokens.SQLTokenType;
 import org.jkiss.dbeaver.model.sql.parser.tokens.predicates.TokenPredicateFactory;
 import org.jkiss.dbeaver.model.sql.parser.tokens.predicates.TokenPredicateSet;
@@ -115,7 +113,8 @@ public class OracleSQLDialect extends JDBCSQLDialect
         "SUBPARTITION",
         "TEMPFILE",
         "DATAFILE",
-        "TABLESPACE"
+        "TABLESPACE",
+        "LATERAL"
     };
 
     private static final GlobalVariableInfo[] GLOBAL_VARIABLES = {
@@ -134,8 +133,6 @@ public class OracleSQLDialect extends JDBCSQLDialect
     private static final String AUTO_INCREMENT_KEYWORD = "GENERATED ALWAYS AS IDENTITY";
     private boolean crlfBroken;
     private DBPPreferenceStore preferenceStore;
-
-    private SQLTokenPredicateSet cachedDialectSkipTokenPredicates = null;
 
     public OracleSQLDialect() {
         super("Oracle", "oracle");
@@ -379,7 +376,7 @@ public class OracleSQLDialect extends JDBCSQLDialect
         addKeywords(Arrays.stream(GLOBAL_VARIABLES).map(GlobalVariableInfo::name).toList(), DBPKeywordType.OTHER);
         turnFunctionIntoKeyword("TRUNCATE");
 
-        cachedDialectSkipTokenPredicates = this.makeDialectSkipTokenPredicates(dataSource);
+        super.cachedDialectSkipTokenPredicates = this.makeDialectSkipTokenPredicates(dataSource);
     }
 
     @Override
@@ -640,23 +637,9 @@ public class OracleSQLDialect extends JDBCSQLDialect
         return localDataType;
     }
 
+    @NotNull
     @Override
-    @NotNull
-    public SQLTokenPredicateSet getSkipTokenPredicates() {
-        return cachedDialectSkipTokenPredicates == null ? super.getSkipTokenPredicates() : cachedDialectSkipTokenPredicates;
-    }
-
-    @NotNull
-    protected TokenPredicateSet makeDialectSkipTokenPredicates(JDBCDataSource dataSource) {
-        SQLSyntaxManager syntaxManager = new SQLSyntaxManager();
-        syntaxManager.init(this, dataSource.getContainer().getPreferenceStore());
-        SQLRuleManager ruleManager = new SQLRuleManager(syntaxManager);
-        ruleManager.loadRules(dataSource, false);
-        TokenPredicateFactory tt = TokenPredicateFactory.makeDialectSpecificFactory(ruleManager);
-        return this.makeDialectSkipTokenPredicatesImpl(dataSource, tt);
-    }
-
-    protected TokenPredicateSet makeDialectSkipTokenPredicatesImpl(JDBCDataSource dataSource, TokenPredicateFactory tt) {
+    protected TokenPredicateSet makeDialectSkipTokenPredicatesImpl(@NotNull JDBCDataSource dataSource, @NotNull TokenPredicateFactory tt) {
 
         // Oracle SQL references could be found from https://docs.oracle.com/en/database/oracle/oracle-database/
         // by following through Get Started links till the SQL Language Reference link presented
@@ -697,6 +680,16 @@ public class OracleSQLDialect extends JDBCSQLDialect
                 SQLParserActionKind.BEGIN_BLOCK,
                 tt.sequence(),
                 tt.sequence(tt.not("END"), "IF", tt.not("EXISTS"))
+            ),
+            new TokenPredicatesCondition(
+                SQLParserActionKind.BLOCK_HEADER,
+                tt.sequence(
+                        "CREATE",
+                        tt.optional("OR", "REPLACE"),
+                        tt.optional(tt.alternative("EDITIONABLE", "NONEDITIONABLE")),
+                        tt.alternative("FUNCTION", "PROCEDURE")
+                ),
+                tt.alternative("AS", "IS")
             )
         );
 
@@ -748,6 +741,11 @@ public class OracleSQLDialect extends JDBCSQLDialect
         return false;
     }
 
+    @Override
+    public String getTextDataType() {
+        return getClobDataType();
+    }
+
     @NotNull
     @Override
     public String getTimestampDataType() {
@@ -764,6 +762,11 @@ public class OracleSQLDialect extends JDBCSQLDialect
     @Override
     public String getClobDataType() {
         return OracleConstants.TYPE_CLOB;
+    }
+
+    @Override
+    public String getNClobDataType() {
+        return OracleConstants.TYPE_NCLOB;
     }
 
     @NotNull
@@ -827,5 +830,11 @@ public class OracleSQLDialect extends JDBCSQLDialect
         return EnumSet.of(
             ProjectionAliasVisibilityScope.ORDER_BY
         );
+    }
+
+    @NotNull
+    @Override
+    public String toSortableTextColumn(@NotNull String columnName) {
+        return "DBMS_LOB.SUBSTR(" + columnName + ", 1000, 1)";
     }
 }

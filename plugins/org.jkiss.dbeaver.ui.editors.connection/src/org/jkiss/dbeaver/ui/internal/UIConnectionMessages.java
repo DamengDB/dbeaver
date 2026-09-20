@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2025 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
  */
 package org.jkiss.dbeaver.ui.internal;
 
-import org.jkiss.dbeaver.utils.NLS;
+import org.eclipse.osgi.util.NLS;
 
 public class UIConnectionMessages extends NLS {
 
@@ -84,6 +84,10 @@ public class UIConnectionMessages extends NLS {
     public static String dialog_connection_auth_label_password;
     public static String dialog_connection_auth_label_username;
     public static String dialog_connection_auth_label_show_password;
+    public static String dialog_connection_auth_shell_command_label;
+    public static String dialog_connection_auth_shell_command_hint;
+    public static String dialog_connection_auth_shell_command_workdir_label;
+    public static String dialog_connection_auth_shell_command_timeout_label;
 
     public static String dialog_connection_network_socket_label_host;
     public static String dialog_connection_network_socket_label_port;
@@ -118,6 +122,8 @@ public class UIConnectionMessages extends NLS {
     public static String dialog_edit_driver_label_default_user;
     public static String dialog_edit_driver_label_id;
     public static String dialog_edit_driver_label_id_tip;
+    public static String dialog_edit_driver_label_provider_id;
+    public static String dialog_edit_driver_label_provider_id_tip;
     public static String dialog_edit_driver_label_description;
     public static String dialog_edit_driver_label_driver_class;
     public static String dialog_edit_driver_label_driver_name;
@@ -153,6 +159,8 @@ public class UIConnectionMessages extends NLS {
     public static String dialog_driver_download_auto_page_driver_file_missing_text;
     public static String dialog_driver_download_auto_page_force_download;
     public static String dialog_driver_download_auto_page_force_download_tooltip;
+    public static String dialog_driver_download_auto_page_show_details;
+    public static String dialog_driver_download_auto_page_driver_description;
     public static String dialog_driver_download_auto_page_required_files;
     public static String dialog_driver_download_auto_page_change_driver_version_text;
     public static String dialog_driver_download_auto_page_obtain_driver_files_text;
@@ -168,6 +176,9 @@ public class UIConnectionMessages extends NLS {
     public static String dialog_driver_download_network_unavailable_msg;
     public static String dialog_driver_download_network_unavailable_cert_msg;
     public static String dialog_driver_download_network_unavailable_cert_msg_advanced;
+    public static String dialog_driver_download_version_change_label;
+    public static String dialog_driver_download_current_version_label;
+
     // Driver edit
 	public static String dialog_edit_driver_setting;
     public static String dialog_edit_driver_type_label;
@@ -227,6 +238,7 @@ public class UIConnectionMessages extends NLS {
     public static String dialog_driver_manager_message_delete_driver_text;
     public static String dialog_driver_manager_message_delete_driver_title;
     public static String dialog_driver_manager_title;
+    public static String dialog_driver_manager_preferences_link;
 
     public static String viewer_selector_control_text_classic;
     public static String viewer_selector_control_text_gallery;
@@ -235,6 +247,7 @@ public class UIConnectionMessages extends NLS {
     // Drivers
     public static String pref_page_ui_general_group_settings;
     public static String pref_page_ui_general_check_new_driver_versions;
+    public static String pref_page_ui_general_check_new_driver_versions_tip;
     public static String pref_page_drivers_local_folder;
     public static String pref_page_drivers_group_file_repositories;
     public static String pref_page_drivers_button_add;
@@ -310,17 +323,27 @@ public class UIConnectionMessages extends NLS {
     public static String pref_page_network_profiles_tool_create_dialog_profile_name;
     public static String pref_page_network_profiles_tool_create_dialog_error_title;
     public static String pref_page_network_profiles_tool_create_dialog_error_info;
+    public static String pref_page_network_profiles_tool_create_dialog_error_global_info;
     public static String pref_page_network_profiles_tool_delete_title;
     public static String pref_page_network_profiles_tool_delete_text;
     public static String pref_page_network_profiles_tool_copy_title;
     public static String pref_page_network_profiles_tool_copy_text;
     public static String pref_page_network_profiles_tool_delete_dialog_error_title;
     public static String pref_page_network_profiles_tool_delete_dialog_error_info;
+    public static String pref_page_network_profiles_tool_delete_dialog_error_message;
     public static String pref_page_network_profiles_tool_delete_confirmation_title;
     public static String pref_page_network_profiles_tool_delete_confirmation_question;
+    public static String pref_page_network_profiles_tool_delete_private_projects_warning;
+    public static String pref_page_network_profiles_tool_delete_used_confirmation_question;
     public static String pref_page_network_profiles_tool_no_profile_error_title;
     public static String pref_page_network_profiles_tool_no_profile_error_info;
     public static String pref_page_network_profiles_tool_no_profile_error_information;
+    public static String pref_page_network_profiles_global_project_label;
+    public static String pref_page_network_profiles_global_project_hint;
+    public static String pref_page_network_profiles_global_project_name_used_in_local_label;
+    public static String pref_page_network_profiles_global_project_name_used_in_local_question;
+    public static String pref_page_network_profiles_local_name_used_in_global_label;
+    public static String pref_page_network_profiles_local_name_used_in_global_question;
     public static String dialog_tunnel_checkbox_use_handler;
     public static String dialog_tunnel_title;
 

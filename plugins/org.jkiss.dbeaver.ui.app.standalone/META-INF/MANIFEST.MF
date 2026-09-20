@@ -5,27 +5,27 @@ Bundle-Name: DBeaver Application Standalone
 Bundle-SymbolicName: org.jkiss.dbeaver.ui.app.standalone;singleton:=true
 Bundle-Activator: org.jkiss.dbeaver.ui.app.standalone.internal.CoreApplicationActivator
 Bundle-ActivationPolicy: lazy
-Bundle-Version: 25.0.2.qualifier
-Bundle-Release-Date: 20250407
-Bundle-RequiredExecutionEnvironment: JavaSE-17
+Bundle-Version: 26.2.0.qualifier
+Bundle-Release-Date: 20260831
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Export-Package: org.jkiss.dbeaver.ui.app.standalone,
  org.jkiss.dbeaver.ui.app.standalone.rpc,
  org.jkiss.dbeaver.ui.app.standalone.update
-Bundle-ClassPath: .
 Import-Package: org.w3c.css.sac
 Require-Bundle: org.eclipse.e4.ui.css.core,
  org.eclipse.e4.ui.css.swt,
+ org.eclipse.e4.ui.model.workbench,
  org.eclipse.e4.ui.workbench,
  org.eclipse.e4.ui.workbench.renderers.swt,
  org.eclipse.help,
  org.eclipse.search,
- org.eclipse.ui.ide.application,
- org.apache.commons.cli,
- com.google.gson,
- org.jkiss.dbeaver.model,
+ org.eclipse.core.net,
+ org.eclipse.ui.ide.application;visibility:=reexport,
+ org.jkiss.dbeaver.model.cli;visibility:=reexport,
  org.jkiss.dbeaver.model.rcp,
  org.jkiss.dbeaver.core,
  org.jkiss.dbeaver.ui,
+ org.jkiss.dbeaver.ui.app.config,
  org.jkiss.dbeaver.ui.editors.base,
  org.eclipse.ui.views.log
 Automatic-Module-Name: org.jkiss.dbeaver.ui.app.standalone

@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2025 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ import org.jkiss.dbeaver.model.struct.DBSDataContainer;
 import org.jkiss.dbeaver.model.struct.DBSEntity;
 import org.jkiss.dbeaver.model.task.DBTTask;
 import org.jkiss.dbeaver.model.task.DBTaskUtils;
+import org.jkiss.dbeaver.runtime.DBInterruptedException;
 import org.jkiss.dbeaver.runtime.DBWorkbench;
 import org.jkiss.dbeaver.tools.transfer.IDataTransferConsumer;
 import org.jkiss.dbeaver.tools.transfer.IDataTransferNodePrimary;
@@ -181,8 +182,9 @@ public class DatabaseTransferProducer implements IDataTransferProducer<DatabaseP
         @NotNull IDataTransferConsumer consumer,
         @Nullable IDataTransferProcessor processor,
         @NotNull DatabaseProducerSettings settings,
-        @Nullable DBTTask task)
-        throws DBException {
+        @Nullable DBTTask task,
+        long maxRows
+    ) throws DBException {
         String contextTask = DTMessages.data_transfer_wizard_job_task_export;
 
         DBSDataContainer databaseObject = getDatabaseObject();
@@ -193,132 +195,160 @@ public class DatabaseTransferProducer implements IDataTransferProducer<DatabaseP
         assert (dataSource != null);
 
         DBExecUtils.tryExecuteRecover(monitor1, dataSource, monitor -> {
+            checkCanceled(monitor);
+
             long readFlags = DBSDataContainer.FLAG_NONE;
-            if (settings.isSelectedColumnsOnly()) {
-                readFlags |= DBSDataContainer.FLAG_USE_SELECTED_COLUMNS;
+
+            var useFetchedRows = settings.getFetchedRowsPolicy();
+            if (useFetchedRows != null) {
+                readFlags |= DBSDataContainer.FLAG_USE_FETCHED_ROWS;
+                if (useFetchedRows.selectedRowsOnly()) {
+                    readFlags |= DBSDataContainer.FLAG_USE_SELECTED_ROWS;
+                }
+                if (useFetchedRows.selectedColumnsOnly()) {
+                    readFlags |= DBSDataContainer.FLAG_USE_SELECTED_COLUMNS;
+                }
             }
-            if (settings.isSelectedRowsOnly()) {
-                readFlags |= DBSDataContainer.FLAG_USE_SELECTED_ROWS;
+
+            boolean newConnection = settings.isOpenNewConnections() && !getDatabaseObject().getDataSource().getContainer().getDriver()
+                .isEmbedded();
+            boolean forceDataReadTransactions
+                = Boolean.TRUE.equals(dataSource.getDataSourceFeature(DBPDataSource.FEATURE_LOB_REQUIRE_TRANSACTIONS));
+            boolean selectiveExportFromUI = useFetchedRows != null;
+            boolean extractInSegments = useFetchedRows == null &&
+                settings.getExtractType() == DatabaseProducerSettings.ExtractType.SEGMENTS;
+
+            DBCExecutionContext context;
+            if (dataContainer instanceof DBPContextProvider contextProvider) {
+                context = contextProvider.getExecutionContext();
+            } else {
+                context = DBUtils.getDefaultContext(dataContainer, false);
+            }
+            if (context == null) {
+                throw new DBCException("Can't retrieve execution context from data container " + dataContainer);
+            }
+            if (!selectiveExportFromUI && newConnection) {
+                context = DBUtils.getObjectOwnerInstance(getDatabaseObject())
+                    .openIsolatedContext(monitor, "Data transfer producer", context);
+                DBExecUtils.setExecutionContextDefaults(monitor, dataSource, context, defaultCatalog, null, defaultSchema);
+            }
+            if (task != null) {
+                DBTaskUtils.initFromContext(monitor, task, context);
             }
 
-            boolean newConnection = settings.isOpenNewConnections() && !getDatabaseObject().getDataSource().getContainer().getDriver().isEmbedded();
-            boolean forceDataReadTransactions = Boolean.TRUE.equals(dataSource.getDataSourceFeature(DBPDataSource.FEATURE_LOB_REQUIRE_TRANSACTIONS));
-            boolean selectiveExportFromUI = settings.isSelectedColumnsOnly() || settings.isSelectedRowsOnly();
-
-            try {
-                DBCExecutionContext context;
-                if (dataContainer instanceof DBPContextProvider) {
-                    context = ((DBPContextProvider) dataContainer).getExecutionContext();
-                } else {
-                    context = DBUtils.getDefaultContext(dataContainer, false);
-                }
-                if (context == null) {
-                    throw new DBCException("Can't retrieve execution context from data container " + dataContainer);
-                }
-                if (!selectiveExportFromUI && newConnection) {
-                    context = DBUtils.getObjectOwnerInstance(getDatabaseObject()).openIsolatedContext(monitor, "Data transfer producer", context);
-                    DBExecUtils.setExecutionContextDefaults(monitor, dataSource, context, defaultCatalog, null, defaultSchema);
-                }
-                if (task != null) {
-                    DBTaskUtils.initFromContext(monitor, task, context);
-                }
-
-                try (DBCSession session = context.openSession(monitor, DBCExecutionPurpose.UTIL, contextTask)) {
-                    Boolean oldAutoCommit = null;
-                    DBCSavepoint savepoint = null;
-                    try {
-                        AbstractExecutionSource transferSource = new AbstractExecutionSource(dataContainer, context, consumer);
-                        session.enableLogging(false);
-                        if (!selectiveExportFromUI && (newConnection || forceDataReadTransactions)) {
-                            // Turn off auto-commit in source DB
-                            // Auto-commit has to be turned off because some drivers allows to read LOBs and
-                            // other complex structures only in transactional mode
-                            try {
-                                DBCTransactionManager txnManager = DBUtils.getTransactionManager(context);
-                                if (txnManager != null && txnManager.isSupportsTransactions()) {
-                                    oldAutoCommit = txnManager.isAutoCommit();
-                                    txnManager.setAutoCommit(monitor, false);
-                                    if (txnManager.supportsSavepoints()) {
-                                        savepoint = txnManager.setSavepoint(monitor, "Data transfer start");
-                                    }
-                                }
-                            } catch (DBCException e) {
-                                log.warn("Can't change auto-commit", e);
-                            }
-
-                        }
-                        long totalRows = 0;
-                        if (settings.isQueryRowCount() && dataContainer.isFeatureSupported(DBSDataContainer.FEATURE_DATA_COUNT)) {
-                            monitor.beginTask(DTMessages.data_transfer_wizard_job_task_retrieve, 1);
-                            try {
-                                totalRows = dataContainer.countData(transferSource, session, dataFilter, readFlags);
-                            } catch (Throwable e) {
-                                log.warn("Can't retrieve row count from '" + dataContainer.getName() + "'", e);
-                                try {
-                                    DBCTransactionManager txnManager = DBUtils.getTransactionManager(session.getExecutionContext());
-                                    if (txnManager != null && !txnManager.isAutoCommit()) {
-                                        txnManager.rollback(session, savepoint);
-                                    }
-                                } catch (Throwable e1) {
-                                    log.warn("Error rolling back transaction", e1);
-                                }
-                            } finally {
-                                monitor.done();
-                            }
-                        }
-
-                        monitor.beginTask(DTMessages.data_transfer_wizard_job_task_export_table_data, (int) totalRows);
-
+            try (DBCSession session = context.openSession(monitor, DBCExecutionPurpose.UTIL, contextTask)) {
+                Boolean oldAutoCommit = null;
+                DBCSavepoint savepoint = null;
+                try {
+                    AbstractExecutionSource transferSource = new AbstractExecutionSource(dataContainer, context, consumer);
+                    if (!selectiveExportFromUI && (newConnection || forceDataReadTransactions)) {
+                        // Turn off auto-commit in source DB
+                        // Auto-commit has to be turned off because some drivers allows to read LOBs and
+                        // other complex structures only in transactional mode
                         try {
-                            monitor.subTask("Read data");
-
-                            // Perform export
-                            if (settings.getExtractType() == DatabaseProducerSettings.ExtractType.SINGLE_QUERY) {
-                                // Just do it in single query
-                                producerStatistics.accumulate(dataContainer.readData(transferSource, session, consumer, dataFilter, -1, -1, readFlags, settings.getFetchSize()));
-                            } else {
-                                // Read all data by segments
-                                long offset = 0;
-                                int segmentSize = settings.getSegmentSize();
-                                for (; ; ) {
-                                    DBCStatistics statistics = dataContainer.readData(
-                                        transferSource, session, consumer, dataFilter, offset, segmentSize, readFlags, settings.getFetchSize());
-                                    if (statistics == null || statistics.getRowsFetched() < segmentSize) {
-                                        // Done
-                                        break;
-                                    }
-                                    producerStatistics.accumulate(statistics);
-                                    offset += statistics.getRowsFetched();
+                            DBCTransactionManager txnManager = DBUtils.getTransactionManager(context);
+                            if (txnManager != null && txnManager.isSupportsTransactions()) {
+                                oldAutoCommit = txnManager.isAutoCommit();
+                                txnManager.setAutoCommit(monitor, false);
+                                if (txnManager.supportsSavepoints()) {
+                                    savepoint = txnManager.setSavepoint(monitor, "Data transfer start");
                                 }
+                            }
+                        } catch (DBCException e) {
+                            log.warn("Can't change auto-commit", e);
+                        }
+
+                    }
+                    long totalRows = 0;
+                    if (settings.isQueryRowCount() && dataContainer.isFeatureSupported(DBSDataContainer.FEATURE_DATA_COUNT)) {
+                        checkCanceled(monitor);
+                        monitor.beginTask(DTMessages.data_transfer_wizard_job_task_retrieve, 1);
+                        try {
+                            totalRows = dataContainer.countData(transferSource, session, dataFilter, readFlags);
+                            checkCanceled(monitor);
+                        } catch (Throwable e) {
+                            log.warn("Can't retrieve row count from '" + dataContainer.getName() + "'", e);
+                            try {
+                                DBCTransactionManager txnManager = DBUtils.getTransactionManager(session.getExecutionContext());
+                                if (txnManager != null && !txnManager.isAutoCommit()) {
+                                    txnManager.rollback(session, savepoint);
+                                }
+                            } catch (Throwable e1) {
+                                log.warn("Error rolling back transaction", e1);
                             }
                         } finally {
                             monitor.done();
                         }
+                    }
 
-                    } finally {
-                        if (!selectiveExportFromUI && (newConnection || forceDataReadTransactions)) {
-                            DBCTransactionManager txnManager = DBUtils.getTransactionManager(context);
-                            if (txnManager != null && txnManager.isSupportsTransactions()) {
-                                if (!txnManager.isAutoCommit()) {
-                                    txnManager.rollback(session, savepoint);
+                    monitor.beginTask(DTMessages.data_transfer_wizard_job_task_export_table_data, (int) totalRows);
+
+                    try {
+                        monitor.subTask("Read data");
+
+                        // Perform export
+                        if (!extractInSegments) {
+                            checkCanceled(monitor);
+                            // Just do it in single query
+                            producerStatistics.accumulate(dataContainer.readData(
+                                transferSource,
+                                session,
+                                consumer,
+                                dataFilter,
+                                -1,
+                                maxRows,
+                                readFlags,
+                                settings.getFetchSize()
+                            ));
+                            checkCanceled(monitor);
+                        } else {
+                            // Read all data by segments
+                            long offset = 0;
+                            int segmentSize = settings.getSegmentSize();
+                            for (; ; ) {
+                                checkCanceled(monitor);
+                                DBCStatistics statistics = dataContainer.readData(
+                                    transferSource, session, consumer, dataFilter, offset, segmentSize, readFlags, settings.getFetchSize());
+                                checkCanceled(monitor);
+                                if (statistics.getRowsFetched() < segmentSize) {
+                                    // Done
+                                    break;
                                 }
-                                if (savepoint != null) {
-                                    txnManager.releaseSavepoint(monitor, savepoint);
-                                }
-                                if (oldAutoCommit != null) {
-                                    txnManager.setAutoCommit(monitor, oldAutoCommit);
-                                }
+                                producerStatistics.accumulate(statistics);
+                                offset += statistics.getRowsFetched();
                             }
                         }
-                        if (!selectiveExportFromUI && newConnection) {
-                            context.close();
+                    } finally {
+                        monitor.done();
+                    }
+
+                } finally {
+                    if (!selectiveExportFromUI && (newConnection || forceDataReadTransactions)) {
+                        DBCTransactionManager txnManager = DBUtils.getTransactionManager(context);
+                        if (txnManager != null && txnManager.isSupportsTransactions()) {
+                            if (!txnManager.isAutoCommit()) {
+                                txnManager.rollback(session, savepoint);
+                            }
+                            if (savepoint != null) {
+                                txnManager.releaseSavepoint(monitor, savepoint);
+                            }
+                            if (oldAutoCommit != null) {
+                                txnManager.setAutoCommit(monitor, oldAutoCommit);
+                            }
                         }
                     }
+                    if (!selectiveExportFromUI && newConnection) {
+                        context.close();
+                    }
                 }
-            } catch (DBException e) {
-                throw new InvocationTargetException(e);
             }
         });
+    }
+
+    private static void checkCanceled(@NotNull DBRProgressMonitor monitor) throws DBInterruptedException {
+        if (monitor.isCanceled()) {
+            throw new DBInterruptedException("Data transfer was canceled");
+        }
     }
 
     @Override
@@ -407,7 +437,7 @@ public class DatabaseTransferProducer implements IDataTransferProducer<DatabaseP
                                 producer.dataSourceContainer = DBUtils.findDataSourceByObjectId(project, id);
                                 if (producer.dataSourceContainer != null && !serializeContext.isDataSourceFailed(producer.dataSourceContainer)) {
                                     try {
-                                        producer.dataContainer = (DBSDataContainer) DBUtils.findObjectById(monitor, project, id);
+                                        producer.dataContainer = (DBSDataContainer) DBUtils.findObjectById(monitor, project, id, true);
                                     } catch (DBException e) {
                                         serializeContext.addError(e);
                                         serializeContext.addDataSourceFail(producer.dataSourceContainer);

@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2025 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
  */
 package org.jkiss.dbeaver.core;
 
-import org.jkiss.dbeaver.utils.NLS;
+import org.eclipse.osgi.util.NLS;
 
 public class CoreMessages extends NLS {
     public static final String BUNDLE_NAME = "org.jkiss.dbeaver.core.CoreResources"; //$NON-NLS-1$
@@ -55,6 +55,8 @@ public class CoreMessages extends NLS {
     public static String action_menu_tools_find_in_navigator;
     public static String action_menu_transaction_pref_page_link;
     public static String action_menu_transaction_pref_page_link_extended;
+    public static String action_menu_transaction_commit_mode_edit_restricted_dialog_title;
+    public static String action_menu_transaction_commit_mode_edit_restricted_dialog_description;
 
     public static String pref_page_connection_types_label_auto_close_enabled_tip;
     public static String pref_page_connection_types_label_auto_close_ttl_tip;
@@ -152,6 +154,8 @@ public class CoreMessages extends NLS {
     public static String dialog_migrate_wizard_start_description;
     public static String dialog_migrate_wizard_start_title;
     public static String dialog_migrate_wizard_window_title;
+    public static String dialog_migrate_wizard_connection_changed_title;
+    public static String dialog_migrate_wizard_connection_changed_message;
     public static String dialog_new_connection_wizard_monitor_load_data_sources;
     public static String dialog_new_connection_wizard_start_description;
     public static String dialog_new_connection_wizard_start_title;
@@ -267,7 +271,6 @@ public class CoreMessages extends NLS {
 
     public static String model_navigator_Description;
     public static String model_navigator_load_;
-    public static String model_navigator_load_items_;
     public static String model_navigator_Model_root;
     public static String model_navigator_Project;
     public static String model_navigator_resource_exception_already_exists;
@@ -367,11 +370,17 @@ public class CoreMessages extends NLS {
     public static String pref_page_ui_general_group_regional;
     public static String pref_page_ui_general_group_language;
     public static String pref_page_ui_general_group_editors;
+    public static String pref_page_ui_general_link_more_color_and_font_settings;
     public static String pref_page_ui_status_bar;
     public static String pref_page_ui_status_bar_show_breadcrumbs_check_label;
     public static String pref_page_ui_status_bar_show_breadcrumbs_check_tip;
+    public static String pref_page_ui_status_bar_show_breadcrumbs_status_bar_label;
+    public static String pref_page_ui_status_bar_show_breadcrumbs_editors_label;
     public static String pref_page_ui_status_bar_show_status_line_check_label;
     public static String pref_page_ui_status_bar_show_status_line_check_tip;
+    public static String pref_page_ui_general_check_zoom_restart_prompt_label;
+    public static String pref_page_ui_general_check_zoom_restart_prompt_tip;
+    public static String pref_page_ui_general_group_display;
     public static String pref_page_eclipse_ui_general_group_general;
     public static String pref_page_eclipse_ui_general_group_label;
 
@@ -455,7 +464,6 @@ public class CoreMessages extends NLS {
     public static String pref_page_database_general_checkbox_add_special_DDL_info_tip;
     // EntityEditor
     public static String pref_page_ui_general_show_full_name_in_editor;
-    public static String pref_page_ui_general_show_table_grid;
     public static String pref_page_ui_general_show_preview_on_save;
     // DatabaseGeneral
     public static String pref_page_ui_general_group_task_bar;
@@ -508,6 +516,7 @@ public class CoreMessages extends NLS {
     public static String pref_page_connection_types_label_name;
     public static String pref_page_connection_types_label_description;
     public static String pref_page_connection_types_label_color;
+    public static String pref_page_connection_types_label_color_alternative;
     public static String pref_page_connection_types_label_auto_commit_by_default;
     public static String pref_page_connection_types_label_auto_commit_by_default_tip;
     public static String pref_page_connection_types_label_confirm_sql_execution;
@@ -528,6 +537,8 @@ public class CoreMessages extends NLS {
 
     public static String pref_page_connection_label_close_connection_on_sleep;
     public static String pref_page_connection_label_close_connection_on_sleep_tip;
+    public static String pref_page_connection_label_enable_shell_auth_model;
+    public static String pref_page_connection_label_enable_shell_auth_model_tip;
 
     public static String pref_page_network_expert_label;
     public static String pref_page_network_expert_preferred_ip_stack_label;
@@ -559,7 +570,7 @@ public class CoreMessages extends NLS {
 
     public static String transaction_log_dialog_error_open_database;
 
-    // Connection edit
+    //region Connection edit
     public static String dialog_connection_edit_title;
 
     public static String dialog_connection_edit_wizard_general;
@@ -575,6 +586,19 @@ public class CoreMessages extends NLS {
     public static String dialog_connection_edit_wizard_shell_cmd_directory_title;
     public static String dialog_connection_edit_wizard_shell_cmd_variables_hint_label;
     public static String dialog_connection_edit_wizard_shell_cmd_variables_hint_title;
+    public static String dialog_connection_edit_wizard_shell_cmd_clear_button_label;
+    public static String dialog_connection_edit_wizard_shell_cmd_te_warning_label;
+    public static String dialog_connection_edit_wizard_shell_cmd_error_adding_cmd_label;
+    public static String dialog_connection_edit_wizard_shell_cmd_error_adding_cmd_text;
+    public static String dialog_connection_edit_wizard_shell_cmd_manage_confirmed_link;
+    public static String dialog_connection_edit_wizard_shell_cmd_manage_confirmed_tooltip;
+    public static String dialog_connection_edit_wizard_shell_cmd_manage_confirmed_error_title;
+    public static String dialog_connection_edit_wizard_shell_cmd_manage_confirmed_error_message;
+    public static String shell_cmd_manager_add_command_confirmation_label;
+    public static String shell_cmd_manager_add_command_confirmation_description;
+    public static String shell_cmd_manager_add_command_script_label;
+    public static String shell_cmd_manager_add_command_confirmation_button;
+    public static String shell_cmd_manager_add_command_error_message;
 
     public static String dialog_connection_edit_wizard_connections;
     public static String dialog_connection_edit_wizard_connections_description;
@@ -590,7 +614,21 @@ public class CoreMessages extends NLS {
     public static String dialog_connection_edit_wizard_bad_pwd_msg;
     public static String dialog_connection_edit_wizard_error_md5_title;
     public static String dialog_connection_edit_wizard_error_md5_msg;
-    //Connection edit
+    //endregion
+
+    //region Connection - Internal Parameters
+    public static String dialog_connection_internal_parameters_title;
+    public static String dialog_connection_internal_parameters_description;
+    public static String dialog_connection_internal_parameters_tip;
+    public static String dialog_connection_internal_parameters_parameters;
+    public static String dialog_connection_internal_parameters_parameters_project_id;
+    public static String dialog_connection_internal_parameters_parameters_connection_id;
+    public static String dialog_connection_internal_parameters_parameters_driver_id;
+    public static String dialog_connection_internal_parameters_parameters_driver_provider_id;
+    public static String dialog_connection_internal_parameters_custom;
+    public static String dialog_connection_internal_parameters_custom_key;
+    public static String dialog_connection_internal_parameters_custom_value;
+    //endregion
 
     // Driver edit
 
@@ -638,11 +676,16 @@ public class CoreMessages extends NLS {
     public static String pref_page_logs_files_max_size_label;
     public static String pref_page_logs_files_max_count_label;
 
-    public static String popup_open_browser_open_external_browser;
-
     public static String pref_page_accessibility_screen_reader_msg;
     public static String pref_page_accessibility_screen_reader_description;
     public static String pref_page_accessibility_screen_reader_group_lbl;
+
+    public static String pref_page_accessibility_force_focus_checkbox;
+    public static String pref_page_accessibility_force_focus_tooltip;
+
+    public static String project_selector_tooltip;
+
+    public static String pref_page_user_interface_fonts_modify_tooltip;
 
     static {
         // initialize resource bundle

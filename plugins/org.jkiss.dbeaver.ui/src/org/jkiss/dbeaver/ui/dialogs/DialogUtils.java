@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2025 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,6 @@
  */
 package org.jkiss.dbeaver.ui.dialogs;
 
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.swt.SWT;
@@ -27,7 +24,6 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.ui.dialogs.FilteredTree;
 import org.eclipse.ui.dialogs.PatternFilter;
-import org.eclipse.ui.progress.UIJob;
 import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.Log;
@@ -50,9 +46,6 @@ import java.util.Arrays;
 public class DialogUtils {
 
     private static final Log log = Log.getLog(DialogUtils.class);
-
-    private static final int INITIAL_POPUP_DELAY = 3000;
-    private static final int RETRY_POPUP_DELAY = 5000;
 
     private static final String DIALOG_FOLDER_PROPERTY = "dialog.default.folder";
     
@@ -261,13 +254,7 @@ public class DialogUtils {
     }
 
     public static TreeViewer createFilteredTree(Composite parent, int treeStyle, PatternFilter filter, String initialText) {
-        FilteredTree filteredTree;
-        try {
-            filteredTree = new FilteredTree(parent, treeStyle, filter, true, true);
-        } catch (Throwable e) {
-            // Fast hash lookup is not supported on old Eclipse versions. Use old constructor
-            filteredTree = new FilteredTree(parent, treeStyle, filter, true);
-        }
+        FilteredTree filteredTree = new FilteredTree(parent, treeStyle, filter, true, true);
         if (initialText != null) {
             filteredTree.setInitialText(initialText);
         }
@@ -288,31 +275,4 @@ public class DialogUtils {
         }
         return filePath;
     }
-
-    /**
-     * Schedules a popup action to be executed after initial delay, and if necessary,
-     * reschedules the action until the specified main shell becomes active.
-     */
-    public static void showDelayedPopup(
-        @NotNull Shell mainShell,
-        @NotNull Runnable popupAction,
-        @NotNull String jobName
-    ) {
-        UIJob uiJob = new UIJob(mainShell.getDisplay(), jobName) {
-            @Override
-            public IStatus runInUIThread(IProgressMonitor monitor) {
-
-                Shell activeShell = mainShell.getDisplay().getActiveShell();
-                if (activeShell != null && !activeShell.equals(mainShell)) {
-                    schedule(RETRY_POPUP_DELAY);
-                } else {
-                    popupAction.run();
-                }
-                return Status.OK_STATUS;
-            }
-        };
-        uiJob.setSystem(true);
-        uiJob.schedule(INITIAL_POPUP_DELAY);
-    }
-
 }

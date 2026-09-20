@@ -1,7 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2016-2016 Karl Griesser (fullref@gmail.com)
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,26 +82,53 @@ public class ExasolTableManager extends SQLTableManager<ExasolTable, ExasolSchem
     // ------
 
     @Override
-    public ExasolTable createDatabaseObject(@NotNull DBRProgressMonitor monitor, @NotNull DBECommandContext context, Object exasolSchema,
-                                            Object copyFrom, @NotNull Map<String, Object> options) {
+    public ExasolTable createDatabaseObject(
+        @NotNull DBRProgressMonitor monitor,
+        @NotNull DBECommandContext context,
+        @NotNull Object exasolSchema,
+        @Nullable Object copyFrom,
+        @NotNull Map<String, Object> options
+    ) {
         ExasolTable table = new ExasolTable((ExasolSchema) exasolSchema, NEW_TABLE_NAME);
         setNewObjectName(monitor, (ExasolSchema) exasolSchema, table);
         return table;
     }
 
+    /**
+     * This implementation is intentionally left blank.
+     */
     @Override
     @SuppressWarnings("rawtypes")
-    public void appendTableModifiers(DBRProgressMonitor monitor, ExasolTable exasolTable, NestedObjectCommand tableProps, StringBuilder ddl, boolean alter) {
+    public void appendTableModifiers(
+        @NotNull DBRProgressMonitor monitor,
+        @NotNull ExasolTable exasolTable,
+        @NotNull NestedObjectCommand tableProps,
+        @NotNull StringBuilder ddl,
+        boolean alter,
+        @NotNull Map<String, Object> options) {
 
+        // no-op
     }
 
     @Override
-    public void addStructObjectCreateActions(DBRProgressMonitor monitor, DBCExecutionContext executionContext, List<DBEPersistAction> actions, StructCreateCommand command, Map<String, Object> options) throws DBException {
+    public void addStructObjectCreateActions(
+        @NotNull DBRProgressMonitor monitor,
+        @NotNull DBCExecutionContext executionContext,
+        @NotNull List<DBEPersistAction> actions,
+        @NotNull StructCreateCommand command,
+        @NotNull Map<String, Object> options
+    ) throws DBException {
         super.addStructObjectCreateActions(monitor, executionContext, actions, command, options);
         // Eventually add Comment
         DBEPersistAction commentAction = buildCommentAction(command.getObject());
         if (commentAction != null) {
             actions.add(commentAction);
+        }
+        for (ExasolTableColumn column : CommonUtils.safeCollection(command.getObject().getAttributes(monitor))) {
+            DBEPersistAction columnCommentAction = ExasolTableColumnManager.buildCommentAction(column);
+            if (columnCommentAction != null) {
+                actions.add(columnCommentAction);
+            }
         }
     }
 
@@ -111,26 +137,32 @@ public class ExasolTableManager extends SQLTableManager<ExasolTable, ExasolSchem
     // ------
 
     @Override
-    public void addObjectModifyActions(@NotNull DBRProgressMonitor monitor, @NotNull DBCExecutionContext executionContext, @NotNull List<DBEPersistAction> actionList, @NotNull ObjectChangeCommand command, @NotNull Map<String, Object> options) {
+    public void addObjectModifyActions(
+        @NotNull DBRProgressMonitor monitor,
+        @NotNull DBCExecutionContext executionContext,
+        @NotNull List<DBEPersistAction> actionList,
+        @NotNull ObjectChangeCommand command,
+        @NotNull Map<String, Object> options) {
+
         ExasolTable exasolTable = command.getObject();
 
         if (command.getProperties().size() > 0) {
-        	
-			if (command.getProperties().containsKey("hasPartitionKey") 
-					&& ((command.getProperties().get("hasPartitionKey").toString()).equals("false")) )
-			{
-				actionList.add(new SQLDatabasePersistAction("ALTER TABLE " + exasolTable.getFullyQualifiedName(DBPEvaluationContext.DDL) + " DROP PARTITION KEYS"));
-			} else if (command.getProperties().size() > 1) {
-			
-			StringBuilder sb = new StringBuilder(128);
-			sb.append(SQL_ALTER);
-			sb.append(exasolTable.getFullyQualifiedName(DBPEvaluationContext.DDL));
-			sb.append(" ");
 
-			appendTableModifiers(monitor, command.getObject(), command, sb, true);
+            if (command.getProperties().containsKey("hasPartitionKey")
+                && ((command.getProperties().get("hasPartitionKey").toString()).equals("false"))) {
+                actionList.add(new SQLDatabasePersistAction(
+                    "ALTER TABLE " + exasolTable.getFullyQualifiedName(DBPEvaluationContext.DDL) + " DROP PARTITION KEYS"));
+            } else if (command.getProperties().size() > 1) {
 
-			actionList.add(new SQLDatabasePersistAction(CMD_ALTER, sb.toString()));
-			}
+                StringBuilder sb = new StringBuilder(128);
+                sb.append(SQL_ALTER);
+                sb.append(exasolTable.getFullyQualifiedName(DBPEvaluationContext.DDL));
+                sb.append(" ");
+
+                appendTableModifiers(monitor, command.getObject(), command, sb, true, options);
+
+                actionList.add(new SQLDatabasePersistAction(CMD_ALTER, sb.toString()));
+            }
         }
 
         DBEPersistAction commentAction = buildCommentAction(exasolTable);

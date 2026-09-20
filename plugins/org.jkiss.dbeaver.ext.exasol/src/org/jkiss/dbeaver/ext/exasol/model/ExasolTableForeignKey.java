@@ -1,7 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2016-2016 Karl Griesser (fullref@gmail.com)
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,9 +30,10 @@ import org.jkiss.dbeaver.model.impl.jdbc.struct.JDBCTableConstraint;
 import org.jkiss.dbeaver.model.meta.Property;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 import org.jkiss.dbeaver.model.runtime.VoidProgressMonitor;
+import org.jkiss.dbeaver.model.struct.DBSEntityConstraint;
 import org.jkiss.dbeaver.model.struct.DBSEntityConstraintType;
 import org.jkiss.dbeaver.model.struct.rdb.DBSForeignKeyModifyRule;
-import org.jkiss.dbeaver.model.struct.rdb.DBSTableForeignKey;
+import org.jkiss.dbeaver.model.struct.rdb.DBSTableForeignKeyEditable;
 
 import java.sql.ResultSet;
 import java.util.List;
@@ -44,7 +44,7 @@ import java.util.Map;
  * @author Karl
  */
 public class ExasolTableForeignKey extends JDBCTableConstraint<ExasolTable, ExasolTableForeignKeyColumn>
-    implements DBSTableForeignKey,DBPScriptObject
+    implements DBSTableForeignKeyEditable, DBPScriptObject
 {
 
     private static final Log LOG = Log.getLog(ExasolTableForeignKey.class);
@@ -98,7 +98,7 @@ public class ExasolTableForeignKey extends JDBCTableConstraint<ExasolTable, Exas
 
     @NotNull
     @Override
-    public String getFullyQualifiedName(DBPEvaluationContext context) {
+    public String getFullyQualifiedName(@NotNull DBPEvaluationContext context) {
         return DBUtils.getFullQualifiedName(getDataSource(), getTable().getContainer(), getTable(), this);
     }
 
@@ -112,6 +112,11 @@ public class ExasolTableForeignKey extends JDBCTableConstraint<ExasolTable, Exas
         }
     }
 
+    @Override
+    public void setUpdateRule(@NotNull DBSForeignKeyModifyRule updateRule) {
+        // Exasol does not support foreign key update rules (derived from the enabled state)
+    }
+
     @NotNull
     @Override
     public DBSForeignKeyModifyRule getDeleteRule() {
@@ -122,11 +127,17 @@ public class ExasolTableForeignKey extends JDBCTableConstraint<ExasolTable, Exas
         }
     }
 
+    @Override
+    public void setDeleteRule(@NotNull DBSForeignKeyModifyRule deleteRule) {
+        // Exasol does not support foreign key delete rules (derived from the enabled state)
+    }
+
     // -----------------
     // Columns
     // -----------------
+    @Nullable
     @Override
-    public List<ExasolTableForeignKeyColumn> getAttributeReferences(DBRProgressMonitor monitor) throws DBException {
+    public List<ExasolTableForeignKeyColumn> getAttributeReferences(@Nullable DBRProgressMonitor monitor) throws DBException {
         return columns;
     }
 
@@ -144,7 +155,6 @@ public class ExasolTableForeignKey extends JDBCTableConstraint<ExasolTable, Exas
     }
 
     @Nullable
-    @NotNull
     @Override
     @Property(id = "reference", viewable = true)
     public ExasolTableUniqueKey getReferencedConstraint() {
@@ -160,9 +170,14 @@ public class ExasolTableForeignKey extends JDBCTableConstraint<ExasolTable, Exas
         return referencedKey;
     }
 
-    public void setReferencedConstraint(ExasolTableUniqueKey referencedKey) {
+    public void setReferencedConstraint(@Nullable ExasolTableUniqueKey referencedKey) {
         this.referencedKey = referencedKey;
         this.refTable = referencedKey == null ? null : referencedKey.getTable();
+    }
+
+    @Override
+    public void setReferencedConstraint(@Nullable DBSEntityConstraint referencedConstraint) {
+        setReferencedConstraint(referencedConstraint instanceof ExasolTableUniqueKey uk ? uk : null);
     }
 
     @Property(viewable = true, editable = true, updatable = true)
@@ -174,8 +189,9 @@ public class ExasolTableForeignKey extends JDBCTableConstraint<ExasolTable, Exas
         this.enabled = enabled;
     }
 
-	@Override
-	public String getObjectDefinitionText(DBRProgressMonitor monitor, Map<String, Object> options)
+	@NotNull
+    @Override
+	public String getObjectDefinitionText(@NotNull DBRProgressMonitor monitor, @NotNull Map<String, Object> options)
 			throws DBException
 	{
 		return ExasolUtils.getFKDdl(this, monitor);

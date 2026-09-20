@@ -144,6 +144,7 @@ public class StreamEntityMapping implements DBSEntity, DBSDataContainer, DBPQual
         return dataSource;
     }
 
+    @NotNull
     @Override
     public String[] getSupportedFeatures() {
         return new String[] {FEATURE_DATA_SELECT};
@@ -182,7 +183,7 @@ public class StreamEntityMapping implements DBSEntity, DBSDataContainer, DBPQual
 
     @NotNull
     @Override
-    public String getFullyQualifiedName(DBPEvaluationContext context) {
+    public String getFullyQualifiedName(@NotNull DBPEvaluationContext context) {
         return getName();
     }
 

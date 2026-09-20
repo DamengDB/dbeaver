@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2025 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 
@@ -44,15 +45,15 @@ public class DriverLibraryBundle extends DriverLibraryAbstract {
 
     private Bundle bundle;
 
-    public DriverLibraryBundle(DriverDescriptor driver, String path) {
+    public DriverLibraryBundle(@NotNull DriverDescriptor driver, @NotNull String path) {
         super(driver, FileType.jar, path);
     }
 
-    public DriverLibraryBundle(DriverDescriptor driver, IConfigurationElement config) {
+    public DriverLibraryBundle(@NotNull DriverDescriptor driver, @NotNull IConfigurationElement config) {
         super(driver, config);
     }
 
-    public DriverLibraryBundle(DriverDescriptor driverDescriptor, DriverLibraryBundle copyFrom) {
+    public DriverLibraryBundle(@NotNull DriverDescriptor driverDescriptor, @NotNull DriverLibraryBundle copyFrom) {
         super(driverDescriptor, copyFrom);
     }
 
@@ -74,18 +75,13 @@ public class DriverLibraryBundle extends DriverLibraryAbstract {
     }
 
     @Override
-    public void resetVersion() {
-        // do nothing
-    }
-
-    @Override
     public boolean isSecureDownload(@NotNull DBRProgressMonitor monitor) {
         return true;
     }
 
     @Nullable
     @Override
-    public String getExternalURL(DBRProgressMonitor monitor) {
+    public String getExternalURL(@NotNull DBRProgressMonitor monitor) {
         return null;
     }
 
@@ -98,12 +94,32 @@ public class DriverLibraryBundle extends DriverLibraryAbstract {
         if (bundle == null) {
             return null;
         }
+
         try {
             String location = bundle.getLocation();
             int divPos = location.indexOf("file:");
             if (divPos != -1) {
                 String installPath = location.substring(divPos + 5);
-                return RuntimeUtils.getLocalPathFromURL(Platform.getInstallLocation().getURL()).resolve(installPath);
+                Path localFilePath = RuntimeUtils.getLocalPathFromURL(Platform.getInstallLocation().getURL())
+                    .resolve(installPath);
+
+                if (Files.isRegularFile(localFilePath)) {
+                    return localFilePath;
+                } else if (Files.isDirectory(localFilePath)) {
+                    Path compiledClassesDir = localFilePath.resolve("target").resolve("classes");
+                    Path libraryDir = localFilePath.resolve("lib");
+
+                    if (Platform.inDevelopmentMode() && Files.exists(compiledClassesDir)) {
+                        return compiledClassesDir;
+                    } else if (Files.exists(libraryDir)) {
+                        return libraryDir;
+                    } else {
+                        // Extracted bundle?
+                        return localFilePath;
+                    }
+                }
+
+                log.error("Bundle file not found: " + localFilePath);
             }
         } catch (Exception e) {
             log.debug(e);
@@ -111,6 +127,7 @@ public class DriverLibraryBundle extends DriverLibraryAbstract {
         return null;
     }
 
+    @Nullable
     private Bundle findBundle() {
         Bundle curBundle = FrameworkUtil.getBundle(getClass());
         if (curBundle == null) {
@@ -148,5 +165,4 @@ public class DriverLibraryBundle extends DriverLibraryAbstract {
     public DBIcon getIcon() {
         return DBIcon.JAR;
     }
-
 }

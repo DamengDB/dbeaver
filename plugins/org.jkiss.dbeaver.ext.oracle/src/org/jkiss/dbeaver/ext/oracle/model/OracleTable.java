@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,6 @@ import org.jkiss.dbeaver.model.meta.Association;
 import org.jkiss.dbeaver.model.meta.LazyProperty;
 import org.jkiss.dbeaver.model.meta.Property;
 import org.jkiss.dbeaver.model.meta.PropertyGroup;
-import org.jkiss.dbeaver.model.preferences.DBPPropertySource;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 import org.jkiss.dbeaver.model.struct.DBSObject;
 import org.jkiss.utils.ArrayUtils;
@@ -45,7 +44,6 @@ import org.jkiss.utils.CommonUtils;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
-import java.util.stream.Stream;
 
 /**
  * OracleTable
@@ -182,6 +180,7 @@ public class OracleTable extends OracleTablePhysical implements DBPScriptObject,
         }
     }
 
+    @Nullable
     @Override
     public TableAdditionalInfo getAdditionalInfo()
     {
@@ -211,12 +210,6 @@ public class OracleTable extends OracleTablePhysical implements DBPScriptObject,
     @Override
     public long getStatObjectSize() {
         return tableSize == null ? 0 : tableSize;
-    }
-
-    @Nullable
-    @Override
-    public DBPPropertySource getStatProperties() {
-        return null;
     }
 
 
@@ -341,6 +334,9 @@ public class OracleTable extends OracleTablePhysical implements DBPScriptObject,
         throws DBException
     {
         List<OracleTableForeignKey> refs = new ArrayList<>();
+        if (monitor.isForceCacheUsage()) {
+            return refs;
+        }
         // This is dummy implementation
         // Get references from this schema only
         final Collection<OracleTableForeignKey> allForeignKeys =
@@ -378,6 +374,7 @@ public class OracleTable extends OracleTablePhysical implements DBPScriptObject,
             && getDataSource().getContainer().getPreferenceStore().getBoolean(OracleConstants.PREF_SUPPORT_ROWID);
     }
 
+    @Nullable
     @Override
     public DBDPseudoAttribute[] getPseudoAttributes() throws DBException {
         if (this.hasRowIdPseudoAttribute()) {
@@ -390,6 +387,7 @@ public class OracleTable extends OracleTablePhysical implements DBPScriptObject,
         }
     }
 
+    @NotNull
     @Override
     public DBDPseudoAttribute[] getAllPseudoAttributes(@NotNull DBRProgressMonitor monitor) throws DBException {
         if (this.allPseudoAttributes == null) {
@@ -423,8 +421,9 @@ public class OracleTable extends OracleTablePhysical implements DBPScriptObject,
         super.appendSelectSource(monitor, query, tableAlias, rowIdAttribute);
     }
 
+    @NotNull
     @Override
-    public String getObjectDefinitionText(DBRProgressMonitor monitor, Map<String, Object> options) throws DBException {
+    public String getObjectDefinitionText(@NotNull DBRProgressMonitor monitor, @NotNull Map<String, Object> options) throws DBException {
         return getDDL(monitor, OracleDDLFormat.getCurrentFormat(getDataSource()), options);
     }
 
@@ -534,7 +533,7 @@ public class OracleTable extends OracleTablePhysical implements DBPScriptObject,
     }
 
     @Override
-    public boolean supportsObjectDefinitionOption(String option) {
+    public boolean supportsObjectDefinitionOption(@NotNull String option) {
         return ArrayUtils.contains(supportedOptions, option);
     }
 }

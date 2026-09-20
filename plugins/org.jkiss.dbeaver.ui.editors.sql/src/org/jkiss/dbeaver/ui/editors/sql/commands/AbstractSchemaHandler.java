@@ -19,8 +19,10 @@ package org.jkiss.dbeaver.ui.editors.sql.commands;
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.ui.handlers.HandlerUtil;
+import org.jkiss.code.NotNull;
+import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.model.app.DBPProject;
-import org.jkiss.dbeaver.model.exec.DBCExecutionContextDefaults;
+import org.jkiss.dbeaver.model.exec.DBCExecutionContext;
 import org.jkiss.dbeaver.model.navigator.DBNDatabaseNode;
 import org.jkiss.dbeaver.model.navigator.DBNModel;
 import org.jkiss.dbeaver.model.struct.DBSObject;
@@ -32,12 +34,14 @@ import java.util.List;
 
 public abstract class AbstractSchemaHandler extends AbstractHandler {
 
-    protected SQLEditor getEditor(ExecutionEvent event) {
+    @Nullable
+    protected SQLEditor getEditor(@NotNull ExecutionEvent event) {
         return RuntimeUtils.getObjectAdapter(HandlerUtil.getActiveEditor(event), SQLEditor.class);
     }
 
-    protected DBCExecutionContextDefaults<?, ?> getExecutionContext(SQLEditor editor) {
-        return (DBCExecutionContextDefaults<?, ?>) editor.getExecutionContext();
+    @Nullable
+    protected DBCExecutionContext getExecutionContext(@NotNull SQLEditor editor) {
+        return editor.getExecutionContext();
     }
 
     protected DBNModel getNavigatorModel(DBPProject project) {

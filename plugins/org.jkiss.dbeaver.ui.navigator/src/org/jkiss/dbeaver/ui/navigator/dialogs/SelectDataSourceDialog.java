@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jkiss.dbeaver.ui.navigator.dialogs;
 
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.IDialogSettings;
+import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -54,7 +55,7 @@ public class SelectDataSourceDialog extends AbstractPopupPanel {
 
     @Nullable
     private final DBPProject project;
-    private DBPDataSourceContainer dataSource = null;
+    private DBPDataSourceContainer dataSource;
 
     private static final String DIALOG_ID = "DBeaver.SelectDataSourceDialog";//$NON-NLS-1$
     private boolean showConnected;
@@ -62,8 +63,11 @@ public class SelectDataSourceDialog extends AbstractPopupPanel {
     private DBNProjectDatabases projectNode;
     private DBNNode rootNode;
 
-    public SelectDataSourceDialog(@NotNull Shell parentShell, @Nullable DBPProject project, DBPDataSourceContainer selection)
-    {
+    public SelectDataSourceDialog(
+        @NotNull Shell parentShell,
+        @Nullable DBPProject project,
+        @Nullable DBPDataSourceContainer selection
+    ) {
         super(parentShell, UINavigatorMessages.dialog_select_datasource_title);
         this.project = project;
         this.dataSource = selection;
@@ -75,8 +79,9 @@ public class SelectDataSourceDialog extends AbstractPopupPanel {
         return UIUtils.getDialogSettings(DIALOG_ID);
     }
 
+    @NotNull
     @Override
-    protected Composite createDialogArea(Composite parent)
+    protected Composite createDialogArea(@NotNull Composite parent)
     {
         showConnected = getDialogBoundsSettings().getBoolean(PARAM_SHOW_CONNECTED);
         showAllProjects = getDialogBoundsSettings().getBoolean(PARAM_SHOW_ALL_PROJECTS);
@@ -142,8 +147,6 @@ public class SelectDataSourceDialog extends AbstractPopupPanel {
                         if (folderNode != null) {
                             expandFolders(this, folderNode);
                         }
-                    } else {
-                        // Do not expand anything
                     }
                     return;
                 }
@@ -156,12 +159,12 @@ public class SelectDataSourceDialog extends AbstractPopupPanel {
         gd.minimumWidth = 100;
         dataSourceTree.setLayoutData(gd);
 
-        final TreeViewer treeViewer = dataSourceTree.getViewer();
+        TreeViewer treeViewer = dataSourceTree.getViewer();
 
-        final Text descriptionText = new Text(group, SWT.READ_ONLY);
+        Text descriptionText = new Text(group, SWT.READ_ONLY);
         descriptionText.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
-        final Button showConnectedCheck = new Button(group, SWT.CHECK);
+        Button showConnectedCheck = new Button(group, SWT.CHECK);
         showConnectedCheck.setText(UINavigatorMessages.label_show_connected);
         showConnectedCheck.setSelection(showConnected);
         showConnectedCheck.addSelectionListener(new SelectionAdapter() {
@@ -172,7 +175,7 @@ public class SelectDataSourceDialog extends AbstractPopupPanel {
                 try {
                     treeViewer.refresh();
                     if (showConnected) {
-                        treeViewer.expandAll();
+                        expandFolders(dataSourceTree, getTreeRootNode());
                     }
                 } finally {
                     treeViewer.getControl().setRedraw(true);
@@ -181,6 +184,7 @@ public class SelectDataSourceDialog extends AbstractPopupPanel {
             }
         });
         final Button showAllProjectsCheck = new Button(group, SWT.CHECK);
+        showAllProjectsCheck.setLayoutData(GridDataFactory.swtDefaults().exclude(project == null).create());
         showAllProjectsCheck.setText(UINavigatorMessages.label_show_all_projects);
         showAllProjectsCheck.setSelection(showAllProjects);
         showAllProjectsCheck.addSelectionListener(new SelectionAdapter() {
@@ -191,7 +195,7 @@ public class SelectDataSourceDialog extends AbstractPopupPanel {
                 try {
                     dataSourceTree.reloadTree(getTreeRootNode());
                     if (showAllProjects) {
-                        treeViewer.expandToLevel(3);
+                        expandFolders(dataSourceTree, getTreeRootNode());
                     }
                 } finally {
                     treeViewer.getControl().setRedraw(true);
@@ -227,9 +231,9 @@ public class SelectDataSourceDialog extends AbstractPopupPanel {
             event -> {
                 IStructuredSelection structSel = (IStructuredSelection) event.getSelection();
                 Object selNode = structSel.isEmpty() ? null : structSel.getFirstElement();
-                if (selNode instanceof DBNDataSource) {
-                    dataSource = ((DBNDataSource) selNode).getObject();
-                    getButton(IDialogConstants.OK_ID).setEnabled(true);
+                if (selNode instanceof DBNDataSource dbnDataSource) {
+                    dataSource = dbnDataSource.getObject();
+                    enableButton(IDialogConstants.OK_ID, true);
                     String description = dataSource.getDescription();
                     if (description == null) {
                         description = dataSource.getName();
@@ -237,15 +241,16 @@ public class SelectDataSourceDialog extends AbstractPopupPanel {
                     descriptionText.setText(description);
                 } else {
                     dataSource = null;
-                    getButton(IDialogConstants.OK_ID).setEnabled(false);
+                    enableButton(IDialogConstants.OK_ID, false);
                 }
             }
         );
         treeViewer.addDoubleClickListener(event -> {
-            if (getButton(IDialogConstants.OK_ID).isEnabled()) {
+            if (isButtonEnabled(IDialogConstants.OK_ID)) {
                 okPressed();
             }
         });
+        Text filterControl = dataSourceTree.getFilterControl();
         UIUtils.asyncExec(() -> {
             Point treeSize = dataSourceTree.getViewer().getTree().computeSize(SWT.DEFAULT, SWT.DEFAULT);
             Point shellSize = getShell().getSize();
@@ -254,15 +259,17 @@ public class SelectDataSourceDialog extends AbstractPopupPanel {
                 getShell().setSize(shellCompSize.x, shellSize.y);
                 getShell().layout(true);
             }
-            dataSourceTree.getFilterControl().setFocus();
+            if (filterControl != null) {
+                filterControl.setFocus();
+            }
             if (showConnected) {
-                treeViewer.expandAll();
+                expandFolders(dataSourceTree, getTreeRootNode());
             }
         });
 
         closeOnFocusLost(
             treeViewer.getControl(),
-            dataSourceTree.getFilterControl(),
+            filterControl,
             descriptionText,
             showConnectedCheck,
             showAllProjectsCheck);
@@ -272,6 +279,10 @@ public class SelectDataSourceDialog extends AbstractPopupPanel {
 
     private void expandFolders(DatabaseNavigatorTree dataSourceTree, DBNNode node) {
         if (node instanceof DBNLocalFolder || node instanceof DBNProjectDatabases || node instanceof DBNProject || node instanceof DBNRoot) {
+            if (node instanceof DBNProject p && !p.getProject().isOpen()) {
+                // Don't try to expand unloaded projects - let the user do it
+                return;
+            }
             dataSourceTree.getViewer().expandToLevel(node, 1);
             DBNNode[] childNodes;
             try {
@@ -296,12 +307,13 @@ public class SelectDataSourceDialog extends AbstractPopupPanel {
     {
         Control ctl = super.createContents(parent);
         if (this.dataSource == null) {
-            getButton(IDialogConstants.OK_ID).setEnabled(false);
+            enableButton(IDialogConstants.OK_ID, false);
         }
         return ctl;
     }
 
-    protected Control createButtonBar(Composite parent) {
+    @NotNull
+    protected Control createButtonBar(@NotNull Composite parent) {
         Composite composite = new Composite(parent, SWT.NONE);
         GridLayout layout = new GridLayout(3, false);
         layout.marginWidth = convertHorizontalDLUsToPixels(IDialogConstants.HORIZONTAL_MARGIN);

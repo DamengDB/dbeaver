@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,6 +91,24 @@ public class DashboardRegistry {
         WorkspaceConfigEventManager.addConfigChangedListener(CONFIG_FILE_NAME, o -> loadConfigFromFile());
     }
 
+    public void updateDashboardItem(@NotNull DashboardItemConfiguration selectedDashboard) {
+        DashboardItemConfiguration oldConfiguration = null;
+        synchronized (syncRoot) {
+            if (!DBWorkbench.getPlatform().getWorkspace().hasRealmPermission(RMConstants.PERMISSION_CONFIGURATION_MANAGER)) {
+                throw new IllegalArgumentException("The user has no permission to edit dashboard configuration");
+            }
+            if (!selectedDashboard.isCustom()) {
+                throw new IllegalArgumentException("Only custom dashboards can be edited");
+            }
+            oldConfiguration = dashboardItems.get(selectedDashboard.getId());
+            dashboardItems.put(selectedDashboard.getId(), selectedDashboard);
+            saveConfigFile();
+        }
+        for (DashboardRegistryListener listener : listeners) {
+            listener.handleItemUpdate(oldConfiguration, selectedDashboard);
+        }
+    }
+
     private void loadConfigFromFile() {
         try {
             String configContent = DBWorkbench.getPlatform()
@@ -132,7 +150,7 @@ public class DashboardRegistry {
         try {
             StringWriter out = new StringWriter();
             XMLBuilder xml = new XMLBuilder(out, GeneralUtils.UTF8_ENCODING);
-            xml.setButify(true);
+            xml.setBeautify(true);
             try (var e = xml.startElement("dashboards")) {
                 synchronized (syncRoot) {
                     for (DashboardItemConfiguration dashboard : dashboardItems.values()) {
@@ -322,7 +340,7 @@ public class DashboardRegistry {
         }
     }
 
-    public void removeDashboardItem(DashboardItemConfiguration dashboard) throws IllegalArgumentException {
+    public void removeDashboardItem(@NotNull DashboardItemConfiguration dashboard) throws IllegalArgumentException {
         synchronized (syncRoot) {
             if (!DBWorkbench.getPlatform().getWorkspace().hasRealmPermission(RMConstants.PERMISSION_CONFIGURATION_MANAGER)) {
                 throw new IllegalArgumentException("The user has no permission to remove dashboard configuration");

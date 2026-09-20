@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2025 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,24 +16,31 @@
  */
 package org.jkiss.dbeaver.model.ai.commands;
 
+import org.eclipse.osgi.util.NLS;
 import org.jkiss.code.NotNull;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.model.DBPDataSource;
 import org.jkiss.dbeaver.model.DBPDataSourceContainer;
 import org.jkiss.dbeaver.model.ai.*;
-import org.jkiss.dbeaver.model.ai.completion.DAICommandRequest;
-import org.jkiss.dbeaver.model.ai.completion.DAICompletionContext;
-import org.jkiss.dbeaver.model.ai.completion.DAICompletionScope;
-import org.jkiss.dbeaver.model.ai.completion.DAICompletionSettings;
+import org.jkiss.dbeaver.model.ai.engine.AIDatabaseContext;
+import org.jkiss.dbeaver.model.ai.impl.MessageChunk;
+import org.jkiss.dbeaver.model.ai.internal.AIMessages;
+import org.jkiss.dbeaver.model.ai.prompt.AIPromptGenerateSql;
+import org.jkiss.dbeaver.model.ai.registry.AIAssistantRegistry;
+import org.jkiss.dbeaver.model.ai.registry.AISettingsManager;
+import org.jkiss.dbeaver.model.ai.utils.AIUtils;
+import org.jkiss.dbeaver.model.exec.DBCExecutionContext;
+import org.jkiss.dbeaver.model.exec.DBCMessageException;
 import org.jkiss.dbeaver.model.exec.output.DBCOutputSeverity;
 import org.jkiss.dbeaver.model.logical.DBSLogicalDataSource;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 import org.jkiss.dbeaver.model.sql.*;
+import org.jkiss.dbeaver.model.sql.parser.SQLScriptParser;
 import org.jkiss.dbeaver.runtime.DBWorkbench;
 import org.jkiss.utils.CommonUtils;
 
-import java.util.Arrays;
-import java.util.stream.Collectors;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Control command handler
@@ -57,65 +64,120 @@ public class SQLCommandAI implements SQLControlCommandHandler {
     public SQLControlResult handleCommand(@NotNull DBRProgressMonitor monitor, @NotNull SQLControlCommand command, @NotNull SQLScriptContext scriptContext) throws DBException {
         DBPDataSource dataSource = command.getDataSource();
         if (dataSource == null) {
-            throw new DBException("Not connected to database");
-        }
-        AISettings aiSettings = AISettingsRegistry.getInstance().getSettings();
-        if (aiSettings.isAiDisabled()) {
-            throw new DBException("AI services are disabled");
+            throw new DBException(AIMessages.ai_command_not_connected);
         }
 
         String prompt = command.getParameter();
         if (CommonUtils.isEmptyTrimmed(prompt)) {
-            throw new DBException("Empty AI prompt");
+            throw new DBException(AIMessages.ai_command_empty_prompt);
         }
+
+        AIBaseFeatures.SQL_AI_COMMAND.use();
 
         final DBSLogicalDataSource lDataSource = new DBSLogicalDataSource(
             command.getDataSourceContainer(), "AI logical wrapper", null);
 
         DBPDataSourceContainer dataSourceContainer = lDataSource.getDataSourceContainer();
-        DAICompletionSettings completionSettings = new DAICompletionSettings(dataSourceContainer);
-        if (!DBWorkbench.getPlatform().getApplication().isHeadlessMode() && !completionSettings.isMetaTransferConfirmed()) {
-            if (DBWorkbench.getPlatformUI().confirmAction("Do you confirm AI usage",
-                "Do you confirm AI usage for '" + dataSourceContainer.getName() + "'?"
+        AIContextSettingsDataSource completionSettings = new AIContextSettingsDataSource(dataSourceContainer);
+        if (!completionSettings.isMetaTransferConfirmed()) {
+            if (DBWorkbench.getPlatformUI().confirmAction(
+                AIMessages.ai_command_confirm_usage_title,
+                NLS.bind(AIMessages.ai_command_confirm_usage_message, dataSourceContainer.getName())
             )) {
                 completionSettings.setMetaTransferConfirmed(true);
                 completionSettings.saveSettings();
             } else {
-                throw new DBException("AI services restricted for '" + dataSourceContainer.getName() + "'");
+                throw new DBException(NLS.bind(AIMessages.ai_command_services_restricted, dataSourceContainer.getName()));
             }
         }
-        DAICompletionScope scope = completionSettings.getScope();
-        DAICompletionContext.Builder contextBuilder = new DAICompletionContext.Builder()
-            .setScope(scope)
-            .setDataSource(lDataSource)
-            .setExecutionContext(scriptContext.getExecutionContext());
-        if (scope == DAICompletionScope.CUSTOM) {
+        DBCExecutionContext executionContext = scriptContext.getExecutionContext();
+        AIUtils.updateScopeSettingsIfNeeded(completionSettings, dataSourceContainer, executionContext);
+
+        AIDatabaseContext.Builder contextBuilder = new AIDatabaseContext.Builder(lDataSource);
+        if (executionContext != null) {
+            contextBuilder.setExecutionContext(executionContext);
+        }
+        AIDatabaseScope scope = completionSettings.getScope();
+        if (scope != null) {
+            contextBuilder.setScope(scope);
+        }
+
+        if (scope == AIDatabaseScope.CUSTOM && completionSettings.getCustomObjectIds() != null) {
             contextBuilder.setCustomEntities(
                 AITextUtils.loadCustomEntities(
                     monitor,
                     dataSource,
-                    Arrays.stream(completionSettings.getCustomObjectIds()).collect(Collectors.toSet()))
+                    Set.of(completionSettings.getCustomObjectIds()))
             );
         }
-        final DAICompletionContext aiContext = contextBuilder.build();
+        AIDatabaseContext dbContext = contextBuilder.build();
+        AIPromptGenerateSql promptGenerateSql = new AIPromptGenerateSql();
+        promptGenerateSql.setSqlQueriesOnly(true);
+        AIFunctionContext fc = new AIFunctionContext(monitor, dbContext, promptGenerateSql);
 
-        CommandResult result = AIAssistantRegistry.getInstance()
-            .getAssistant()
-            .command(monitor, new DAICommandRequest(prompt, aiContext));
+        monitor.subTask(AIMessages.ai_command_generate_sql);
 
-        if (result.sql() == null && result.message() != null) {
-            throw new DBException(result.message());
-        } else if (result.sql() == null) {
-            throw new DBException("Empty AI completion for '" + prompt + "'");
+        AIAssistant assistant = AIAssistantRegistry.getInstance()
+            .getAssistant(dataSourceContainer.getProject().getWorkspace());
+
+        AIAssistantResponse result = assistant.generateText(
+            monitor,
+            AISettingsManager.getStaticSettings().getDefaultConfiguration(),
+            fc,
+            List.of(AIMessage.userMessage(prompt))
+        );
+        if (!result.isText()) {
+            return SQLControlResult.success();
+        }
+
+        monitor.subTask(AIMessages.ai_command_process_generated_sql);
+
+        AISqlFormatter sqlFormatter = AIAssistantRegistry.getInstance().getDescriptor().createSqlFormatter();
+        MessageChunk[] messageChunks = AITextUtils.processAndSplitCompletion(
+            monitor,
+            dbContext,
+            sqlFormatter,
+            result.getText()
+        );
+
+        String script = null;
+        StringBuilder messages = new StringBuilder();
+        for (MessageChunk chunk : messageChunks) {
+            if (chunk instanceof MessageChunk.Code code) {
+                script = code.text();
+            } else if (chunk instanceof MessageChunk.Text textChunk) {
+                messages.append(textChunk.text());
+            }
+        }
+
+        if (script == null) {
+            if (!messages.isEmpty()) {
+                throw new DBCMessageException(messages.toString());
+            }
+            throw new DBCMessageException(NLS.bind(AIMessages.ai_command_empty_response, prompt));
         }
 
         SQLDialect dialect = SQLUtils.getDialectFromObject(dataSource);
-        if (!result.sql().contains("\n") && SQLUtils.isCommentLine(dialect, result.sql())) {
-            throw new DBException(result.sql());
+        if (!script.contains("\n") && SQLUtils.isCommentLine(dialect, script)) {
+            throw new DBCMessageException(script);
         }
 
-        scriptContext.getOutputWriter().println(AI_OUTPUT_SEVERITY, prompt + " ==> " + result.sql() + "\n");
+        List<SQLScriptElement> scriptElements = SQLScriptParser.parseScript(dataSource, script);
+        if (!AIUtils.confirmExecutionIfNeeded(dataSource, scriptElements, true)) {
+            return SQLControlResult.failure();
+        }
+        AIUtils.disableAutoCommitIfNeeded(
+            monitor,
+            scriptElements,
+            scriptContext.getExecutionContext()
+        );
 
-        return SQLControlResult.transform(new SQLQuery(dataSource, result.sql()));
+        scriptContext.getOutputWriter().println(AI_OUTPUT_SEVERITY, prompt + " ==> " + script + "\n");
+
+        if (scriptElements.size() == 1) {
+            return SQLControlResult.transform(scriptElements.getFirst());
+        } else {
+            return SQLControlResult.transform(new SQLScript(dataSource, script, scriptElements));
+        }
     }
 }

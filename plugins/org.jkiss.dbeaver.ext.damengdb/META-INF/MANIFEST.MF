@@ -2,20 +2,20 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: DBeaver Dameng Support
 Bundle-SymbolicName: org.jkiss.dbeaver.ext.damengdb;singleton:=true
-Bundle-Version: 1.0.1
+Bundle-Version: 1.0.1.qualifier
 Bundle-ClassPath: .,
  libs/commons-parser.jar,
  libs/commons-util.jar,
  libs/ejml-core-0.41.jar,
- libs/geoutil-1.1.0.jar,
+ libs/geoutil-1.2.0.jar,
  libs/ejml-ddense-0.41.jar,
- libs/gt-main-28-SNAPSHOT.jar,
- libs/gt-opengis-28-SNAPSHOT.jar,
- libs/gt-referencing-28-SNAPSHOT.jar,
- libs/gt-metadata-28-SNAPSHOT.jar,
- libs/jts-core-1.19.0.jar,
- libs/geolatte-geom-1.8.2.jar,
- libs/slf4j-api-1.6.1.jar
+ libs/gt-main-35-SNAPSHOT.jar,
+ libs/gt-api-35-SNAPSHOT.jar,
+ libs/gt-referencing-35-SNAPSHOT.jar,
+ libs/gt-metadata-35-SNAPSHOT.jar,
+ libs/jts-core-1.20.0.jar,
+ libs/geolatte-geom-1.10.jar,
+ libs/slf4j-api-2.0.18.jar
 Bundle-Vendor: dameng.com
 Export-Package: org.jkiss.dbeaver.ext.damengdb,
  org.jkiss.dbeaver.ext.damengdb.data,
@@ -36,8 +36,10 @@ Require-Bundle: org.eclipse.core.runtime,
  org.jkiss.dbeaver.tasks.native,
  com.sun.jna.platform,
  com.google.gson
-Bundle-RequiredExecutionEnvironment: JavaSE-17
 Bundle-Release-Date: 20230920
 Bundle-ActivationPolicy: lazy
 Automatic-Module-Name: org.jkiss.dbeaver.ext.damengdb
 Import-Package: org.jkiss.dbeaver.ext.damengdb.model
+Bundle-RequiredExecutionEnvironment: JavaSE-25
+Require-Capability: osgi.ee;filter="(&(osgi.ee=JavaSE)(version=25))"
+

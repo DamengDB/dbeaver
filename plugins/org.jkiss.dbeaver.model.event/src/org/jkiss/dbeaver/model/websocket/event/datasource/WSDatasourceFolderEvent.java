@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,21 +37,23 @@ public class WSDatasourceFolderEvent extends WSProjectResourceEvent {
         this.nodePaths = nodePaths;
     }
 
+    @NotNull
     public static WSDatasourceFolderEvent create(
         @Nullable String sessionId,
         @Nullable String userId,
         @NotNull String projectId,
-        @NotNull List<String> datasourceIds
+        @NotNull List<String> folderPaths
     ) {
         return new WSDatasourceFolderEvent(
             "cb_datasource_folder_created",
             sessionId,
             userId,
             projectId,
-            datasourceIds
+            folderPaths
         );
     }
 
+    @NotNull
     public static WSDatasourceFolderEvent delete(
         @Nullable String sessionId,
         @Nullable String userId,
@@ -67,6 +69,7 @@ public class WSDatasourceFolderEvent extends WSProjectResourceEvent {
         );
     }
 
+    @NotNull
     public static WSDatasourceFolderEvent update(
         @Nullable String sessionId,
         @Nullable String userId,

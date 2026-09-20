@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2025 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,9 @@ import org.eclipse.swt.custom.CTabItem;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
+import org.jkiss.code.NotNull;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.model.connection.DBPDriver;
 import org.jkiss.dbeaver.model.connection.DBPDriverLibrary;
@@ -63,9 +63,14 @@ public class DriverLibraryDetailsDialog extends HelpEnabledDialog {
         return UIUtils.getDialogSettings(DIALOG_ID);
     }
 
+    @NotNull
     @Override
-    protected Composite createDialogArea(Composite parent) {
-        getShell().setText(NLS.bind(UIConnectionMessages.dialog_edit_driver_text_driver_library, driver.getName(), library.getDisplayName())); //$NON-NLS-2$
+    protected Composite createDialogArea(@NotNull Composite parent) {
+        getShell().setText(NLS.bind(
+            UIConnectionMessages.dialog_edit_driver_text_driver_library,
+            driver.getName(),
+            library.getDisplayName()
+        ));
         getShell().setImage(DBeaverIcons.getImage(library.getIcon()));
 
         Composite group = super.createDialogArea(parent);
@@ -73,7 +78,12 @@ public class DriverLibraryDetailsDialog extends HelpEnabledDialog {
         gd.widthHint = 500;
         group.setLayoutData(gd);
 
-        Group propsGroup = UIUtils.createControlGroup(group, UIConnectionMessages.dialog_edit_driver_info, 2, -1, -1);
+        Composite propsGroup = UIUtils.createTitledComposite(
+            group,
+            UIConnectionMessages.dialog_edit_driver_info,
+            2,
+            GridData.FILL_HORIZONTAL
+        );
         propsGroup.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
         UIUtils.createLabelText(propsGroup, UIConnectionMessages.dialog_edit_driver_driver, driver.getName(), SWT.BORDER | SWT.READ_ONLY);
@@ -88,6 +98,7 @@ public class DriverLibraryDetailsDialog extends HelpEnabledDialog {
         createDependenciesTab(tabs);
         createLicenseTab(tabs);
         createDetailsTab(tabs);
+        tabs.setSelection(0);
 
         final Path localFile = library.getLocalFile();
         if (localFile != null) {
@@ -130,8 +141,7 @@ public class DriverLibraryDetailsDialog extends HelpEnabledDialog {
         UIUtils.createControlLabel(detailsGroup, UIConnectionMessages.dialog_edit_driver_label_description);
         Text descriptionText = new Text(detailsGroup, SWT.READ_ONLY | SWT.BORDER);
         descriptionText.setText(CommonUtils.notEmpty(library.getDescription()));
-        GridData gd = new GridData(GridData.FILL_HORIZONTAL);
-        gd.heightHint = 40;
+        GridData gd = new GridData(GridData.FILL_BOTH);
         descriptionText.setLayoutData(gd);
 
         CTabItem detailsTab = new CTabItem(tabs, SWT.NONE);
@@ -161,7 +171,7 @@ public class DriverLibraryDetailsDialog extends HelpEnabledDialog {
 
 
     @Override
-    protected void createButtonsForButtonBar(Composite parent) {
+    protected void createButtonsForButtonBar(@NotNull Composite parent) {
         createButton(parent, IDialogConstants.CLOSE_ID, IDialogConstants.CLOSE_LABEL, true);
     }
 

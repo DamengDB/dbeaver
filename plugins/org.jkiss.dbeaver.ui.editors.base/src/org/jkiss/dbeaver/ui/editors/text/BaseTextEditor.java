@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,7 @@ package org.jkiss.dbeaver.ui.editors.text;
 
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.jface.action.GroupMarker;
-import org.eclipse.jface.action.IAction;
-import org.eclipse.jface.action.IMenuManager;
-import org.eclipse.jface.action.Separator;
+import org.eclipse.jface.action.*;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IUndoManager;
 import org.eclipse.jface.text.TextViewer;
@@ -38,6 +35,7 @@ import org.eclipse.ui.texteditor.IDocumentProvider;
 import org.eclipse.ui.texteditor.ITextEditorActionConstants;
 import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.runtime.DBWorkbench;
+import org.jkiss.dbeaver.ui.ActionUtils;
 import org.jkiss.dbeaver.ui.ICommentsSupport;
 import org.jkiss.dbeaver.ui.ISingleControlEditor;
 import org.jkiss.dbeaver.ui.UIUtils;
@@ -154,6 +152,9 @@ public abstract class BaseTextEditor extends AbstractDecoratedTextEditor impleme
     @Override
     protected void editorContextMenuAboutToShow(IMenuManager menu)
     {
+        if (menu instanceof MenuManager mm && mm.getMenu() != null) {
+            ActionUtils.setHostingObject(mm.getMenu(), this);
+        }
         //super.editorContextMenuAboutToShow(menu);
 
         menu.add(new GroupMarker(GROUP_SQL_ADDITIONS));
@@ -307,6 +308,16 @@ public abstract class BaseTextEditor extends AbstractDecoratedTextEditor impleme
 
     protected boolean isNonPersistentEditor() {
         return getEditorInput() instanceof INonPersistentEditorInput;
+    }
+
+    protected void setFocusToTextControl() {
+        SourceViewer viewer = getViewer();
+        if (viewer != null) {
+            StyledText textWidget = viewer.getTextWidget();
+            if (textWidget != null && !textWidget.isDisposed()) {
+                textWidget.setFocus();
+            }
+        }
     }
 
 }

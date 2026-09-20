@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2025 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,12 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.dialogs.IDialogConstants;
+import org.eclipse.jface.layout.GridDataFactory;
+import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.text.IUndoManager;
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
+import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.*;
@@ -32,7 +36,6 @@ import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.model.*;
-import org.jkiss.dbeaver.model.app.DBPProject;
 import org.jkiss.dbeaver.model.data.json.JSONUtils;
 import org.jkiss.dbeaver.model.edit.DBECommand;
 import org.jkiss.dbeaver.model.edit.DBECommandContext;
@@ -45,6 +48,8 @@ import org.jkiss.dbeaver.model.impl.edit.DBECommandAdapter;
 import org.jkiss.dbeaver.model.navigator.DBNDatabaseNode;
 import org.jkiss.dbeaver.model.navigator.DBNEvent;
 import org.jkiss.dbeaver.model.navigator.DBNNode;
+import org.jkiss.dbeaver.model.preferences.DBPPreferenceListener;
+import org.jkiss.dbeaver.model.preferences.DBPPreferenceStore;
 import org.jkiss.dbeaver.model.rm.RMConstants;
 import org.jkiss.dbeaver.model.runtime.AbstractJob;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
@@ -66,9 +71,11 @@ import org.jkiss.dbeaver.ui.controls.folders.ITabbedFolderContainer;
 import org.jkiss.dbeaver.ui.controls.folders.ITabbedFolderListener;
 import org.jkiss.dbeaver.ui.dialogs.ConfirmationDialog;
 import org.jkiss.dbeaver.ui.editors.*;
+import org.jkiss.dbeaver.ui.editors.DatabaseEditorPreferences.BreadcrumbLocation;
 import org.jkiss.dbeaver.ui.editors.entity.properties.ObjectPropertiesEditor;
 import org.jkiss.dbeaver.ui.internal.UINavigatorMessages;
 import org.jkiss.dbeaver.ui.navigator.NavigatorPreferences;
+import org.jkiss.dbeaver.ui.navigator.breadcrumb.NodeBreadcrumbViewer;
 import org.jkiss.dbeaver.utils.GeneralUtils;
 import org.jkiss.utils.CommonUtils;
 
@@ -234,12 +241,13 @@ public class EntityEditor extends MultiPageDatabaseEditor
             // Do not save entity editors in auto-save job (#2408)
             return;
         }
-        DBPProject ownerProject = getEditorInput().getNavigatorNode().getOwnerProject();
+        DBNDatabaseNode navigatorNode = getEditorInput().getNavigatorNode();
+        if (navigatorNode == null) {
+            return;
+        }
 
-        if (
-            DBUtils.isReadOnly(getDatabaseObject())
-                || ownerProject == null
-                || !DBWorkbench.getPlatform().getWorkspace().hasRealmPermission(RMConstants.PERMISSION_METADATA_EDITOR)
+        if (DBUtils.isReadOnly(getDatabaseObject()) ||
+            !DBWorkbench.getPlatform().getWorkspace().hasRealmPermission(RMConstants.PERMISSION_METADATA_EDITOR)
         ) {
             DBWorkbench.getPlatformUI().showNotification(
                 "Read-only",
@@ -265,9 +273,7 @@ public class EntityEditor extends MultiPageDatabaseEditor
         // Show preview
         int previewResult = IDialogConstants.PROCEED_ID;
         if (DBWorkbench.getPlatform().getPreferenceStore().getBoolean(NavigatorPreferences.NAVIGATOR_SHOW_SQL_PREVIEW)) {
-            monitor.beginTask(UINavigatorMessages.editors_entity_monitor_preview_changes, 1);
             previewResult = showChanges(true);
-            monitor.done();
         }
 
         if (previewResult == IDialogConstants.IGNORE_ID) {
@@ -336,7 +342,7 @@ public class EntityEditor extends MultiPageDatabaseEditor
     @Override
     public boolean loadEditorInput() {
         final IDatabaseEditorInput input = getEditorInput();
-        if (input instanceof DatabaseLazyEditorInput && !((DatabaseLazyEditorInput) input).canLoadImmediately()) {
+        if (input instanceof DatabaseLazyEditorInput lei && !lei.canLoadImmediately()) {
             return ((ProgressEditorPart) getActiveEditor()).scheduleEditorLoad();
         } else {
             return false;
@@ -373,7 +379,7 @@ public class EntityEditor extends MultiPageDatabaseEditor
         boolean isNewObject = getDatabaseObject() == null || !getDatabaseObject().isPersisted();
         if (!isNewObject) {
             // Check for any new nested objects
-            for (DBECommand cmd : commandContext.getFinalCommands()) {
+            for (DBECommand<?> cmd : commandContext.getFinalCommands()) {
                 if (cmd.getObject() instanceof DBSObject && !((DBSObject) cmd.getObject()).isPersisted()) {
                     isNewObject = true;
                     break;
@@ -381,13 +387,8 @@ public class EntityEditor extends MultiPageDatabaseEditor
             }
         }
         try {
-            DBExecUtils.tryExecuteRecover(monitor, executionContext.getDataSource(), param -> {
-                try {
-                    commandContext.saveChanges(monitor, options);
-                } catch (DBException e) {
-                    throw new InvocationTargetException(e);
-                }
-            });
+            DBExecUtils.tryExecuteRecover(monitor, executionContext.getDataSource(), param ->
+                commandContext.saveChanges(monitor, options));
         } catch (DBException e) {
             error = e;
         }
@@ -405,18 +406,21 @@ public class EntityEditor extends MultiPageDatabaseEditor
             // It'll refresh database object and all it's descendants
             // So we'll get actual data from database
             final DBNDatabaseNode treeNode = getEditorInput().getNavigatorNode();
-            boolean doRefresh = isNewObject;
-            new AbstractJob("Database node refresh") { //$NON-NLS-1$
-                @Override
-                protected IStatus run(DBRProgressMonitor monitor) {
-                    try {
-                        treeNode.refreshNode(monitor, doRefresh ? DBNEvent.FORCE_REFRESH : DBNEvent.UPDATE_ON_SAVE);
-                    } catch (DBException e) {
-                        return GeneralUtils.makeExceptionStatus(e);
+            if (treeNode != null) {
+                boolean doRefresh = isNewObject;
+                new AbstractJob("Database node refresh") { //$NON-NLS-1$
+                    @NotNull
+                    @Override
+                    protected IStatus run(@NotNull DBRProgressMonitor monitor) {
+                        try {
+                            treeNode.refreshNode(monitor, doRefresh ? DBNEvent.FORCE_REFRESH : DBNEvent.UPDATE_ON_SAVE);
+                        } catch (DBException e) {
+                            return GeneralUtils.makeExceptionStatus(e);
+                        }
+                        return Status.OK_STATUS;
                     }
-                    return Status.OK_STATUS;
-                }
-            }.schedule();
+                }.schedule();
+            }
         }
         monitor.done();
 
@@ -501,13 +505,12 @@ public class EntityEditor extends MultiPageDatabaseEditor
         }
     }
 
-    public int showChanges(boolean allowSave)
-    {
+    public int showChanges(boolean allowSave) {
         DBECommandContext commandContext = getCommandContext();
         if (commandContext == null) {
             return IDialogConstants.CANCEL_ID;
         }
-        Collection<? extends DBECommand> commands = commandContext.getFinalCommands();
+        Collection<? extends DBECommand<?>> commands = commandContext.getFinalCommands();
         if (CommonUtils.isEmpty(commands)) {
             return IDialogConstants.IGNORE_ID;
         }
@@ -518,7 +521,7 @@ public class EntityEditor extends MultiPageDatabaseEditor
             UIUtils.runInProgressService(monitor -> {
                 monitor.beginTask("Generate SQL script", commands.size());
                 Map<String, Object> validateOptions = new HashMap<>();
-                for (DBECommand command : commands) {
+                for (DBECommand<?> command : commands) {
                     monitor.subTask(command.getTitle());
                     try {
                         command.validateCommand(monitor, validateOptions);
@@ -530,7 +533,11 @@ public class EntityEditor extends MultiPageDatabaseEditor
 
                     DBPDataSource dataSource = getDatabaseObject().getDataSource();
                     try {
-                        DBEPersistAction[] persistActions = command.getPersistActions(monitor, getExecutionContext(), options);
+                        DBEPersistAction[] persistActions = command.getPersistActions(
+                            monitor,
+                            getExecutionContext(),
+                            options
+                        );
                         script.append(SQLUtils.generateScript(
                             dataSource,
                             persistActions,
@@ -552,7 +559,7 @@ public class EntityEditor extends MultiPageDatabaseEditor
             saveInProgress = false;
         }
 
-        if (script.length() == 0) {
+        if (script.isEmpty()) {
             return IDialogConstants.PROCEED_ID;
         }
         ChangesPreviewer changesPreviewer = new ChangesPreviewer(script, allowSave);
@@ -573,7 +580,7 @@ public class EntityEditor extends MultiPageDatabaseEditor
         // Command listener
         commandListener = new DBECommandAdapter() {
             @Override
-            public void onCommandChange(DBECommand<?> command)
+            public void onCommandChange(@NotNull DBECommand<?> command)
             {
                 UIUtils.syncExec(() -> firePropertyChange(IEditorPart.PROP_DIRTY));
             }
@@ -611,11 +618,16 @@ public class EntityEditor extends MultiPageDatabaseEditor
                 hasPropertiesEditor = addEditorTab(defaultEditor);
             }
             if (hasPropertiesEditor) {
-                DBNNode node = editorInput.getNavigatorNode();
                 int propEditorIndex = getPageCount() - 1;
                 setPageText(propEditorIndex, UINavigatorMessages.editors_entity_properties_text);
-                setPageToolTip(propEditorIndex, node.getNodeTypeLabel() + UINavigatorMessages.editors_entity_properties_tooltip_suffix);
-                setPageImage(propEditorIndex, DBeaverIcons.getImage(node.getNodeIconDefault()));
+                DBNNode node = editorInput.getNavigatorNode();
+                if (node != null) {
+                    setPageToolTip(
+                        propEditorIndex,
+                        node.getNodeTypeLabel() + UINavigatorMessages.editors_entity_properties_tooltip_suffix
+                    );
+                    setPageImage(propEditorIndex, DBeaverIcons.getImage(node.getNodeIconDefault()));
+                }
             }
         }
 
@@ -649,15 +661,13 @@ public class EntityEditor extends MultiPageDatabaseEditor
             setActiveEditor(getEditor(0));
         }
         this.activeEditor = getActiveEditor();
-        if (activeEditor instanceof ITabbedFolderContainer) {
+        if (activeEditor instanceof ITabbedFolderContainer tfc) {
             if (defFolderId == null && editorDefaults != null) {
                 defFolderId = editorDefaults.folderId;
             }
             if (defFolderId != null) {
                 String folderId = defFolderId;
-                UIUtils.asyncExec(() -> {
-                    ((ITabbedFolderContainer)activeEditor).switchFolder(folderId);
-                });
+                UIUtils.asyncExec(() -> tfc.switchFolder(folderId));
             }
         }
 
@@ -975,19 +985,17 @@ public class EntityEditor extends MultiPageDatabaseEditor
         }
 
         boolean isRename = false;
-        if (source instanceof DBNEvent) {
-            if (((DBNEvent) source).getNodeChange() == DBNEvent.NodeChange.REFRESH) {
+        if (source instanceof DBNEvent event) {
+            if (event.getNodeChange() == DBNEvent.NodeChange.REFRESH) {
                 // This may happen if editor was refreshed indirectly (it is a child of refreshed node)
                 //force = true;
             }
-            Object source2 = ((DBNEvent) source).getSource();
-            if (source2 instanceof DBPEvent) {
-                if (((DBPEvent) source2).getData() == DBPEvent.RENAME) {
-                    Map<String, Object> options = ((DBPEvent) source2).getOptions();
-                    Object uiSource = options.get(DBEObjectManager.OPTION_UI_SOURCE);
-                    if (uiSource != null && !(uiSource instanceof CustomFormEditor)) {
-                        isRename = true;
-                    }
+            Object source2 = event.getSource();
+            if (source2 instanceof DBPEvent event2 && event2.getData() == DBPEvent.RENAME) {
+                Map<String, Object> options = event2.getOptions();
+                Object uiSource = options.get(DBEObjectManager.OPTION_UI_SOURCE);
+                if (uiSource != null && !(uiSource instanceof CustomFormEditor)) {
+                    isRename = true;
                 }
             }
         }
@@ -1069,6 +1077,38 @@ public class EntityEditor extends MultiPageDatabaseEditor
     }
 
     @Override
+    protected Control createTopRightControl(Composite parent) {
+        Composite composite = new Composite(parent, SWT.NONE);
+        composite.setLayoutData(GridDataFactory.swtDefaults().grab(false, true).create());
+        composite.setLayout(GridLayoutFactory.fillDefaults().create());
+
+        NodeBreadcrumbViewer viewer = new NodeBreadcrumbViewer(composite, SWT.TOP);
+        viewer.setInput(getEditorInput().getNavigatorNode());
+
+        DBPPreferenceStore store = DBWorkbench.getPlatform().getPreferenceStore();
+        DBPPreferenceListener listener = event -> {
+            if (event.getProperty().equals(DatabaseEditorPreferences.UI_STATUS_BAR_SHOW_BREADCRUMBS)) {
+                this.applyBreadcrumbsVisibility(store, composite);
+                updateTopRightControl();
+            }
+        };
+
+        store.addPropertyChangeListener(listener);
+        composite.addDisposeListener(e -> store.removePropertyChangeListener(listener));
+        this.applyBreadcrumbsVisibility(store, composite);
+
+        return composite;
+    }
+
+    private void applyBreadcrumbsVisibility(@NotNull DBPPreferenceStore store, @NotNull Composite composite) {
+        if (DBWorkbench.getPlatform().getApplication().isStandalone()) {
+            composite.setVisible(BreadcrumbLocation.get(store) == BreadcrumbLocation.IN_EDITORS);
+        } else {
+            composite.setVisible(BreadcrumbLocation.get(store) != BreadcrumbLocation.HIDDEN);
+        }
+    }
+
+    @Override
     public DBPDataSourceContainer getDataSourceContainer() {
         return DBUtils.getContainer(getDatabaseObject());
     }
@@ -1140,8 +1180,9 @@ public class EntityEditor extends MultiPageDatabaseEditor
             setUser(true);
         }
 
+        @NotNull
         @Override
-        protected IStatus run(DBRProgressMonitor monitor) {
+        protected IStatus run(@NotNull DBRProgressMonitor monitor) {
             try {
                 final DBECommandContext commandContext = getCommandContext();
                 if (commandContext != null && commandContext.isDirty()) {

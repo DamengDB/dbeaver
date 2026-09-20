@@ -71,12 +71,12 @@ public class DamengTableManager extends SQLTableManager<DamengTable, DamengSchem
 
     @Override
     protected void addObjectModifyActions(DBRProgressMonitor monitor, DBCExecutionContext executionContext,
-                                          List<DBEPersistAction> actionList, ObjectChangeCommand command, Map<String, Object> options) {
+                                          List<DBEPersistAction> actionList, ObjectChangeCommand command, Map<String, Object> options) throws DBException {
         if (command.getProperties().size() > 1 || command.getProperty("comment") == null) //$NON-NLS-1$
         {
             StringBuilder query = new StringBuilder("ALTER TABLE ");
             query.append(command.getObject().getFullyQualifiedName(DBPEvaluationContext.DDL)).append(" "); //$NON-NLS-1$
-            appendTableModifiers(monitor, command.getObject(), command, query, true);
+            appendTableModifiers(monitor, command.getObject(), command, query, true, options);
             actionList.add(new SQLDatabasePersistAction(query.toString()));
         }
     }
@@ -103,11 +103,10 @@ public class DamengTableManager extends SQLTableManager<DamengTable, DamengSchem
         }
     }
 
-    @SuppressWarnings("rawtypes")
     @Override
-    protected void appendTableModifiers(DBRProgressMonitor monitor, DamengTable table, NestedObjectCommand tableProps,
-                                        StringBuilder ddl, boolean alter) {
-        // ALTER
+	protected void appendTableModifiers(DBRProgressMonitor monitor, DamengTable table, NestedObjectCommand tableProps,
+			StringBuilder ddl, boolean alter, Map<String, Object> options) throws DBException {
+    	// ALTER
         if (tableProps.getProperty("tablespace") != null)
         {
             Object tablespace = table.getTablespace();
@@ -119,9 +118,9 @@ public class DamengTableManager extends SQLTableManager<DamengTable, DamengSchem
                 }
             }
         }
-    }
+	}
 
-    @Override
+	@Override
     protected void addObjectRenameActions(DBRProgressMonitor monitor, DBCExecutionContext executionContext,
                                           List<DBEPersistAction> actions, ObjectRenameCommand command, Map<String, Object> options) {
         actions.add(new SQLDatabasePersistAction("Rename table", "ALTER TABLE "

@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,13 @@ import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.jkiss.dbeaver.ui.DataEditorFeatures;
+import org.jkiss.dbeaver.ui.UIExecutionQueue;
 import org.jkiss.dbeaver.ui.UIUtils;
-import org.jkiss.dbeaver.ui.controls.resultset.*;
+import org.jkiss.dbeaver.ui.controls.resultset.IResultSetPresentation;
+import org.jkiss.dbeaver.ui.controls.resultset.IResultSetSelection;
+import org.jkiss.dbeaver.ui.controls.resultset.ResultSetRow;
+import org.jkiss.dbeaver.ui.controls.resultset.ResultSetUtils;
+import org.jkiss.dbeaver.ui.controls.resultset.panel.ResultSetPanelBase;
 import org.jkiss.dbeaver.ui.controls.resultset.panel.ResultSetPanelRefresher;
 import org.jkiss.utils.CommonUtils;
 
@@ -36,7 +41,7 @@ import java.util.List;
 /**
  * RSV references panel
  */
-public class ReferencesPanel implements IResultSetPanel {
+public class ReferencesPanel extends ResultSetPanelBase {
 
     //private static final Log log = Log.getLog(ReferencesPanel.class);
 
@@ -65,7 +70,7 @@ public class ReferencesPanel implements IResultSetPanel {
 
         ResultSetPanelRefresher.installOn(this, presentation);
 
-        if (presentation instanceof ISelectionProvider) {
+        if (presentation instanceof ISelectionProvider sp) {
             ISelectionChangedListener selectionListener = new ISelectionChangedListener() {
                 private List<ResultSetRow> prevSelection;
                 @Override
@@ -73,19 +78,21 @@ public class ReferencesPanel implements IResultSetPanel {
                     if (presentation.getController().getVisiblePanel() != ReferencesPanel.this) {
                         return;
                     }
-                    if (!(event.getSelection() instanceof IResultSetSelection)) {
+                    if (!(event.getSelection() instanceof IResultSetSelection rss)) {
                         return;
                     }
-                    List<ResultSetRow> selectedItems = ((IResultSetSelection) event.getSelection()).getSelectedRows();
-                    if (CommonUtils.equalObjects(prevSelection, selectedItems)) {
-                        return;
-                    }
-                    this.prevSelection = selectedItems;
-                    getResultsContainer().refreshReferences(false);
+                    UIExecutionQueue.queueExec(() -> {
+                        List<ResultSetRow> selectedItems = rss.getSelectedRows();
+                        if (CommonUtils.equalObjects(prevSelection, selectedItems)) {
+                            return;
+                        }
+                        this.prevSelection = selectedItems;
+                        getResultsContainer().refreshReferences(false);
+                    });
                 }
             };
-            ((ISelectionProvider) presentation).addSelectionChangedListener(selectionListener);
-            presentation.getControl().addDisposeListener(e -> ((ISelectionProvider) presentation).removeSelectionChangedListener(selectionListener));
+            sp.addSelectionChangedListener(selectionListener);
+            presentation.getControl().addDisposeListener(e -> sp.removeSelectionChangedListener(selectionListener));
         }
 
         DataEditorFeatures.RESULT_SET_PANEL_REFS.use();

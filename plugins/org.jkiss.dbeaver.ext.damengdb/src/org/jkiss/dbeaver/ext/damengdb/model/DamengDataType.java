@@ -315,13 +315,16 @@ public class DamengDataType extends DamengObject<DBSObject>
         if (typeOwner != null) {
             try {
                 typeSchema = dataSource.getSchema(monitor, typeOwner);
-                if (typeSchema == null) {
-                    log.error("Type attr schema '" + typeOwner + "' not found");
-                } else {
-                    type = typeSchema.getDataType(monitor, typeName);
-                }
             } catch (DBException e) {
                 log.error(e);
+            }
+            // For UDT types, create a lightweight type object directly
+            // instead of triggering the full schema DataTypeCache load
+            if (typeSchema != null) {
+                type = new DamengDataType(typeSchema, typeName, true);
+                type.flagPredefined = true;
+                typeSchema.dataTypeCache.cacheObject(type);
+                return type;
             }
         } else {
             type = (DamengDataType) dataSource.getLocalDataType(typeName);

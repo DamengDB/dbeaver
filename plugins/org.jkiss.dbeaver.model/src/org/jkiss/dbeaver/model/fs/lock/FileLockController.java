@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2025 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,12 +50,16 @@ public class FileLockController {
     private final long maxLockTime;
 
     public FileLockController(@NotNull String applicationId) throws DBException {
-        this(applicationId, DEFAULT_MAX_LOCK_TIME);
+        this(applicationId, DEFAULT_MAX_LOCK_TIME, GeneralUtils.getMetadataFolder());
+    }
+
+    public FileLockController(@NotNull String applicationId, @NotNull Path metadataFolder) throws DBException {
+        this(applicationId, DEFAULT_MAX_LOCK_TIME, metadataFolder);
     }
 
     // for tests
-    public FileLockController(@NotNull String applicationId, long maxLockTime) throws DBException {
-        this.lockFolderPath =  GeneralUtils.getMetadataFolder()
+    public FileLockController(@NotNull String applicationId, long maxLockTime, @NotNull Path metadataFolder) throws DBException {
+        this.lockFolderPath = metadataFolder
             .resolve(LOCK_META_FOLDER);
         this.applicationId = applicationId;
         this.maxLockTime = maxLockTime;
@@ -187,6 +191,13 @@ public class FileLockController {
         }
 
         if (fileUnlocked) {
+            if (Files.exists(lockFile)) {
+                try {
+                    Files.delete(lockFile);
+                } catch (IOException e) {
+                    log.debug("Error deleting lock file " + lockFile, e);
+                }
+            }
             return;
         }
 

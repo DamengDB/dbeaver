@@ -306,7 +306,7 @@ public class DamengDataSource extends JDBCDataSource implements DBPObjectStatist
             try (JDBCSession session = context.openSession(monitor, DBCExecutionPurpose.META,
                 "Set connection parameters")) {
                 try {
-                    readDatabaseServerVersion(session.getMetaData());
+                    readDatabaseServerVersion(session, session.getMetaData());
                 } catch (SQLException e) {
                     log.debug("Error reading metadata", e);
                 }

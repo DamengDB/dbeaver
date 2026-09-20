@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2025 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -169,11 +169,6 @@ public abstract class DriverLibraryAbstract implements DBPDriverLibrary {
     }
 
     @Override
-    public void setPreferredVersion(@NotNull String version) {
-        // do nothing
-    }
-
-    @Override
     public boolean isInvalidLibrary() {
         return false;
     }
@@ -223,6 +218,7 @@ public abstract class DriverLibraryAbstract implements DBPDriverLibrary {
         return disabled;
     }
 
+    @Override
     public void setDisabled(boolean disabled) {
         this.disabled = disabled;
     }
@@ -237,7 +233,11 @@ public abstract class DriverLibraryAbstract implements DBPDriverLibrary {
         return system == null || system.matches(DBWorkbench.getPlatform().getLocalSystem());
     }
 
-    public void downloadLibraryFile(@NotNull DBRProgressMonitor monitor, boolean forceUpdate, String taskName) throws IOException, InterruptedException {
+    public void downloadLibraryFile(
+        @NotNull DBRProgressMonitor monitor,
+        boolean forceUpdate,
+        @NotNull String taskName
+    ) throws IOException, InterruptedException {
         final Path localFile = getLocalFile();
         if (localFile == null) {
             throw new IOException("No target file for '" + getPath() + "'");

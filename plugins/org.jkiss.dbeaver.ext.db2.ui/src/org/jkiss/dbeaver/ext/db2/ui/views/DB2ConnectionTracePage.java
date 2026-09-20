@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2025 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,10 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Text;
+import org.jkiss.code.NotNull;
+import org.jkiss.dbeaver.DBException;
+import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.ext.db2.DB2Constants;
 import org.jkiss.dbeaver.ext.db2.ui.internal.DB2Messages;
 import org.jkiss.dbeaver.model.DBPDataSourceContainer;
@@ -40,8 +42,8 @@ import java.util.Map;
 /**
  * OracleConnectionPage
  */
-public class DB2ConnectionTracePage extends ConnectionPageAbstract
-{
+public class DB2ConnectionTracePage extends ConnectionPageAbstract {
+    private static final Log log = Log.getLog(DB2ConnectionTracePage.class);
 
     private Button enableTraceCheck;
     private Text fileNameText;
@@ -119,7 +121,12 @@ public class DB2ConnectionTracePage extends ConnectionPageAbstract
             DB2Messages.db2_connection_trace_page_string_trace);
         traceAppendCheck = UIUtils.createLabelCheckbox(traceGroup, DB2Messages.db2_connection_trace_page_checkbox_append, false);
 
-        Group levelsGroup = UIUtils.createControlGroup(traceGroup, DB2Messages.db2_connection_trace_page_header_levels, 2, 0, 0);
+        Composite levelsGroup = UIUtils.createTitledComposite(
+            traceGroup,
+            DB2Messages.db2_connection_trace_page_header_levels,
+            2,
+            GridData.FILL_HORIZONTAL
+        );
         gd = new GridData(GridData.HORIZONTAL_ALIGN_BEGINNING);
         gd.horizontalSpan = 2;
         levelsGroup.setLayoutData(gd);
@@ -189,7 +196,7 @@ public class DB2ConnectionTracePage extends ConnectionPageAbstract
     }
 
     @Override
-    public void saveSettings(DBPDataSourceContainer dataSource)
+    public void saveSettings(@NotNull DBPDataSourceContainer dataSource)
     {
         super.saveSettings(dataSource);
         Map<String, String> providerProperties = dataSource.getConnectionConfiguration().getProviderProperties();

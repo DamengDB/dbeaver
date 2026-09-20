@@ -33,11 +33,11 @@ import java.util.Optional;
 public class DamengInsertReplaceMethodIgnore implements DBDInsertReplaceMethod {
 	
     private static final Log log = Log.getLog(DamengInsertReplaceMethodIgnore.class);
-
+    
     @NotNull
     @Override
-    public String getOpeningClause(DBSTable table, DBRProgressMonitor monitor) {
-        if (table != null) {
+	public String getOpeningClause(DBRProgressMonitor monitor, DBSTable table) {
+    	if (table != null) {
             try {
                 Collection<? extends DBSTableConstraint> constraints = table.getConstraints(monitor);
                 if (!CommonUtils.isEmpty(constraints)) {
@@ -54,11 +54,11 @@ public class DamengInsertReplaceMethodIgnore implements DBDInsertReplaceMethod {
             }
         }
         return "INSERT INTO";
-    }
+	}
 
-    @Override
-    public String getTrailingClause(DBSTable table, DBRProgressMonitor monitor, DBSAttributeBase[] attributes) {
-        return null;
-    }
+	@Override
+	public String getTrailingClause(DBRProgressMonitor monitor, DBSTable table, DBSAttributeBase[] attributes) {
+		return null;
+	}
     
 }

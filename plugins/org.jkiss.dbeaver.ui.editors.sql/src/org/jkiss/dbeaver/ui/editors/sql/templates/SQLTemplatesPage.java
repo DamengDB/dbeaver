@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.ui.internal.editors.text.EditorsPlugin;
 import org.eclipse.ui.part.IPageSite;
 import org.eclipse.ui.texteditor.templates.AbstractTemplatesPage;
+import org.jkiss.code.NotNull;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.model.DBIcon;
 import org.jkiss.dbeaver.model.DBPDataSource;
@@ -58,15 +59,14 @@ public class SQLTemplatesPage extends AbstractTemplatesPage {
 
     private static final String PREFERENCE_PAGE_ID = "org.jkiss.dbeaver.ui.editors.sql.templates.SQLTemplatesPage"; //$NON-NLS-1$
 
-    private SQLEditorBase sqlEditor;
+    private final SQLEditorBase sqlEditor;
 
     /**
      * Create a new AbstractTemplatesPage for the JavaEditor
      *
      * @param sqlEditor the java editor
      */
-    public SQLTemplatesPage(final SQLEditorBase sqlEditor)
-    {
+    public SQLTemplatesPage(@NotNull SQLEditorBase sqlEditor) {
         super(sqlEditor, sqlEditor.getViewer());
         this.sqlEditor = sqlEditor;
         IPageSite ps = new ProxyPageSite(sqlEditor.getSite());
@@ -74,15 +74,16 @@ public class SQLTemplatesPage extends AbstractTemplatesPage {
     }
 
     @Override
-    public void insertTemplate(Template template, IDocument document)
-    {
-        if (!sqlEditor.validateEditorInputState())
+    public void insertTemplate(Template template, IDocument document) {
+        if (!sqlEditor.validateEditorInputState()) {
             return;
+        }
 
         ISourceViewer contextViewer = sqlEditor.getViewer();
         ITextSelection textSelection = (ITextSelection) contextViewer.getSelectionProvider().getSelection();
-        if (!isValidTemplate(document, template, textSelection.getOffset(), textSelection.getLength()))
+        if (!isValidTemplate(document, template, textSelection.getOffset(), textSelection.getLength())) {
             return;
+        }
         beginCompoundChange(contextViewer);
         /*
            * The Editor checks whether a completion for a word exists before it allows for the template to be
@@ -172,7 +173,7 @@ public class SQLTemplatesPage extends AbstractTemplatesPage {
         IDocument document = new Document();
         SQLEditorSourceViewer viewer = new SQLEditorSourceViewer(
                 parent, null, null, false, SWT.V_SCROLL | SWT.H_SCROLL,
-                DBWorkbench.getPlatform()::getPreferenceStore
+                DBWorkbench.getPlatform()::getPreferenceStore, sqlEditor
         );
         //FIXME: reconciling is turned off here because it's a cause of deadlocks and severe UI glitches. The exact cause is unknown, find a more precise solution. [dbeaver/dbeaver#11452]
         SQLEditorSourceViewerConfiguration configuration = new SQLEditorSourceViewerConfiguration(sqlEditor, EditorsPlugin.getDefault().getPreferenceStore(), null);

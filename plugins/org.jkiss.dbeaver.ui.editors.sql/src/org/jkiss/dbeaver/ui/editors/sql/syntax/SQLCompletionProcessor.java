@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2025 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -115,8 +115,10 @@ public class SQLCompletionProcessor implements IContentAssistProcessor {
             IRegion line = document.getLineInformationOfOffset(documentOffset);
             if (documentOffset <= line.getLength() + line.getOffset() && line.getLength() > 0) { // we are in the nonempty line
                 String typeAtLine = TextUtilities.getContentType(document, SQLParserPartitions.SQL_PARTITIONING, documentOffset - 1, true);
-                // and previous position belongs to the single-line comment
-                if (SQLParserPartitions.CONTENT_TYPE_SQL_COMMENT.equals(typeAtLine)) {
+                // and previous position belongs to the single-line comment or command
+                if (SQLParserPartitions.CONTENT_TYPE_SQL_COMMENT.equals(typeAtLine)
+                    || SQLParserPartitions.CONTENT_TYPE_SQL_CONTROL.equals(typeAtLine)
+                ) {
                     return new ICompletionProposal[0];
                 }
             }
@@ -241,10 +243,11 @@ public class SQLCompletionProcessor implements IContentAssistProcessor {
             LinkedHashSet<ICompletionProposal> result = new LinkedHashSet<>(proposals.size());
             if (actualCompletionOffset != request.getDocumentOffset()) {
                 for (Object cp : proposals) {
-                    if (cp instanceof ICompletionProposal proposal && (
-                        (cp instanceof ICompletionProposalExtension2 exp && exp.validate(request.getDocument(), completionRequestPosition.getOffset(), null))
-                        || !(cp instanceof ICompletionProposalExtension2)
-                    )) {
+                    if (cp instanceof ICompletionProposal proposal && ((cp instanceof ICompletionProposalExtension2 exp && exp.validate(
+                        request.getDocument(),
+                        completionRequestPosition.getOffset(),
+                        null
+                    )) || !(cp instanceof ICompletionProposalExtension2))) {
                         result.add(proposal);
                     }
                 }
@@ -511,8 +514,9 @@ public class SQLCompletionProcessor implements IContentAssistProcessor {
             setUser(false);
         }
 
+        @NotNull
         @Override
-        protected IStatus run(DBRProgressMonitor monitor) {
+        protected IStatus run(@NotNull DBRProgressMonitor monitor) {
             try {
                 monitor.beginTask("Seeking for SQL completion proposals", 1);
                 try {
@@ -536,8 +540,9 @@ public class SQLCompletionProcessor implements IContentAssistProcessor {
             super("Analyzing query for proposals...");
             this.analyzer = analyzer;
         }
+        @NotNull
         @Override
-        protected IStatus run(DBRProgressMonitor monitor) {
+        protected IStatus run(@NotNull DBRProgressMonitor monitor) {
             try {
                 monitor.beginTask("Seeking for SQL completion proposals", 2);
                 monitor.worked(1);

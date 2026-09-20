@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2025 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,10 @@
 package org.jkiss.dbeaver.model.sql.schema;
 
 import org.jkiss.code.NotNull;
+import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
+import org.jkiss.dbeaver.model.app.DBPApplication;
 import org.jkiss.dbeaver.model.connection.InternalDatabaseConfig;
 import org.jkiss.dbeaver.model.impl.jdbc.exec.JDBCTransaction;
 import org.jkiss.dbeaver.model.impl.sql.BasicSQLDialect;
@@ -29,6 +31,7 @@ import org.jkiss.dbeaver.model.sql.SQLDialect;
 import org.jkiss.dbeaver.model.sql.backup.JDBCDatabaseBackupDescriptor;
 import org.jkiss.dbeaver.model.sql.backup.JDBCDatabaseBackupRegistry;
 import org.jkiss.dbeaver.model.sql.translate.SQLQueryTranslator;
+import org.jkiss.dbeaver.runtime.DBWorkbench;
 import org.jkiss.dbeaver.utils.ContentUtils;
 import org.jkiss.utils.CommonUtils;
 import org.jkiss.utils.IOUtils;
@@ -63,6 +66,8 @@ public final class SQLSchemaManager {
     private final int schemaVersionObsolete;
     @NotNull
     private final InternalDatabaseConfig databaseConfig;
+    @Nullable
+    private final SQLInitialSchemaFiller sqlInitialSchemaFiller;
 
     public SQLSchemaManager(
         @NotNull String schemaId,
@@ -72,7 +77,8 @@ public final class SQLSchemaManager {
         @NotNull SQLDialect targetDatabaseDialect,
         int schemaVersionActual,
         int schemaVersionObsolete,
-        @NotNull InternalDatabaseConfig databaseConfig
+        @NotNull InternalDatabaseConfig databaseConfig,
+        @Nullable SQLInitialSchemaFiller sqlInitialSchemaFiller
     ) {
         this.schemaId = schemaId;
 
@@ -84,9 +90,17 @@ public final class SQLSchemaManager {
         this.schemaVersionActual = schemaVersionActual;
         this.schemaVersionObsolete = schemaVersionObsolete;
         this.databaseConfig = databaseConfig;
+        this.sqlInitialSchemaFiller = sqlInitialSchemaFiller;
     }
 
-    public void updateSchema(@NotNull DBRProgressMonitor monitor) throws DBException {
+    /**
+     * @param monitor
+     * @return
+     * @throws DBException
+     */
+    public void updateSchema(
+        @NotNull DBRProgressMonitor monitor
+    ) throws DBException {
         try {
             Connection dbCon = connectionProvider.getDatabaseConnection(monitor);
             try (JDBCTransaction txn = new JDBCTransaction(dbCon)) {
@@ -96,22 +110,25 @@ public final class SQLSchemaManager {
                     txn.rollback();
                     if (currentSchemaVersion < 0) {
                         createNewSchema(monitor, dbCon);
+                        // Update schema version
+                        versionManager.updateCurrentSchemaVersion(
+                            monitor,
+                            dbCon,
+                            databaseConfig.getSchema(),
+                            versionManager.getLatestSchemaVersion()
+                        );
                     } else if (schemaVersionObsolete > 0 && currentSchemaVersion < schemaVersionObsolete) {
                         dropSchema(monitor, dbCon);
                         createNewSchema(monitor, dbCon);
+                        // Update schema version
+                        versionManager.updateCurrentSchemaVersion(
+                            monitor,
+                            dbCon,
+                            databaseConfig.getSchema(),
+                            versionManager.getLatestSchemaVersion()
+                        );
                     } else if (schemaVersionActual > currentSchemaVersion) {
-                        if (databaseConfig.isBackupEnabled()) {
-                            JDBCDatabaseBackupDescriptor descriptor =
-                                    JDBCDatabaseBackupRegistry.getInstance().getCurrentDescriptor(this.targetDatabaseDialect);
-                            if (descriptor != null) {
-                                try {
-                                    descriptor.getInstance().doBackup(dbCon, currentSchemaVersion, databaseConfig);
-                                    log.info("Starting backup execution");
-                                } catch (DBException e) {
-                                    throw new DBException("Internal database backup has failed", e);
-                                }
-                            }
-                        }
+                        doBackupDatabase(dbCon, currentSchemaVersion);
                         upgradeSchemaVersion(monitor, dbCon, txn, currentSchemaVersion);
                     }
 
@@ -124,6 +141,26 @@ public final class SQLSchemaManager {
             }
         } catch (IOException | SQLException e) {
             throw new DBException("Error updating " + schemaId + " schema version", e);
+        }
+    }
+
+    private void doBackupDatabase(@NotNull Connection dbCon, int currentSchemaVersion) throws IOException, DBException {
+        if (databaseConfig.isBackupEnabled()) {
+            JDBCDatabaseBackupDescriptor descriptor =
+                JDBCDatabaseBackupRegistry.getInstance().getCurrentDescriptor(this.targetDatabaseDialect);
+            if (descriptor != null) {
+                try {
+                    descriptor.getInstance().doBackup(dbCon, currentSchemaVersion, databaseConfig);
+                    log.info("Starting backup execution");
+                } catch (DBException e) {
+                    DBPApplication application = DBWorkbench.getPlatform().getApplication();
+                    if (application.isHeadlessMode() && application.isCommunity()) {
+                        log.warn("Database backup failed: " + e.getMessage());
+                        return;
+                    }
+                    throw new DBException("Internal database backup has failed", e);
+                }
+            }
         }
     }
 
@@ -159,17 +196,12 @@ public final class SQLSchemaManager {
         @NotNull Connection connection
     ) throws IOException, DBException, SQLException {
         log.debug("Create new schema " + schemaId);
-        try (Reader ddlStream = scriptSource.openSchemaCreateScript(monitor)) {
+        try (Reader ddlStream = scriptSource.openSchemaCreateScript(monitor, targetDatabaseDialect.getDialectId())) {
             executeScript(monitor, connection, ddlStream, false);
         }
-        // Update schema version
-        versionManager.updateCurrentSchemaVersion(
-            monitor,
-            connection,
-            databaseConfig.getSchema(),
-            versionManager.getLatestSchemaVersion()
-        );
-        versionManager.fillInitialSchemaData(monitor, connection);
+        if (sqlInitialSchemaFiller != null) {
+            sqlInitialSchemaFiller.fillInitialSchemaData(monitor, connection);
+        }
     }
 
     private void dropSchema(

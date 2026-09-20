@@ -194,10 +194,25 @@ public class DamengGeometryValueHandler extends JDBCAbstractValueHandler {
         int len = (int) gSerBlob.length();
         byte[] gserBytes = gSerBlob.getBytes(1, len);
         byte[] ewkb = null;
+        int gserType = 0;
         try {
-            ewkb = DmGeo2Util.gserialized(gserBytes).toEwkb(ByteEndian.NDR);
+            DmGeo2Util.Gserialized gser = DmGeo2Util.gserialized(gserBytes);
+            gserType = gser.getType();
+            int srid = gser.getSrid();
 
-            // WKBReader reader = new WKBReader();
+            if (gserType == CURVEPOLYGON_TYPE && gser.isEmpty() == true) {
+                DBGeometry tempDbGeometry = new DBGeometry(org.cugos.wkg.CurvePolygon.createEmpty(), srid);
+                String text = tempDbGeometry.toString();
+                return new DamengDBGeometry(tempDbGeometry, text, gserType);
+            }
+
+            if (gserType == POLYHEDRALSURFACE_TYPE || gserType == TRIANGLE_TYPE || gserType == TIN_TYPE) {
+                gserBytes = gser.transform();
+                gser = DmGeo2Util.gserialized(gserBytes);
+            }
+
+            ewkb = gser.toEwkb(ByteEndian.NDR);
+
             org.geotools.geometry.jts.WKBReader reader = new org.geotools.geometry.jts.WKBReader();
             Geometry geometry = reader.read(ewkb);
             if (geometry instanceof CircularString) {
@@ -224,36 +239,18 @@ public class DamengGeometryValueHandler extends JDBCAbstractValueHandler {
             String text = wkgGeometry.toString();
             return new DamengDBGeometry(new DBGeometry(geometry), text, 0);
         } catch (Exception e) {
-            // Try to parse as WKG
-            int gserType = 0;
             try {
-                gserType = DmGeo2Util.gserialized(gserBytes).getType();
-                int srid = DmGeo2Util.gserialized(gserBytes).getSrid();
-                if (gserType == CURVEPOLYGON_TYPE && DmGeo2Util.gserialized(gserBytes).isEmpty() == true) {
-                    DBGeometry tempDbGeometry = new DBGeometry(org.cugos.wkg.CurvePolygon.createEmpty(), srid);
-                    String text = tempDbGeometry.toString();
-                    return new DamengDBGeometry(tempDbGeometry, text, gserType);
-                }
-                if (gserType == POLYHEDRALSURFACE_TYPE || gserType == TRIANGLE_TYPE || gserType == TIN_TYPE) {
-                    gserBytes = DmGeo2Util.gserialized(gserBytes).transform();
-                    ewkb = DmGeo2Util.gserialized(gserBytes).toEwkb(ByteEndian.NDR);
-                }
-
                 String ewkbHexString = bytesToHexString(ewkb);
                 return parseWKB(ewkbHexString, gserType);
             } catch (Exception ex) {
-                e = ex;
-
                 try {
                     WKBReader reader = new WKBReader();
                     Geometry geometry = reader.read(ewkb);
                     return new DamengDBGeometry(new DBGeometry(geometry), null, gserType);
                 } catch (ParseException e1) {
-                    e = e1;
+                    throw new DBCException("fetch column value failed", e1);
                 }
             }
-
-            throw new DBCException("fetch column value failed", e);
         }
     }
 

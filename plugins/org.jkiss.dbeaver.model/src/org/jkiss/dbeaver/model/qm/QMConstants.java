@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,9 @@ public class QMConstants {
     public static final String QM_USERNAME_ATTR = "qm_username_id";
     public static final String QM_ANONYMOUS_DOMAIN = "anonymous";
     public static final String QM_ANONYMOUS_USER = "@anonymous@";
+    public static final String QM_UNAUTHORIZED_DOMAIN = "unauthorized";
+    public static final String QM_UNAUTHORIZED_USER = "@unauthorized@";
+    public static final String QM_SYSTEM_USER = "@system@";
 
     public static final String PROP_PREFIX = "qm.";
 
@@ -32,6 +35,7 @@ public class QMConstants {
     public static final String PROP_QUERY_TYPES = PROP_PREFIX + "queryTypes";
     public static final String PROP_ENTRIES_PER_PAGE = PROP_PREFIX + "maxEntries";
     public static final String PROP_HISTORY_DAYS = PROP_PREFIX + "historyDays";
+    public static final String PROP_SKIP_METADATA_QUERIES = PROP_PREFIX + "skipMetadataQueries";
     public static final String PROP_STORE_LOG_FILE = PROP_PREFIX + "storeLogs";
     public static final String PROP_LOG_DIRECTORY = PROP_PREFIX + "logDirectory";
 

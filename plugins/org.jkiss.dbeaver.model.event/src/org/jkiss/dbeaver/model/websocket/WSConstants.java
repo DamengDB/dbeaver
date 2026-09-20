@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2025 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,9 @@ package org.jkiss.dbeaver.model.websocket;
  */
 public interface WSConstants {
     String WS_AUTH_HEADER = "SM-Auth-Token";
+    String WS_SESSION_HEADER = "CB-LP-Session";
+    @Deprecated(forRemoval = true)
+    String WS_SESSION_HEADER_LEGACY = "X-LP-Session";
 
     String TOPIC_SERVER_CONFIG = "cb_config";
     String TOPIC_SERVER_STATE = "cb_server_state";
@@ -30,6 +33,7 @@ public interface WSConstants {
     String TOPIC_SESSION = "cb_session";
     String TOPIC_SESSION_AUTH = "cb_session_auth";
     String TOPIC_SESSION_TASK = "cb_session_task";
+    String TOPIC_SESSION_ACTION = "cb_session_action";
     String TOPIC_USER = "cb_user";
     String TOPIC_DATASOURCE = "cb_datasource";
     String TOPIC_DATASOURCE_FOLDER = "cb_datasource_folder";
@@ -39,12 +43,15 @@ public interface WSConstants {
     String TOPIC_USER_SECRET = "cb_user_secret";
     String TOPIC_SCRIPTS = "cb_scripts";
     String TOPIC_PROJECTS = "cb_projects";
+    String TOPIC_PROFILES = "cb_profiles";
     String TOPIC_OBJECT_PERMISSIONS = "cb_object_permissions";
     String TOPIC_SUBJECT_PERMISSIONS = "cb_subject_permissions";
     String TOPIC_TRANSACTION_COUNT = "cb_transaction";
+    String TOPIC_AI = "cb_ai";
+    String TOPIC_USER_NOTIFICATION = "cb_notification";
+    String TOPIC_OBJECT_SETTINGS = "cb_object_settings";
 
     //TODO remove this enum
-    @Deprecated
     enum EventAction {
         CREATE,
         DELETE,

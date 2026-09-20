@@ -50,7 +50,6 @@ import org.jkiss.dbeaver.model.meta.Association;
 import org.jkiss.dbeaver.model.meta.LazyProperty;
 import org.jkiss.dbeaver.model.meta.Property;
 import org.jkiss.dbeaver.model.meta.PropertyGroup;
-import org.jkiss.dbeaver.model.preferences.DBPPropertySource;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 import org.jkiss.dbeaver.model.struct.DBSObject;
 import org.jkiss.utils.ArrayUtils;
@@ -131,12 +130,6 @@ public class DamengTable extends DamengTablePhysical implements DBPScriptObject,
     @Override
     public long getStatObjectSize() {
         return tableSize == null ? 0 : tableSize;
-    }
-
-    @Nullable
-    @Override
-    public DBPPropertySource getStatProperties() {
-        return null;
     }
 
     public Long getTableSize(DBRProgressMonitor monitor) throws DBCException {

@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2025 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,13 +23,19 @@ import org.jkiss.dbeaver.model.DBConstants;
 import org.jkiss.dbeaver.model.DBIcon;
 import org.jkiss.dbeaver.model.DBPHiddenObject;
 import org.jkiss.dbeaver.model.DBPImage;
+import org.jkiss.dbeaver.model.fs.DBFFileSystemContainer;
 import org.jkiss.dbeaver.model.fs.DBFFileSystemManager;
 import org.jkiss.dbeaver.model.fs.DBFUtils;
 import org.jkiss.dbeaver.model.fs.DBFVirtualFileSystem;
 import org.jkiss.dbeaver.model.messages.ModelMessages;
 import org.jkiss.dbeaver.model.meta.Property;
-import org.jkiss.dbeaver.model.navigator.*;
+import org.jkiss.dbeaver.model.navigator.DBNEvent;
+import org.jkiss.dbeaver.model.navigator.DBNNode;
+import org.jkiss.dbeaver.model.navigator.DBNNodeWithCache;
+import org.jkiss.dbeaver.model.navigator.DBNUtils;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
+import org.jkiss.dbeaver.runtime.DBWorkbench;
+import org.jkiss.utils.ArrayUtils;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -43,7 +49,7 @@ public class DBNFileSystems extends DBNNode implements DBNNodeWithCache, DBPHidd
 
     private DBNFileSystem[] children;
 
-    public DBNFileSystems(DBNProject parentNode) {
+    public DBNFileSystems(DBNNode parentNode) {
         super(parentNode);
     }
 
@@ -53,22 +59,25 @@ public class DBNFileSystems extends DBNNode implements DBNNodeWithCache, DBPHidd
         this.disposeFileSystems();
     }
 
+    @NotNull
     @Override
     public String getNodeType() {
-        return NodePathType.dbvfs.name();
+        return DBFUtils.DBVFS_NODE_TYPE;
     }
 
     @NotNull
     @Override
     public String getNodeId() {
-        return NodePathType.dbvfs.name();
+        return DBFUtils.DBVFS_NODE_TYPE;
     }
 
+    @NotNull
     @Override
     public String getNodeTypeLabel() {
         return ModelMessages.fs_root;
     }
 
+    @NotNull
     @Override
     @Property(id = DBConstants.PROP_ID_NAME, viewable = true, order = 1)
     public String getNodeDisplayName() {
@@ -78,15 +87,17 @@ public class DBNFileSystems extends DBNNode implements DBNNodeWithCache, DBPHidd
     @NotNull
     @Override
     public String getName() {
-        return NodePathType.dbvfs.name();
+        return DBFUtils.DBVFS_NODE_TYPE;
     }
 
+    @Nullable
     @Override
 //    @Property(viewable = false, order = 100)
     public String getNodeDescription() {
         return "All virtual file systems";
     }
 
+    @Nullable
     @Override
     public DBPImage getNodeIcon() {
         return DBIcon.TREE_FILE;
@@ -111,15 +122,27 @@ public class DBNFileSystems extends DBNNode implements DBNNodeWithCache, DBPHidd
     }
 
     public DBNFileSystemRoot getRootFolder(@NotNull DBRProgressMonitor monitor, @NotNull String id) throws DBException {
-        for (DBNFileSystem fsNode : getChildren(monitor)) {
-            DBNFileSystemRoot rootFolder = fsNode.getChild(monitor, id);
-            if (rootFolder != null) {
-                return rootFolder;
+        Throwable firstError = null;
+        for (DBNFileSystem fsNode : ArrayUtils.safeArray(getChildren(monitor))) {
+            try {
+                DBNFileSystemRoot rootFolder = fsNode.getChild(monitor, id);
+                if (rootFolder != null) {
+                    return rootFolder;
+                }
+            } catch (Throwable e) {
+                firstError = e;
             }
+        }
+        if (firstError != null) {
+            if (firstError instanceof DBException dbe) {
+                throw dbe;
+            }
+            throw new DBException("Error reading file system roots", firstError);
         }
         return null;
     }
 
+    @Nullable
     @Override
     public DBNFileSystem[] getChildren(@NotNull DBRProgressMonitor monitor) throws DBException {
         if (children == null && !monitor.isForceCacheUsage()) {
@@ -139,11 +162,16 @@ public class DBNFileSystems extends DBNNode implements DBNNodeWithCache, DBPHidd
     ) throws DBException {
         monitor.beginTask("Read available file systems", 1);
         List<DBNFileSystem> result = new ArrayList<>();
-        var project = getOwnerProject();
-        if (project == null) {
-            return new DBNFileSystem[0];
+        DBFFileSystemContainer fsContainer = getOwnerProjectOrNull();
+        if (fsContainer == null) {
+            // Root - use workspace
+            fsContainer = getModel().getModelWorkspace();
+            if (fsContainer == null) {
+                // Global workspace
+                fsContainer = DBWorkbench.getPlatform().getWorkspace();
+            }
         }
-        DBFFileSystemManager fileSystemManager = project.getFileSystemManager();
+        DBFFileSystemManager fileSystemManager = fsContainer.getFileSystemManager();
 
         for (DBFVirtualFileSystem fs : fileSystemManager.getVirtualFileSystems(monitor)) {
             DBNFileSystem newChild = null;
@@ -227,12 +255,13 @@ public class DBNFileSystems extends DBNNode implements DBNNodeWithCache, DBPHidd
     }
 
     @Override
-    public boolean isManagable() {
+    public boolean isManageable() {
         return true;
     }
 
+    @Nullable
     @Override
-    public DBNNode refreshNode(DBRProgressMonitor monitor, Object source) throws DBException {
+    public DBNNode refreshNode(@NotNull DBRProgressMonitor monitor, @Nullable Object source) throws DBException {
         refreshFileSystems(monitor);
         return this;
     }
@@ -253,25 +282,15 @@ public class DBNFileSystems extends DBNNode implements DBNNodeWithCache, DBPHidd
         }
     }
 
-    @Deprecated
-    @Override
-    public String getNodeItemPath() {
-        return NodePathType.ext.getPrefix() + ((DBNProject) getParentNode()).getProject().getId() + "/" + getName();
-    }
-
-    @Override
-    public boolean supportsRename() {
-        return false;
-    }
-
     @Override
     public boolean isHidden() {
         return true;
     }
 
+    @NotNull
     @Override
     public String toString() {
-        return "FileSystems(" + getOwnerProject().getName()  +")";
+        return "FileSystems(" + getParentNode()  +")";
     }
 
     @Override

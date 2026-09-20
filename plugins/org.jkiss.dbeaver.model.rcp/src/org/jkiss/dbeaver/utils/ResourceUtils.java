@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,15 +23,25 @@ import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
+import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
+import org.jkiss.dbeaver.model.fs.DBFVirtualFileSystemRoot;
+import org.jkiss.dbeaver.model.fs.nio.EFSNIOFile;
+import org.jkiss.dbeaver.model.fs.nio.EFSNIOFileSystemRoot;
+import org.jkiss.dbeaver.model.fs.nio.EFSNIOFolder;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 import org.jkiss.dbeaver.model.runtime.VoidProgressMonitor;
+import org.jkiss.utils.AlphanumericComparator;
 import org.jkiss.utils.ArrayUtils;
 
-import java.io.*;
 import java.net.URI;
+import java.nio.file.Path;
+import java.util.Comparator;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 /**
  * Eclipse resource utilities
@@ -40,15 +50,14 @@ public class ResourceUtils {
 
     private static final Log log = Log.getLog(ResourceUtils.class);
 
-    public static void checkFolderExists(IFolder folder)
-            throws DBException
-    {
+    public static void checkFolderExists(@NotNull IFolder folder) throws DBException {
         checkFolderExists(folder, new VoidProgressMonitor());
     }
 
-    public static void checkFolderExists(IFolder folder, DBRProgressMonitor monitor)
-            throws DBException
-    {
+    public static void checkFolderExists(
+        @NotNull IFolder folder,
+        @NotNull DBRProgressMonitor monitor
+    ) throws DBException {
         if (!folder.exists()) {
             try {
                 folder.create(true, true, monitor.getNestedMonitor());
@@ -58,7 +67,7 @@ public class ResourceUtils {
         }
     }
 
-    public static long getResourceLastModified(IResource resource) {
+    public static long getResourceLastModified(@NotNull IResource resource) {
         try {
             IFileStore fileStore = EFS.getStore(resource.getLocationURI());
             IFileInfo iFileInfo = fileStore.fetchInfo();
@@ -69,7 +78,7 @@ public class ResourceUtils {
         }
     }
 
-    public static long getFileLength(IResource resource) {
+    public static long getFileLength(@NotNull IResource resource) {
         try {
             IFileStore fileStore = EFS.getStore(resource.getLocationURI());
             IFileInfo iFileInfo = fileStore.fetchInfo();
@@ -80,7 +89,7 @@ public class ResourceUtils {
         }
     }
 
-    public static void syncFile(DBRProgressMonitor monitor, IResource localFile) {
+    public static void syncFile(@NotNull DBRProgressMonitor monitor, @NotNull IResource localFile) {
         // Sync file with contents
         try {
             localFile.refreshLocal(IFile.DEPTH_ZERO, monitor.getNestedMonitor());
@@ -90,8 +99,45 @@ public class ResourceUtils {
         }
     }
 
-    public static IFile getUniqueFile(IFolder folder, String fileName, String fileExt)
-    {
+    @NotNull
+    public static IFile getUniqueFile(@NotNull IFolder folder, @NotNull String fileName, @NotNull String fileExt) {
+        IFile file = folder.getFile(fileName + "." + fileExt);
+        if (!file.exists()) {
+            // Fast path
+            return file;
+        }
+
+        IResource[] members;
+        try {
+            members = folder.members();
+        } catch (CoreException ignored) {
+            return getUniqueFileFallback(folder, fileName, fileExt);
+        }
+
+        // Look for all matching files and grab the one that has the highest index
+        var pattern = Pattern.compile("^%s-(\\d+).%s".formatted(Pattern.quote(fileName), Pattern.quote(fileExt)));
+        var files = Stream.of(members)
+            .filter(r -> pattern.matcher(r.getName()).matches())
+            .sorted(Comparator.comparing(IResource::getName, AlphanumericComparator.getInstance()))
+            .toList();
+
+        if (!files.isEmpty()) {
+            Matcher matcher = pattern.matcher(files.getLast().getName());
+            if (matcher.matches()) {
+                try {
+                    int index = Integer.parseInt(matcher.group(1));
+                    return folder.getFile(fileName + '-' + (index + 1) + '.' + fileExt);
+                } catch (NumberFormatException ignored) {
+                    // How did we get here?
+                }
+            }
+        }
+
+        return getUniqueFileFallback(folder, fileName, fileExt);
+    }
+
+    @NotNull
+    private static IFile getUniqueFileFallback(@NotNull IFolder folder, @NotNull String fileName, @NotNull String fileExt) {
         IFile file = folder.getFile(fileName + "." + fileExt);
         int index = 1;
         while (file.exists()) {
@@ -102,8 +148,7 @@ public class ResourceUtils {
     }
 
     @Nullable
-    public static IFile convertPathToWorkspaceFile(IPath path)
-    {
+    public static IFile convertPathToWorkspaceFile(@NotNull IPath path) {
         IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
         IFile file = root.getFileForLocation(path);
         if (file != null) {
@@ -121,64 +166,27 @@ public class ResourceUtils {
     }
 
     @Nullable
-    public static IPath convertPathToWorkspacePath(IPath path)
-    {
+    public static IPath convertPathToWorkspacePath(@NotNull IPath path) {
         IFile wFile = convertPathToWorkspaceFile(path);
         return wFile == null ? null : wFile.getFullPath();
     }
 
-    public static void deleteTempFile(DBRProgressMonitor monitor, IFile file)
-    {
-        try {
-            file.delete(true, false, monitor.getNestedMonitor());
+    @NotNull
+    public static IResource createResourceFromPath(
+        @NotNull DBFVirtualFileSystemRoot fsRoot,
+        @NotNull IProject project,
+        @NotNull Path path
+    ) {
+        EFSNIOFileSystemRoot root = new EFSNIOFileSystemRoot(
+            project,
+            fsRoot,
+            fsRoot.getFileSystem().getType() + "/" + fsRoot.getFileSystem().getId() + "/" + fsRoot.getRootId()
+        );
+        if (fsRoot.getFileSystem().isDirectory(path)) {
+            return new EFSNIOFolder(root, path);
+        } else {
+            return new EFSNIOFile(root, path);
         }
-        catch (CoreException e) {
-            log.warn("Can't delete temporary file '" + file.getFullPath().toString() + "'", e);
-        }
-    }
-
-    public static void copyStreamToFile(DBRProgressMonitor monitor, InputStream inputStream, long contentLength, IFile localFile)
-        throws IOException
-    {
-        //localFile.appendContents(inputStream, true, false, monitor.getNestedMonitor());
-        File file = localFile.getLocation().toFile();
-        try {
-            try (OutputStream outputStream = new FileOutputStream(file)) {
-                ContentUtils.copyStreams(inputStream, contentLength, outputStream, monitor);
-            }
-        }
-        finally {
-            inputStream.close();
-        }
-        syncFile(monitor, localFile);
-
-    }
-
-    public static void copyReaderToFile(DBRProgressMonitor monitor, Reader reader, long contentLength, String charset, IFile localFile)
-        throws IOException
-    {
-        try {
-            if (charset == null) {
-                charset = localFile.getCharset();
-            } else {
-                localFile.setCharset(charset, monitor.getNestedMonitor());
-            }
-        }
-        catch (CoreException e) {
-            log.warn("Can't set content charset", e);
-        }
-        File file = localFile.getLocation().toFile();
-        try {
-            try (OutputStream outputStream = new FileOutputStream(file)) {
-                Writer writer = new OutputStreamWriter(outputStream, charset == null ? GeneralUtils.DEFAULT_ENCODING : charset);
-                ContentUtils.copyStreams(reader, contentLength, writer, monitor);
-                writer.flush();
-            }
-        }
-        finally {
-            reader.close();
-        }
-        syncFile(monitor, localFile);
     }
 
 }

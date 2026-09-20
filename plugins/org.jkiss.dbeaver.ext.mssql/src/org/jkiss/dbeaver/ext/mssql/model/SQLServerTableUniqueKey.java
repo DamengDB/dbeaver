@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package org.jkiss.dbeaver.ext.mssql.model;
 
 import org.jkiss.code.NotNull;
+import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.model.DBPEvaluationContext;
 import org.jkiss.dbeaver.model.DBUtils;
@@ -56,8 +57,9 @@ public class SQLServerTableUniqueKey extends JDBCTableConstraint<SQLServerTableB
         return index;
     }
 
+    @Nullable
     @Override
-    public List<DBSTableConstraintColumn> getAttributeReferences(DBRProgressMonitor monitor) {
+    public List<DBSTableConstraintColumn> getAttributeReferences(@Nullable DBRProgressMonitor monitor) {
         if (!CommonUtils.isEmpty(columns)) {
             return new ArrayList<>(columns);
         }
@@ -82,7 +84,7 @@ public class SQLServerTableUniqueKey extends JDBCTableConstraint<SQLServerTableB
 
     @NotNull
     @Override
-    public String getFullyQualifiedName(DBPEvaluationContext context) {
+    public String getFullyQualifiedName(@NotNull DBPEvaluationContext context) {
         return DBUtils.getFullQualifiedName(getDataSource(),
             getTable().getDatabase(),
             getTable().getSchema(),

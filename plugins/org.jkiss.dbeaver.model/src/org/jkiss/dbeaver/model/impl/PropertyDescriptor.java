@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import org.eclipse.core.runtime.IConfigurationElement;
 import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.Log;
+import org.jkiss.dbeaver.model.DBPConditionalProperty;
 import org.jkiss.dbeaver.model.DBPNamedObject2;
 import org.jkiss.dbeaver.model.meta.IPropertyValueListProvider;
 import org.jkiss.dbeaver.model.meta.PropertyLength;
@@ -36,7 +37,7 @@ import java.util.List;
 /**
  * PropertyDescriptor
  */
-public class PropertyDescriptor implements DBPPropertyDescriptor, IPropertyValueListProvider<Object>, DBPNamedObject2 {
+public class PropertyDescriptor implements DBPPropertyDescriptor, IPropertyValueListProvider<Object>, DBPNamedObject2, DBPConditionalProperty {
 
     public static final String CURRENT_DATE_STRING_VAR_PREFIX = "${now as ";
 
@@ -78,6 +79,10 @@ public class PropertyDescriptor implements DBPPropertyDescriptor, IPropertyValue
     private static final String ATTR_ALLOW_CUSTOM_VALUES = "allowCustomValues";
     private static final String ATTR_FEATURES = "features";
     private static final String ATTR_LENGTH = "length";
+    private static final String ATTR_DESKTOP = "desktop";
+    private static final String ATTR_HIDDEN = "hidden";
+    private static final String ATTR_HIDE_EXPR = "hideExpr";
+    private static final String ATTR_READ_ONLY_EXPR = "readOnlyExpr";
 
     private static final String VALUE_SPLITTER = ","; //NON-NLS-1
 
@@ -94,9 +99,13 @@ public class PropertyDescriptor implements DBPPropertyDescriptor, IPropertyValue
     private Object[] validValues;
     private boolean allowCustomValues = true;
     private final boolean editable;
+    private final boolean desktop;
+    private final boolean hidden;
     @NotNull
     private final PropertyLength length;
     private String[] features;
+    private String hideExpr;
+    private String readOnlyExpr;
 
     public static DBPPropertyDescriptor[] extractPropertyGroups(IConfigurationElement config) {
         List<DBPPropertyDescriptor> props = new ArrayList<>();
@@ -143,6 +152,8 @@ public class PropertyDescriptor implements DBPPropertyDescriptor, IPropertyValue
         this.name = name;
         this.description = description;
         this.required = required;
+        this.desktop = false;
+        this.hidden = false;
         this.type = type;
         this.defaultValue = defaultValue;
         this.validValues = validValues;
@@ -161,6 +172,10 @@ public class PropertyDescriptor implements DBPPropertyDescriptor, IPropertyValue
         this.description = config.getAttribute(ATTR_DESCRIPTION);
         this.hint = config.getAttribute(ATTR_HINT);
         this.required = CommonUtils.getBoolean(config.getAttribute(ATTR_REQUIRED));
+        this.desktop = CommonUtils.getBoolean(config.getAttribute(ATTR_DESKTOP), false);
+        this.hidden = CommonUtils.getBoolean(config.getAttribute(ATTR_HIDDEN), false);
+        this.hideExpr = CommonUtils.nullIfEmpty(config.getAttribute(ATTR_HIDE_EXPR));
+        this.readOnlyExpr = CommonUtils.nullIfEmpty(config.getAttribute(ATTR_READ_ONLY_EXPR));
         String typeString = config.getAttribute(ATTR_TYPE);
         if (typeString == null) {
             propertyType = PropertyType.t_string;
@@ -210,10 +225,16 @@ public class PropertyDescriptor implements DBPPropertyDescriptor, IPropertyValue
         this.description = description;
         this.type = type;
         this.required = required;
+        this.desktop = false;
+        this.hidden = false;
         this.defaultValue = defaultValue;
         this.validValues = validValues;
         this.editable = editable;
-        this.length = PropertyLength.LONG;
+        if (type != null && type != String.class) {
+            this.length = PropertyLength.LONG;
+        } else {
+            this.length = PropertyLength.MULTILINE;
+        }
         this.hint = null;
     }
 
@@ -224,7 +245,7 @@ public class PropertyDescriptor implements DBPPropertyDescriptor, IPropertyValue
     }
 
     @Override
-    public void setName(String name) {
+    public void setName(@NotNull String name) {
         this.name = name;
     }
 
@@ -291,10 +312,21 @@ public class PropertyDescriptor implements DBPPropertyDescriptor, IPropertyValue
     }
 
     @Override
+    public boolean isDesktop() {
+        return desktop;
+    }
+
+    @Override
+    public boolean isHidden() {
+        return hidden;
+    }
+
+    @Override
     public boolean allowCustomValue() {
         return ArrayUtils.isEmpty(validValues) || allowCustomValues;
     }
 
+    @Nullable
     @Override
     public Object[] getPossibleValues(Object object) {
         return validValues;
@@ -312,9 +344,27 @@ public class PropertyDescriptor implements DBPPropertyDescriptor, IPropertyValue
         return allFeatures;
     }
 
+    @Nullable
+    @Override
+    public String[] getRequiredFeatures() {
+        return null;
+    }
+
     @Override
     public boolean hasFeature(@NotNull String feature) {
         return features != null && ArrayUtils.contains(features, feature);
+    }
+
+    @Nullable
+    @Override
+    public String getHideExpression() {
+        return hideExpr;
+    }
+
+    @Nullable
+    @Override
+    public String getReadOnlyExpression() {
+        return readOnlyExpr;
     }
 
     @Override

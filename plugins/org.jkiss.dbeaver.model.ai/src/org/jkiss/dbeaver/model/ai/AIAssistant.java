@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2025 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,45 +18,59 @@ package org.jkiss.dbeaver.model.ai;
 
 import org.jkiss.code.NotNull;
 import org.jkiss.dbeaver.DBException;
-import org.jkiss.dbeaver.model.ai.completion.*;
+import org.jkiss.dbeaver.model.ai.qm.AIChatStorage;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 
-import java.util.concurrent.Flow;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 /**
- * AI Assistant interface. Provides methods for AI-based operations.
+ * AI Assistant interface.
+ * Provides various methods for AI-based operations.
  */
 public interface AIAssistant {
 
     /**
+     * Generates text according to the prompt
+     *
+     * @param profile engine configuration profile
+     * @param functionContext database context. Creates database snapshot according to this context.
+     * @param messages        user messages
+     * @return generated text
+     */
+    @NotNull
+    AIAssistantResponse generateText(
+        @NotNull DBRProgressMonitor monitor,
+        @NotNull AIConfigurationProfile profile,
+        @NotNull AIFunctionContext functionContext,
+        @NotNull List<AIMessage> messages
+    ) throws DBException;
+
+    /**
      * Generates the next message in a chat conversation.
+     *
+     * @return future
      */
     @NotNull
-    Flow.Publisher<DAICompletionChunk> chat(
+    CompletableFuture<AIChatConversation> generateTextStream(
         @NotNull DBRProgressMonitor monitor,
-        @NotNull DAIChatRequest chatCompletionRequest
+        @NotNull AIChatSession chatSession,
+        @NotNull AIChatConversation conversation,
+        @NotNull AIChatRequest request,
+        @NotNull AIChatResponseConsumer chatListener
     ) throws DBException;
 
+    boolean isFunctionSupported(@NotNull AIConfigurationProfile profile);
+
     /**
-     * Translates text to SQL.
+     * Toolbox manager
      */
     @NotNull
-    String translateTextToSql(
-        @NotNull DBRProgressMonitor monitor,
-        @NotNull DAITranslateRequest request
-    ) throws DBException;
+    AIToolboxManager getToolboxManager();
 
-    /**
-     * Translates a user command to SQL. The active completion engine is used.
-     */
     @NotNull
-    CommandResult command(
-        @NotNull DBRProgressMonitor monitor,
-        @NotNull DAICommandRequest request
-    ) throws DBException;
+    AIChatSession.SessionIdProvider getChatSessionProvider();
 
-    /**
-     * Returns whether the AI assistant has a valid configuration.
-     */
-    boolean hasValidConfiguration() throws DBException;
+    @NotNull
+    AIChatStorage createChatStorage();
 }

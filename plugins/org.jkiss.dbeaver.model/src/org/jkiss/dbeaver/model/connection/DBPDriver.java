@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2025 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ public interface DBPDriver extends DBPNamedObject, DBPDriverLibraryProvider {
      * Driver contributor
      */
     @NotNull
-    DBPDataSourceProvider getDataSourceProvider();
+    DBPDataSourceProvider<?> getDataSourceProvider();
 
     @NotNull
     DBPDataSourceProviderDescriptor getProviderDescriptor();
@@ -140,18 +140,12 @@ public interface DBPDriver extends DBPNamedObject, DBPDriverLibraryProvider {
     boolean isTemporary();
 
     boolean isDisabled();
+    @Nullable
     DBPDriver getReplacedBy();
 
-    boolean isNotAvailable();
-
+    // Driver stub. If not null then this driver instance cannot be created
     @Nullable
-    String getNonAvailabilityTitle();
-
-    @Nullable
-    String getNonAvailabilityDescription();
-
-    @Nullable
-    String getNonAvailabilityReason();
+    DBPDriverStub getDriverStub();
 
     /**
      * @return a pair of providerId and driverId for each of driver replacement
@@ -216,7 +210,7 @@ public interface DBPDriver extends DBPNamedObject, DBPDriverLibraryProvider {
     void resetDriverInstance();
 
     @Nullable
-    String getConnectionURL(DBPConnectionConfiguration configuration);
+    String getConnectionURL(DBPConnectionConfiguration configuration) throws DBException;
 
     /**
      * Create copy of
@@ -248,5 +242,11 @@ public interface DBPDriver extends DBPNamedObject, DBPDriverLibraryProvider {
      * Compare driverId to this driver and its replacements
      */
     boolean matchesId(@NotNull String driverId);
+
+    /**
+     * Returns true if the driver supports virtual keys.
+     * @return true or false
+     */
+    boolean supportsVirtualKeys();
 
 }

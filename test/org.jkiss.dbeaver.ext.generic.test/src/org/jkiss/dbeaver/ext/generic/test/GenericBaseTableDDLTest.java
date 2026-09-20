@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,17 +25,14 @@ import org.jkiss.dbeaver.model.edit.DBEPersistAction;
 import org.jkiss.dbeaver.model.exec.DBExecUtils;
 import org.jkiss.dbeaver.model.impl.edit.TestCommandContext;
 import org.jkiss.dbeaver.model.impl.jdbc.JDBCRemoteInstance;
-import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 import org.jkiss.dbeaver.model.sql.SQLUtils;
 import org.jkiss.dbeaver.model.struct.DBSEntityConstraintType;
 import org.jkiss.dbeaver.model.struct.DBSObject;
-import org.jkiss.dbeaver.registry.DataSourceNavigatorSettings;
 import org.jkiss.dbeaver.runtime.DBWorkbench;
 import org.jkiss.junit.DBeaverUnitTest;
-import org.jkiss.utils.StandardConstants;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 
@@ -44,11 +41,6 @@ import java.util.List;
 
 public class GenericBaseTableDDLTest extends DBeaverUnitTest {
 
-    private final String lineBreak = System.getProperty(StandardConstants.ENV_LINE_SEPARATOR);
-
-    @Mock
-    private DBRProgressMonitor mockMonitor;
-
     private GenericDataSource dataSource;
     private GenericExecutionContext executionContext;
     private DBEObjectMaker<GenericTableBase, GenericStructContainer> objectMaker;
@@ -56,19 +48,13 @@ public class GenericBaseTableDDLTest extends DBeaverUnitTest {
     private GenericTable genericTable;
 
     @Mock
-    private DBPDataSourceContainer mockDataSourceContainer;
-    @Mock
     private JDBCRemoteInstance mockRemoteInstance;
 
-    @Before
+    @BeforeEach
     public void setUp() throws DBException {
         // We do not have generic driver, so use SQLite one.
-        Mockito.when(mockDataSourceContainer.getDriver())
-            .thenReturn(DBWorkbench.getPlatform().getDataSourceProviderRegistry().findDriver("sqlite_jdbc"));
-
-        Mockito.when(mockDataSourceContainer.getPreferenceStore()).thenReturn(DBWorkbench.getPlatform().getPreferenceStore());
-        dataSource = new GenericDataSource(mockMonitor, new GenericMetaModel(), mockDataSourceContainer, new GenericSQLDialect());
-        Mockito.when(mockDataSourceContainer.getNavigatorSettings()).thenReturn(new DataSourceNavigatorSettings());
+        DBPDataSourceContainer mockDataSourceContainer = configureTestContainer("sqlite_jdbc");
+        dataSource = new GenericDataSource(monitor, new GenericMetaModel(), mockDataSourceContainer, new GenericSQLDialect());
         Mockito.when(mockRemoteInstance.getDataSource()).thenReturn(dataSource);
         executionContext = new GenericExecutionContext(mockRemoteInstance, "Test");
         GenericCatalog catalog = new GenericCatalog(dataSource, "CATALOG_GENERIC");
@@ -91,16 +77,16 @@ public class GenericBaseTableDDLTest extends DBeaverUnitTest {
         TestCommandContext commandContext = new TestCommandContext(executionContext, false);
 
         GenericTableBase table = objectMaker.createNewObject(
-            mockMonitor, 
+            monitor,
             commandContext, 
             genericSchema, 
             null, 
             Collections.emptyMap());
         DBEObjectMaker objectManager = getManagerForClass(GenericTableColumn.class);
-        objectManager.createNewObject(mockMonitor, commandContext, table, null, Collections.emptyMap());
-        objectManager.createNewObject(mockMonitor, commandContext, table, null, Collections.emptyMap());
+        objectManager.createNewObject(monitor, commandContext, table, null, Collections.emptyMap());
+        objectManager.createNewObject(monitor, commandContext, table, null, Collections.emptyMap());
         List<DBEPersistAction> actions = DBExecUtils.getActionsListFromCommandContext(
-            mockMonitor, 
+            monitor,
             commandContext, 
             executionContext, 
             Collections.emptyMap(), 
@@ -112,7 +98,7 @@ public class GenericBaseTableDDLTest extends DBeaverUnitTest {
             "\tColumn2 INTEGER" + lineBreak +
             ");" + lineBreak;
 
-        Assert.assertEquals(script, expectedDDL);
+        Assertions.assertEquals(script, expectedDDL);
     }
 
     @Test
@@ -120,20 +106,20 @@ public class GenericBaseTableDDLTest extends DBeaverUnitTest {
         TestCommandContext commandContext = new TestCommandContext(executionContext, false);
 
         GenericTableBase table = objectMaker.createNewObject(
-            mockMonitor,
+            monitor,
             commandContext,
             genericSchema,
             null,
             Collections.emptyMap());
         DBEObjectMaker<GenericTableColumn, GenericTableBase> objectManager = getManagerForClass(GenericTableColumn.class);
-        objectManager.createNewObject(mockMonitor, commandContext, table, null, Collections.emptyMap());
+        objectManager.createNewObject(monitor, commandContext, table, null, Collections.emptyMap());
         final DBSObject newColumn =
-            objectManager.createNewObject(mockMonitor, commandContext, table, null, Collections.emptyMap());
+            objectManager.createNewObject(monitor, commandContext, table, null, Collections.emptyMap());
         if (newColumn instanceof GenericTableColumn) {
             ((GenericTableColumn) newColumn).setRequired(true);
         }
         List<DBEPersistAction> actions = DBExecUtils.getActionsListFromCommandContext(
-            mockMonitor,
+            monitor,
             commandContext,
             executionContext,
             Collections.emptyMap(),
@@ -148,7 +134,7 @@ public class GenericBaseTableDDLTest extends DBeaverUnitTest {
             "\tColumn2 INTEGER NOT NULL" + lineBreak +
             ");" + lineBreak;
 
-        Assert.assertEquals(script, expectedDDL);
+        Assertions.assertEquals(script, expectedDDL);
     }
 
     @Test
@@ -156,22 +142,22 @@ public class GenericBaseTableDDLTest extends DBeaverUnitTest {
         TestCommandContext commandContext = new TestCommandContext(executionContext, false);
 
         GenericTableBase table = objectMaker.createNewObject(
-            mockMonitor,
+            monitor,
             commandContext,
             genericSchema,
             null,
             Collections.emptyMap());
         DBEObjectMaker<GenericTableColumn, GenericTableBase> objectManager = getManagerForClass(GenericTableColumn.class);
         GenericTableColumn column1 = objectManager.createNewObject(
-            mockMonitor,
+            monitor,
             commandContext,
             table,
             null,
             Collections.emptyMap());
-        objectManager.createNewObject(mockMonitor, commandContext, table, null, Collections.emptyMap());
+        objectManager.createNewObject(monitor, commandContext, table, null, Collections.emptyMap());
         DBEObjectMaker<GenericUniqueKey, GenericTableBase> constraintManager = getManagerForClass(GenericUniqueKey.class);
         GenericUniqueKey constraint = constraintManager.createNewObject(
-            mockMonitor,
+            monitor,
             commandContext,
             table,
             null,
@@ -182,7 +168,7 @@ public class GenericBaseTableDDLTest extends DBeaverUnitTest {
         constraint.setAttributeReferences(Collections.singletonList(constraintColumn));
 
         List<DBEPersistAction> actions = DBExecUtils.getActionsListFromCommandContext(
-            mockMonitor,
+            monitor,
             commandContext,
             executionContext,
             Collections.emptyMap(),
@@ -195,7 +181,7 @@ public class GenericBaseTableDDLTest extends DBeaverUnitTest {
             "\tCONSTRAINT NEWTABLE_PK PRIMARY KEY (Column1)" + lineBreak +
             ");" + lineBreak;
 
-        Assert.assertEquals(script, expectedDDL);
+        Assertions.assertEquals(script, expectedDDL);
     }
 
     @Test
@@ -203,21 +189,21 @@ public class GenericBaseTableDDLTest extends DBeaverUnitTest {
         TestCommandContext commandContext = new TestCommandContext(executionContext, false);
 
         GenericTableBase table = objectMaker.createNewObject(
-            mockMonitor,
+            monitor,
             commandContext,
             genericSchema,
             null,
             Collections.emptyMap());
         DBEObjectMaker<GenericTableColumn, GenericTableBase> objectManager = getManagerForClass(GenericTableColumn.class);
         GenericTableColumn column1 = objectManager.createNewObject(
-            mockMonitor,
+            monitor,
             commandContext,
             table,
             null,
             Collections.emptyMap());
         column1.setDescription("Test comment 1");
         GenericTableColumn column2 = objectManager.createNewObject(
-            mockMonitor,
+            monitor,
             commandContext,
             table,
             null,
@@ -225,7 +211,7 @@ public class GenericBaseTableDDLTest extends DBeaverUnitTest {
         column2.setDescription("Test comment 2");
 
         List<DBEPersistAction> actions = DBExecUtils.getActionsListFromCommandContext(
-            mockMonitor,
+            monitor,
             commandContext,
             executionContext,
             Collections.emptyMap(),
@@ -239,7 +225,7 @@ public class GenericBaseTableDDLTest extends DBeaverUnitTest {
             "COMMENT ON COLUMN CATALOG_GENERIC.SCHEMA_GENERIC.NewTable.Column1 IS 'Test comment 1';" + lineBreak +
             "COMMENT ON COLUMN CATALOG_GENERIC.SCHEMA_GENERIC.NewTable.Column2 IS 'Test comment 2';" + lineBreak;
 
-        Assert.assertEquals(script, expectedDDL);
+        Assertions.assertEquals(script, expectedDDL);
     }
 
     @Test
@@ -249,7 +235,7 @@ public class GenericBaseTableDDLTest extends DBeaverUnitTest {
         objectMaker.deleteObject(commandContext, genericTable, Collections.emptyMap());
 
         List<DBEPersistAction> actions = DBExecUtils.getActionsListFromCommandContext(
-            mockMonitor,
+            monitor,
             commandContext,
             executionContext,
             Collections.emptyMap(),
@@ -258,7 +244,7 @@ public class GenericBaseTableDDLTest extends DBeaverUnitTest {
 
         String expectedDDL = "DROP TABLE CATALOG_GENERIC.TABLE_GENERIC;" + lineBreak;
 
-        Assert.assertEquals(script, expectedDDL);
+        Assertions.assertEquals(script, expectedDDL);
     }
 
     @Test
@@ -270,7 +256,7 @@ public class GenericBaseTableDDLTest extends DBeaverUnitTest {
         GenericTableColumn tableColumn2 = addColumn(genericTable, "COLUMN3", "CHAR", 3);
         tableColumn2.setMaxLength(13);
 
-        String tableDDL = genericTable.getObjectDefinitionText(mockMonitor, Collections.emptyMap());
+        String tableDDL = genericTable.getObjectDefinitionText(monitor, Collections.emptyMap());
 
         String expectedDDL = "-- Drop table" + lineBreak +
             lineBreak +
@@ -282,7 +268,7 @@ public class GenericBaseTableDDLTest extends DBeaverUnitTest {
             "\tCOLUMN3 CHAR(13)" + lineBreak +
             ");" + lineBreak;
 
-        Assert.assertEquals(tableDDL, expectedDDL);
+        Assertions.assertEquals(tableDDL, expectedDDL);
     }
 
     @Test
@@ -297,7 +283,7 @@ public class GenericBaseTableDDLTest extends DBeaverUnitTest {
         GenericTableColumn tableColumn1 = addColumn(genericTable2, "COLUMN2", "BIGINT", 2);
         tableColumn1.setPrecision(4);
 
-        String tableDDL = genericTable2.getObjectDefinitionText(mockMonitor, Collections.emptyMap());
+        String tableDDL = genericTable2.getObjectDefinitionText(monitor, Collections.emptyMap());
 
         String expectedDDL = "-- Drop table" + lineBreak +
             lineBreak +
@@ -308,7 +294,7 @@ public class GenericBaseTableDDLTest extends DBeaverUnitTest {
             "\tCOLUMN2 BIGINT" + lineBreak +
             ");" + lineBreak;
 
-        Assert.assertEquals(tableDDL, expectedDDL);
+        Assertions.assertEquals(tableDDL, expectedDDL);
     }
 
     @Test
@@ -325,7 +311,7 @@ public class GenericBaseTableDDLTest extends DBeaverUnitTest {
         GenericTableColumn tableColumn2 = addColumn(genericTable3, "COLUMN3", "BLOB", 3);
         tableColumn2.setRequired(true);
 
-        String tableDDL = genericTable3.getObjectDefinitionText(mockMonitor, Collections.emptyMap());
+        String tableDDL = genericTable3.getObjectDefinitionText(monitor, Collections.emptyMap());
 
         String expectedDDL = "-- Drop table" + lineBreak +
             lineBreak +
@@ -337,7 +323,7 @@ public class GenericBaseTableDDLTest extends DBeaverUnitTest {
             "\tCOLUMN3 BLOB NOT NULL" + lineBreak +
             ");" + lineBreak;
 
-        Assert.assertEquals(tableDDL, expectedDDL);
+        Assertions.assertEquals(tableDDL, expectedDDL);
     }
 
     private GenericTableColumn addColumn(

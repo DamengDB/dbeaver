@@ -26,10 +26,8 @@ import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.ext.clickhouse.ClickhouseDataTypesParser.ArrayTypeContext;
 import org.jkiss.dbeaver.ext.clickhouse.ClickhouseDataTypesParser.MapTypeContext;
 import org.jkiss.dbeaver.ext.clickhouse.ClickhouseDataTypesParser.TupleTypeContext;
-import org.jkiss.dbeaver.ext.clickhouse.model.ClickhouseArrayType;
-import org.jkiss.dbeaver.ext.clickhouse.model.ClickhouseDataSource;
-import org.jkiss.dbeaver.ext.clickhouse.model.ClickhouseMapType;
-import org.jkiss.dbeaver.ext.clickhouse.model.ClickhouseTupleType;
+import org.jkiss.dbeaver.ext.clickhouse.model.*;
+import org.jkiss.dbeaver.ext.clickhouse.model.data.ClickhouseArrayValueHandler;
 import org.jkiss.dbeaver.ext.clickhouse.model.data.ClickhouseMapValue;
 import org.jkiss.dbeaver.ext.clickhouse.model.data.ClickhouseTupleValue;
 import org.jkiss.dbeaver.model.DBUtils;
@@ -37,6 +35,7 @@ import org.jkiss.dbeaver.model.data.json.JSONUtils;
 import org.jkiss.dbeaver.model.exec.DBCSession;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 import org.jkiss.dbeaver.model.struct.DBSDataType;
+import org.jkiss.dbeaver.model.struct.DBSEntity;
 import org.jkiss.dbeaver.model.struct.DBSTypedObject;
 import org.jkiss.utils.CommonUtils;
 import org.jkiss.utils.Pair;
@@ -51,7 +50,6 @@ public class ClickhouseTypeParser {
 
     private static final Gson gson = new Gson();
 
-    // FIXME: Disabled as per dbeaver/dbeaver#34283
     private static final boolean ENABLE_COMPLEX_TYPE_PARSING = true;
 
     private ClickhouseTypeParser() {
@@ -59,7 +57,11 @@ public class ClickhouseTypeParser {
     }
 
     public static boolean isComplexType(@NotNull String typeName) {
-        return ENABLE_COMPLEX_TYPE_PARSING && (typeName.startsWith("Map") || typeName.startsWith("Tuple") || typeName.startsWith("Array"));
+        return ENABLE_COMPLEX_TYPE_PARSING && (
+            typeName.startsWith(ClickhouseConstants.DATA_TYPE_MAP) ||
+                typeName.startsWith(ClickhouseConstants.DATA_TYPE_TUPLE) ||
+                typeName.startsWith(ClickhouseConstants.DATA_TYPE_ARRAY)
+            );
     }
 
     @Nullable
@@ -79,16 +81,23 @@ public class ClickhouseTypeParser {
             return null;
         }
 
-        if (type instanceof ClickhouseMapType map && ENABLE_COMPLEX_TYPE_PARSING) {
-            return new ClickhouseMapValue((ClickhouseDataSource) session.getDataSource(), map, ((Map<?, ?>) object));
+        if (type instanceof ClickhouseMapType mapType && ENABLE_COMPLEX_TYPE_PARSING) {
+            return new ClickhouseMapValue(
+                (ClickhouseDataSource) session.getDataSource(),
+                mapType,
+                Objects.requireNonNull(mapType.getAttributes(session.getProgressMonitor())),
+                ((Map<?, ?>) object)
+            );
         } else if (type instanceof ClickhouseTupleType tuple && ENABLE_COMPLEX_TYPE_PARSING) {
             final Object[] values;
             if (object instanceof Map) {
                 values = ((Map<?, ?>) object).entrySet().stream()
                     .flatMap(e -> Stream.of(e.getKey(), e.getValue())).toArray();
-            } else if (object instanceof String) { 
+            } else if (object instanceof String) {
                 values = JSONUtils.parseMap(gson, new StringReader((String) object)).entrySet().stream()
                     .flatMap(e -> Stream.of(e.getKey(), e.getValue())).toArray();
+            } else if (object instanceof Object[] array) {
+                values = array;
             } else {
                 values = ((Collection<?>) object).toArray();
             }
@@ -98,6 +107,8 @@ public class ClickhouseTypeParser {
             }
 
             return new ClickhouseTupleValue(session.getProgressMonitor(), tuple, values);
+        } else if (type instanceof ClickhouseArrayType arrayType) {
+            return ClickhouseArrayValueHandler.INSTANCE.getValueFromObject(session, arrayType, object, false, false);
         } else {
             return object;
         }
@@ -129,9 +140,11 @@ public class ClickhouseTypeParser {
     ) throws DBException {
         final DBSDataType resolved;
         if (type.simpleType() != null) {
-            resolved = DBUtils.resolveDataType(monitor, dataSource, type.simpleType().getText());
+            resolved = DBUtils.resolveDataType(monitor, dataSource, getSimpleTypeText(type.simpleType()));
         } else if (type.markerType() != null) {
             resolved = DBUtils.resolveDataType(monitor, dataSource, type.markerType().anyType().getText());
+        } else if (type.enumType() != null) {
+            resolved = DBUtils.resolveDataType(monitor, dataSource, type.enumType().Enum().getText());
         } else if (type.tupleType() != null) {
             resolved = getTupleType(monitor, dataSource, type.tupleType());
         } else if (type.mapType() != null) {
@@ -149,6 +162,23 @@ public class ClickhouseTypeParser {
         return resolved;
     }
 
+    // We need to cut out complex type's parameters received from parser
+    // E.g. Decimal(10,2) -> Decimal
+    // Otherwise types can't be established from the data source
+    private static String getSimpleTypeText(ClickhouseDataTypesParser.SimpleTypeContext simpleType) {
+        if (simpleType.dateTimeType() != null) {
+            return simpleType.dateTimeType().DateTime().getText();
+        } else if (simpleType.dateType() != null) {
+            return simpleType.dateType().Date().getText();
+        } else if (simpleType.decimalType() != null) {
+            return simpleType.decimalType().Decimal().getText();
+        } else if (simpleType.fixedStringType() != null) {
+            return simpleType.fixedStringType().FixedString().getText();
+        } else {
+            return simpleType.getText();
+        }
+    }
+
     @Nullable
     private static DBSDataType getArrayType(@NotNull DBRProgressMonitor monitor, @NotNull ClickhouseDataSource dataSource, ArrayTypeContext type) throws DBException {
         final DBSDataType componentType = getType(monitor, dataSource, type.anyType());
@@ -157,7 +187,9 @@ public class ClickhouseTypeParser {
             return null;
         }
 
-        return new ClickhouseArrayType(dataSource, componentType);
+        return componentType instanceof DBSEntity
+            ? new ClickhouseTuplesArrayType(dataSource, componentType)
+            : new ClickhouseArrayType(dataSource, componentType);
     }
 
     @Nullable

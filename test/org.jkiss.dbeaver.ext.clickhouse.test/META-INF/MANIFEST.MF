@@ -2,19 +2,13 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: DBeaver Clickhouse Tests
 Bundle-SymbolicName: org.jkiss.dbeaver.ext.clickhouse.test
-Bundle-Version: 1.0.13.qualifier
-Bundle-Release-Date: 20250407
-Bundle-RequiredExecutionEnvironment: JavaSE-17
+Bundle-Version: 1.0.47.qualifier
+Bundle-Release-Date: 20260831
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Bundle-Vendor: DBeaver Corp
-Bundle-ClassPath: .
 Fragment-Host: org.jkiss.dbeaver.ext.clickhouse
 Bundle-ActivationPolicy: lazy
-Require-Bundle: org.eclipse.core.runtime,
- org.eclipse.core.resources,
- org.junit,
- org.mockito.mockito-core,
- org.jkiss.dbeaver.headless,
- org.jkiss.dbeaver.model,
+Require-Bundle: org.jkiss.dbeaver.headless,
  org.jkiss.dbeaver.model.sql,
  org.jkiss.dbeaver.test.platform,
  org.jkiss.dbeaver.registry

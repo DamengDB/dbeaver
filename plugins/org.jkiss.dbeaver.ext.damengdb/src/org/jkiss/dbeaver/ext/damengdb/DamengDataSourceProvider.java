@@ -52,9 +52,14 @@ import org.jkiss.utils.CommonUtils;
 public class DamengDataSourceProvider extends JDBCDataSourceProvider implements DBAUserCredentialsProvider, DBPNativeClientLocationManager, DBPInformationProvider {
 	
     public DamengDataSourceProvider() {
+        super(DamengDataSource.class);
     }
 
-    public static Integer getDmVersion(DBPNativeClientLocation location) {
+    protected DamengDataSourceProvider(Class dsClass) {
+		super(dsClass);
+	}
+
+	public static Integer getDmVersion(DBPNativeClientLocation location) {
         return 8;
     }
 
@@ -100,7 +105,7 @@ public class DamengDataSourceProvider extends JDBCDataSourceProvider implements 
     }
 
     @Override
-    public String getConnectionURL(DBPDriver driver, DBPConnectionConfiguration connectionInfo) {
+    public String getConnectionURL(DBPDriver driver, DBPConnectionConfiguration connectionInfo) throws DBException {
         if (connectionInfo.getConfigurationType() == DBPDriverConfigurationType.URL) {
             return connectionInfo.getUrl();
         }
@@ -181,7 +186,11 @@ public class DamengDataSourceProvider extends JDBCDataSourceProvider implements 
             DBPConnectionConfiguration connectionInfo = ds.getConnectionConfiguration();
             DamengConstants.ConnectionType connectionType = getConnectionType(connectionInfo);
             if (connectionType == DamengConstants.ConnectionType.CUSTOM) {
-                return DatabaseURL.generateUrlByTemplate(connectionInfo.getUrl(), connectionInfo);
+                try {
+					return DatabaseURL.generateUrlByTemplate(connectionInfo.getUrl(), connectionInfo);
+				} catch (DBException e) {
+					e.printStackTrace();
+				}
             }
 
             String hostName = DBWUtils.getTargetTunnelHostName(ds, connectionInfo);

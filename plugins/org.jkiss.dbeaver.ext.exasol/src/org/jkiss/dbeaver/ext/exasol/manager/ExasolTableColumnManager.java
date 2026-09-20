@@ -1,7 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2016-2016 Karl Griesser (fullref@gmail.com)
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,7 +72,7 @@ public class ExasolTableColumnManager extends SQLTableColumnManager<ExasolTableC
     }
 
     @Override
-    public boolean canEditObject(ExasolTableColumn object) {
+    public boolean canEditObject(@NotNull ExasolTableColumn object) {
         // Edit is only available for ExasolTable and not for other kinds of tables (View, MQTs, Nicknames..)
         ExasolTableBase exasolTableBase = object.getParentObject();
         if ((exasolTableBase != null) && (exasolTableBase.getClass().equals(ExasolTable.class))) {
@@ -88,8 +87,13 @@ public class ExasolTableColumnManager extends SQLTableColumnManager<ExasolTableC
     // ------
 
     @Override
-    protected ExasolTableColumn createDatabaseObject(@NotNull DBRProgressMonitor monitor, @NotNull DBECommandContext context, Object container,
-                                                     Object copyFrom, @NotNull Map<String, Object> options) throws DBException {
+    protected ExasolTableColumn createDatabaseObject(
+        @NotNull DBRProgressMonitor monitor,
+        @NotNull DBECommandContext context,
+        @NotNull Object container,
+        @Nullable Object copyFrom,
+        @NotNull Map<String, Object> options
+    ) throws DBException {
         ExasolTableColumn column = new ExasolTableColumn((ExasolTableBase) container);
         column.setName(getNewColumnName(monitor, context, (ExasolTableBase) container));
         return column;
@@ -164,7 +168,7 @@ public class ExasolTableColumnManager extends SQLTableColumnManager<ExasolTableC
     // -------
     // Helpers
     // -------
-    private DBEPersistAction buildCommentAction(ExasolTableColumn exasolColumn) {
+    static DBEPersistAction buildCommentAction(ExasolTableColumn exasolColumn) {
         if (CommonUtils.isNotEmpty(exasolColumn.getDescription())) {
             String tableName = exasolColumn.getTable().getFullyQualifiedName(DBPEvaluationContext.DDL);
             String columnName = DBUtils.getObjectFullName(exasolColumn, DBPEvaluationContext.DDL);

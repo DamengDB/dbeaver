@@ -1966,9 +1966,7 @@ public class DamengSchema extends DamengGlobalObject implements DBSSchema, DBPRe
                                                         DamengTablePhysical forTable) throws SQLException {
             StringBuilder sql = new StringBuilder();
             sql.append("SELECT ").append(DamengUtils.getSysCatalogHint(owner.getDataSource())).append(
-                " distinct IND_OBJ.NAME, IND_OBJ.ID, INDS.ISUNIQUE, INDS.XTYPE, INDS.GROUPID, INDS.TYPE$, INDS.INIT_EXTENTS, INDS.BATCH_ALLOC, INDS.MIN_EXTENTS, FBI_DEF(IND_OBJ.ID), IND_OBJ.CRTDATE, SCH_OBJ.ID, SCH_OBJ.NAME, TAB_OBJ.ID, TAB_OBJ.NAME TABLE_NAME, INDEX_USED_PAGES(IND_OBJ.ID)*(PAGE/1024),IND_OBJ.VALID, INDEX_USED_SPACE(IND_OBJ.ID)*(PAGE/1024),\n"
-                    +
-                    "(select MONITORING FROM V$OBJECT_USAGE where INDEX_NAME=IND_OBJ.NAME and SCH_NAME = SCH_OBJ.NAME) MONITORING, IND_OBJ.INFO7, i.TABLESPACE_NAME, ic.INDEX_NAME, ic.COLUMN_NAME, ic.COLUMN_POSITION, ic.DESCEND\n"
+                " distinct IND_OBJ.NAME, IND_OBJ.ID, INDS.ISUNIQUE, INDS.XTYPE, INDS.GROUPID, INDS.TYPE$, IND_OBJ.CRTDATE, SCH_OBJ.ID, SCH_OBJ.NAME, TAB_OBJ.ID, TAB_OBJ.NAME TABLE_NAME, IND_OBJ.VALID, IND_OBJ.INFO7, i.TABLESPACE_NAME, ic.INDEX_NAME, ic.COLUMN_NAME, ic.COLUMN_POSITION, ic.DESCEND\n"
                     +
                     "from (select * from SYSINDEXES where ROOTFILE != -1 or (XTYPE & 0x1000) = 0x1000 or (XTYPE & 0x2000) = 0x2000 or (XTYPE & 0x08) = 0x08 or (FLAG & 0x08) = 0x08 or (XTYPE & 0x8000) = 0x8000 or (XTYPE & 0x40) = 0x40) INDS, SYSCOLUMNS COLS, ALL_INDEXES i, \n"
                     +
@@ -1977,7 +1975,7 @@ public class DamengSchema extends DamengGlobalObject implements DBSSchema, DBPRe
                     +
                     "and SCHID = ?) TAB_OBJ, (select ID, NAME from SYSOBJECTS where TYPE$='SCH' and  ID = ?) SCH_OBJ, ALL_IND_COLUMNS ic where INDS.ID=IND_OBJ.ID and IND_OBJ.PID=TAB_OBJ.ID and TAB_OBJ.SCHID=SCH_OBJ.ID  and i.owner = SCH_OBJ.name and i.index_name = IND_OBJ.NAME and ic.index_owner = SCH_OBJ.NAME AND ic.index_name = IND_OBJ.name "
                     +
-                    "and COLS.ID = IND_OBJ.PID and (SF_COL_IS_IDX_KEY(INDS.KEYNUM, INDS.KEYINFO, COLS.COLID)=1 or (INDS.XTYPE & 0x1000) = 0x1000 or (INDS.XTYPE & 0x2000) = 0x2000 or (XTYPE & 0x08) = 0x08) ORDER BY IND_OBJ.NAME\n");
+                    "and COLS.ID = IND_OBJ.PID and ((INDS.XTYPE & 0x1000) = 0x1000 or (INDS.XTYPE & 0x2000) = 0x2000 or (XTYPE & 0x08) = 0x08)) ORDER BY IND_OBJ.NAME\n");
             JDBCPreparedStatement dbStat = session.prepareStatement(sql.toString());
             if (forTable == null) {
                 dbStat.setLong(1, DamengSchema.this.getId());

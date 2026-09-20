@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2025 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,6 @@ import org.jkiss.dbeaver.model.struct.DBSObject;
 import org.jkiss.dbeaver.runtime.DBWorkbench;
 import org.jkiss.dbeaver.runtime.ui.UIServiceConnections;
 import org.jkiss.dbeaver.ui.IRefreshablePart;
-import org.jkiss.dbeaver.ui.UITextUtils;
 import org.jkiss.dbeaver.ui.UIUtils;
 import org.jkiss.dbeaver.ui.controls.folders.ITabbedFolderContainer;
 import org.jkiss.dbeaver.ui.editors.*;
@@ -55,6 +54,7 @@ import org.jkiss.dbeaver.ui.navigator.NavigatorPreferences;
 import org.jkiss.dbeaver.ui.navigator.NavigatorUtils;
 import org.jkiss.dbeaver.utils.RuntimeUtils;
 import org.jkiss.utils.CommonUtils;
+import org.jkiss.utils.StringUtils;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
@@ -143,7 +143,7 @@ public class NavigatorHandlerObjectOpen extends NavigatorHandlerObjectBase imple
         if (connectionEditorAllowed && selectedNode instanceof DBNDataSource) {
             final DBPDataSourceContainer dataSourceContainer = ((DBNDataSource)selectedNode).getDataSourceContainer();
             if (dataSourceContainer.getProject().hasRealmPermission(RMConstants.PERMISSION_PROJECT_DATASOURCES_EDIT)) {
-                openConnectionEditor(workbenchWindow, dataSourceContainer);
+                openConnectionEditor(dataSourceContainer);
                 return null;
             }
         }
@@ -176,8 +176,8 @@ public class NavigatorHandlerObjectOpen extends NavigatorHandlerObjectBase imple
                     }
                 }
                 if (settingsChanged) {
-                    if (editor instanceof IRefreshablePart) {
-                        ((IRefreshablePart) editor).refreshPart(selectedNode, true);
+                    if (editor instanceof IRefreshablePart refreshablePart) {
+                        refreshablePart.refreshPart(selectedNode, true);
                     }
                 }
                 if (workbenchWindow.getActivePage().getActiveEditor() != editor || activate) {
@@ -249,12 +249,12 @@ public class NavigatorHandlerObjectOpen extends NavigatorHandlerObjectBase imple
                 } catch (Throwable e) {
                     continue;
                 }
-                if (editorInput instanceof INavigatorEditorInput) {
+                if (editorInput instanceof INavigatorEditorInput nei) {
                     boolean matches;
-                    if (editorInput instanceof DatabaseLazyEditorInput) {
-                        matches = node.getNodeUri().equals(((DatabaseLazyEditorInput) editorInput).getNodePath());
+                    if (editorInput instanceof DatabaseLazyEditorInput lei) {
+                        matches = node.getNodeUri().equals(lei.getNodePath());
                     } else {
-                        matches = ((INavigatorEditorInput) editorInput).getNavigatorNode() == node;
+                        matches = nei.getNavigatorNode() == node;
                     }
                     if (matches) {
                         return ref.getEditor(true);
@@ -279,14 +279,19 @@ public class NavigatorHandlerObjectOpen extends NavigatorHandlerObjectBase imple
         });
     }
 
-    public static void openConnectionEditor(IWorkbenchWindow workbenchWindow, DBPDataSourceContainer dataSourceContainer) {
+    public static void openConnectionEditor(DBPDataSourceContainer dataSourceContainer) {
         UIServiceConnections serviceConnections = DBWorkbench.getService(UIServiceConnections.class);
         if (serviceConnections != null) {
             serviceConnections.openConnectionEditor(dataSourceContainer, null);
         }
     }
 
-    private static boolean setInputAttributes(DatabaseEditorInput<?> editorInput, String defaultPageId, String defaultFolderId, Map<String, Object> attributes) {
+    private static boolean setInputAttributes(
+        @NotNull DatabaseEditorInput<?> editorInput,
+        @Nullable String defaultPageId,
+        @Nullable String defaultFolderId,
+        @Nullable Map<String, Object> attributes
+    ) {
         boolean changed = false;
         if (defaultFolderId != null && !CommonUtils.equalObjects(defaultFolderId, editorInput.getDefaultFolderId())) {
             editorInput.setDefaultFolderId(defaultFolderId);
@@ -343,7 +348,7 @@ public class NavigatorHandlerObjectOpen extends NavigatorHandlerObjectBase imple
                     label = NLS.bind(actionName, UINavigatorMessages.actions_navigator__objects);
                 } else {
                     if (node.getAdapter(IResource.class) != null) {
-                        label = actionName + " '" + UITextUtils.truncateText(node.getNodeDisplayName(), 32) + "'"; //$NON-NLS-1$
+                        label = actionName + " '" + StringUtils.truncateText(node.getNodeDisplayName(), 32) + "'"; //$NON-NLS-1$
                     } else {
                         label = NLS.bind(actionName, node.getNodeTypeLabel()); //$NON-NLS-1$
                     }

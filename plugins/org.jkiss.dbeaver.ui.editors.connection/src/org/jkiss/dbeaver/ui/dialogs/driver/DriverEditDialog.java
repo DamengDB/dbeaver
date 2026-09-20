@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2025 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,9 @@
  */
 package org.jkiss.dbeaver.ui.dialogs.driver;
 
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.dialogs.IDialogConstants;
-import org.eclipse.jface.dialogs.IDialogSettings;
+import org.eclipse.jface.resource.JFaceColors;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
@@ -25,12 +26,15 @@ import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.CTabItem;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.ui.IWorkbenchCommandConstants;
+import org.jkiss.code.NotNull;
+import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.model.DBFileController;
@@ -44,7 +48,7 @@ import org.jkiss.dbeaver.runtime.DBWorkbench;
 import org.jkiss.dbeaver.runtime.properties.PropertySourceCustom;
 import org.jkiss.dbeaver.ui.*;
 import org.jkiss.dbeaver.ui.controls.CSmartCombo;
-import org.jkiss.dbeaver.ui.dialogs.HelpEnabledDialog;
+import org.jkiss.dbeaver.ui.dialogs.BaseDialog;
 import org.jkiss.dbeaver.ui.dialogs.connection.ClientHomesPanel;
 import org.jkiss.dbeaver.ui.dialogs.connection.ConnectionPropertiesControl;
 import org.jkiss.dbeaver.ui.internal.UIConnectionMessages;
@@ -54,6 +58,7 @@ import org.jkiss.dbeaver.ui.properties.PropertyTreeViewer;
 import org.jkiss.dbeaver.utils.RuntimeUtils;
 import org.jkiss.utils.ArrayUtils;
 import org.jkiss.utils.CommonUtils;
+import org.jkiss.utils.IOUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -68,10 +73,8 @@ import java.util.stream.Stream;
 /**
  * DriverEditDialog
  */
-public class DriverEditDialog extends HelpEnabledDialog {
+public class DriverEditDialog extends BaseDialog {
     private static final Log log = Log.getLog(DriverEditDialog.class);
-
-    private static final String DIALOG_ID = "DBeaver.DriverEditDialog";//$NON-NLS-1$
 
     private static int dialogCount;
 
@@ -114,22 +117,26 @@ public class DriverEditDialog extends HelpEnabledDialog {
         return dialogCount;
     }
 
-    public DriverEditDialog(Shell shell, DBPDriver driver) {
-        super(shell, IHelpContextIds.CTX_DRIVER_EDITOR);
+    public DriverEditDialog(@Nullable Shell shell, @NotNull DBPDriver driver) {
+        super(shell, UIConnectionMessages.dialog_edit_driver_title_edit_driver, null);
         this.driver = (DriverDescriptor) driver;
         this.provider = this.driver.getProviderDescriptor();
         this.newDriver = false;
     }
 
-    DriverEditDialog(Shell shell, DataSourceProviderDescriptor provider, String category) {
-        super(shell, IHelpContextIds.CTX_DRIVER_EDITOR);
+    DriverEditDialog(@Nullable Shell shell, @NotNull DataSourceProviderDescriptor provider, @NotNull String category) {
+        super(shell, UIConnectionMessages.dialog_edit_driver_title_edit_driver, null);
         this.provider = provider;
         this.driver = provider.createDriver();
         this.newDriver = true;
     }
 
-    DriverEditDialog(Shell shell, DataSourceProviderDescriptor provider, DriverDescriptor driver) {
-        super(shell, IHelpContextIds.CTX_DRIVER_EDITOR);
+    DriverEditDialog(
+        @NotNull Shell shell,
+        @NotNull DataSourceProviderDescriptor provider,
+        @NotNull DriverDescriptor driver
+    ) {
+        super(shell, UIConnectionMessages.dialog_edit_driver_title_edit_driver, null);
         this.provider = provider;
         this.driver = provider.createDriver(driver);
         this.driver.setName(this.driver.getName() + " Copy");
@@ -138,14 +145,15 @@ public class DriverEditDialog extends HelpEnabledDialog {
         // Mark driver and all its libraries as custom (#3867)
         this.driver.setCustom(true);
         for (DBPDriverLibrary library : this.driver.getDriverLibraries()) {
-            if (library instanceof DriverLibraryAbstract) {
-                ((DriverLibraryAbstract) library).setCustom(true);
+            if (library instanceof DriverLibraryAbstract dla) {
+                dla.setCustom(true);
             }
         }
 
         this.newDriver = true;
     }
 
+    @NotNull
     public DriverDescriptor getDriver() {
         return driver;
     }
@@ -166,24 +174,20 @@ public class DriverEditDialog extends HelpEnabledDialog {
     }
 
     @Override
-    protected IDialogSettings getDialogBoundsSettings() {
-        return null;//UIUtils.getDialogSettings(DIALOG_ID);
-    }
-
-    @Override
-    protected Control createContents(Composite parent) {
+    protected Control createContents(@NotNull Composite parent) {
         Control ctl = super.createContents(parent);
         onChangeProperty();
         return ctl;
     }
 
+    @NotNull
     @Override
-    protected Composite createDialogArea(Composite parent) {
+    protected Composite createDialogArea(@NotNull Composite parent) {
         if (newDriver) {
-            getShell().setText(UIConnectionMessages.dialog_edit_driver_title_create_driver);
+            setTitle(UIConnectionMessages.dialog_edit_driver_title_create_driver);
         } else {
-            getShell().setText(UIConnectionMessages.dialog_edit_driver_title_edit_driver + driver.getName() + "'"); //$NON-NLS-2$
-            getShell().setImage(DBeaverIcons.getImage(driver.getPlainIcon()));
+            setTitle(UIConnectionMessages.dialog_edit_driver_title_edit_driver + driver.getName() + "'"); //$NON-NLS-2$
+            setImage(driver.getPlainIcon());
         }
 
         final Composite group = super.createDialogArea(parent);
@@ -215,16 +219,16 @@ public class DriverEditDialog extends HelpEnabledDialog {
         loadSettings(false);
 
         if (showAddFiles) {
-            getShell().getDisplay().asyncExec(this::addLibraryFiles);
+            UIUtils.asyncExec(this::addLibraryFiles);
         }
 
-        driverNameText.setFocus();
+        driverClassText.setFocus();
 
         return group;
     }
 
     private void createMainTab(CTabFolder group) {
-        boolean isReadOnly = !provider.isDriversManagable();
+        boolean isReadOnly = !provider.isDriversManageable();
         int advStyle = isReadOnly ? SWT.READ_ONLY : SWT.NONE;
 
         Composite propsGroup = new Composite(group, SWT.NONE);
@@ -233,7 +237,13 @@ public class DriverEditDialog extends HelpEnabledDialog {
 
         GridData gd = new GridData(GridData.FILL_HORIZONTAL);
         gd.widthHint = UIUtils.getFontHeight(propsGroup) * 20;
-        driverNameText = UIUtils.createLabelText(propsGroup, UIConnectionMessages.dialog_edit_driver_label_driver_name, driver.getName(), SWT.BORDER | advStyle, gd);
+        driverNameText = UIUtils.createLabelText(
+            propsGroup,
+            UIConnectionMessages.dialog_edit_driver_label_driver_name,
+            driver.getName(),
+            SWT.BORDER | advStyle,
+            gd
+        );
         driverNameText.setEnabled(driver == null || driver.isCustom());
         driverNameText.addModifyListener(e -> onChangeProperty());
 
@@ -258,22 +268,19 @@ public class DriverEditDialog extends HelpEnabledDialog {
                     }
                 });
             gd = new GridData(GridData.FILL_HORIZONTAL);
-            gd.minimumWidth = UIUtils.getFontHeight(propsGroup) * 20;
+            gd.widthHint = UIUtils.getFontHeight(propsGroup) * 20;
             providerCombo.setLayoutData(gd);
             if (newDriver) {
                 for (DataSourceProviderDescriptor provider : DataSourceProviderRegistry.getInstance().getDataSourceProviders()) {
-                    if (provider.isDriversManagable()) {
+                    if (provider.isDriversManageable()) {
                         providerCombo.addItem(provider);
                     }
                 }
                 providerCombo.select(provider);
-                providerCombo.addSelectionListener(new SelectionAdapter() {
-                    @Override
-                    public void widgetSelected(SelectionEvent e) {
-                        provider = providerCombo.getItem(providerCombo.getSelectionIndex());
-                        driver = provider.createDriver();
-                    }
-                });
+                providerCombo.addSelectionListener(SelectionListener.widgetSelectedAdapter(e -> {
+                    provider = providerCombo.getItem(providerCombo.getSelectionIndex());
+                    driver = provider.createDriver();
+                }));
             } else {
                 providerCombo.addItem(provider);
                 providerCombo.select(provider);
@@ -282,24 +289,51 @@ public class DriverEditDialog extends HelpEnabledDialog {
 
         gd = new GridData(GridData.FILL_HORIZONTAL);
         gd.horizontalSpan = 3;
-        driverClassText = UIUtils.createLabelText(propsGroup, UIConnectionMessages.dialog_edit_driver_label_class_name, CommonUtils.notEmpty(driver.getDriverClassName()), SWT.BORDER | advStyle, gd);
+        driverClassText = UIUtils.createLabelText(
+            propsGroup,
+            UIConnectionMessages.dialog_edit_driver_label_class_name,
+            CommonUtils.notEmpty(driver.getDriverClassName()),
+            SWT.BORDER | advStyle,
+            gd
+        );
         driverClassText.setToolTipText(UIConnectionMessages.dialog_edit_driver_label_class_name_tip);
         driverClassText.addModifyListener(e -> onChangeProperty());
 
-        driverURLText = UIUtils.createLabelText(propsGroup, UIConnectionMessages.dialog_edit_driver_label_sample_url, CommonUtils.notEmpty(driver.getSampleURL()), SWT.BORDER | advStyle, gd);
+        driverURLText = UIUtils.createLabelText(
+            propsGroup,
+            UIConnectionMessages.dialog_edit_driver_label_sample_url,
+            CommonUtils.notEmpty(driver.getSampleURL()),
+            SWT.BORDER | advStyle,
+            gd
+        );
         driverURLText.setToolTipText(UIConnectionMessages.dialog_edit_driver_label_sample_url_tip);
         driverURLText.addModifyListener(e -> onChangeProperty());
         driverURLText.setEnabled(driver == null || driver.isSampleURLApplicable());
 
-        driverPortText = UIUtils.createLabelText(propsGroup, UIConnectionMessages.dialog_edit_driver_label_default_port, CommonUtils.notEmpty(driver.getDefaultPort()), SWT.BORDER | advStyle);
+        driverPortText = UIUtils.createLabelText(
+            propsGroup,
+            UIConnectionMessages.dialog_edit_driver_label_default_port,
+            CommonUtils.notEmpty(driver.getDefaultPort()),
+            SWT.BORDER | advStyle
+        );
         driverPortText.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
         driverPortText.addModifyListener(e -> onChangeProperty());
 
-        driverDatabaseText = UIUtils.createLabelText(propsGroup, UIConnectionMessages.dialog_edit_driver_label_default_database, CommonUtils.notEmpty(driver.getDefaultDatabase()), SWT.BORDER | advStyle);
+        driverDatabaseText = UIUtils.createLabelText(
+            propsGroup,
+            UIConnectionMessages.dialog_edit_driver_label_default_database,
+            CommonUtils.notEmpty(driver.getDefaultDatabase()),
+            SWT.BORDER | advStyle
+        );
         driverDatabaseText.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
         driverDatabaseText.addModifyListener(e -> onChangeProperty());
 
-        driverUserText = UIUtils.createLabelText(propsGroup, UIConnectionMessages.dialog_edit_driver_label_default_user, CommonUtils.notEmpty(driver.getDefaultUser()), SWT.BORDER | advStyle);
+        driverUserText = UIUtils.createLabelText(
+            propsGroup,
+            UIConnectionMessages.dialog_edit_driver_label_default_user,
+            CommonUtils.notEmpty(driver.getDefaultUser()),
+            SWT.BORDER | advStyle
+        );
         driverUserText.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
         driverUserText.addModifyListener(e -> onChangeProperty());
 
@@ -310,7 +344,13 @@ public class DriverEditDialog extends HelpEnabledDialog {
         gd.horizontalSpan = 4;
         optionsPanel.setLayoutData(gd);
         optionsPanel.setLayout(new RowLayout());
-        embeddedDriverCheck = UIUtils.createCheckbox(optionsPanel, UIConnectionMessages.dialog_edit_driver_embedded_label, UIConnectionMessages.dialog_edit_driver_embedded_tip, driver.isEmbedded(), 1);
+        embeddedDriverCheck = UIUtils.createCheckbox(
+            optionsPanel,
+            UIConnectionMessages.dialog_edit_driver_embedded_label,
+            UIConnectionMessages.dialog_edit_driver_embedded_tip,
+            driver.isEmbedded(),
+            1
+        );
         propagateDriverPropertiesCheck = UIUtils.createCheckbox(
             optionsPanel,
             UIConnectionMessages.dialog_edit_driver_propagate_driver_properties_label,
@@ -331,17 +371,34 @@ public class DriverEditDialog extends HelpEnabledDialog {
             threadSafeCheck.setEnabled(false);
         }
 
-        Group infoGroup = UIUtils.createControlGroup(propsGroup, UIConnectionMessages.dialog_edit_driver_description, 4, -1, -1);
+        Composite groupWrapper = UIUtils.createComposite(propsGroup, 1);
         gd = new GridData(GridData.FILL_HORIZONTAL);
         gd.horizontalSpan = 4;
-        infoGroup.setLayoutData(gd);
+        groupWrapper.setLayoutData(gd);
+        Composite infoGroup = UIUtils.createTitledComposite(
+            groupWrapper,
+            UIConnectionMessages.dialog_edit_driver_description,
+            4,
+            GridData.FILL_HORIZONTAL,
+            SWT.DEFAULT
+        );
+        infoGroup.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
-        {
-            gd = new GridData(GridData.FILL_HORIZONTAL);
-            gd.horizontalSpan = 3;
-            Text idText = UIUtils.createLabelText(infoGroup, UIConnectionMessages.dialog_edit_driver_label_id, driver.getId(), SWT.BORDER | SWT.READ_ONLY, gd);
-            idText.setToolTipText(UIConnectionMessages.dialog_edit_driver_label_id_tip);
-        }
+        Text idText = UIUtils.createLabelText(
+            infoGroup,
+            UIConnectionMessages.dialog_edit_driver_label_id,
+            driver.getId(),
+            SWT.BORDER | SWT.READ_ONLY
+        );
+        idText.setToolTipText(UIConnectionMessages.dialog_edit_driver_label_id_tip);
+
+        Text providerIdText = UIUtils.createLabelText(
+            infoGroup,
+            UIConnectionMessages.dialog_edit_driver_label_provider_id,
+            driver.getProviderId(),
+            SWT.BORDER | SWT.READ_ONLY
+        );
+        providerIdText.setToolTipText(UIConnectionMessages.dialog_edit_driver_label_provider_id_tip);
 
         gd = new GridData(GridData.FILL_HORIZONTAL);
         gd.horizontalSpan = 3;
@@ -355,15 +412,13 @@ public class DriverEditDialog extends HelpEnabledDialog {
 
         if (!CommonUtils.isEmpty(driver.getWebURL())) {
             UIUtils.createControlLabel(infoGroup, UIConnectionMessages.dialog_edit_driver_label_website);
-            Link urlLabel = UIUtils.createLink(infoGroup, "<a>" + driver.getWebURL() + "</a>", new SelectionAdapter() {
-                @Override
-                public void widgetSelected(SelectionEvent e) {
-                    ShellUtils.launchProgram(driver.getWebURL());
-                }
-            });
+            Link urlLabel = UIUtils.createLink(
+                infoGroup,
+                "<a>" + driver.getWebURL() + "</a>",
+                SelectionListener.widgetSelectedAdapter(e -> ShellUtils.launchProgram(driver.getWebURL()))
+            );
             gd = new GridData(GridData.FILL_HORIZONTAL);
             gd.horizontalSpan = 3;
-            driverDescText.setLayoutData(gd);
             urlLabel.setLayoutData(gd);
         }
 
@@ -405,9 +460,9 @@ public class DriverEditDialog extends HelpEnabledDialog {
                         cell.setText(displayName);
                         Path localFile = lib.getLocalFile();
                         if (localFile != null && !Files.exists(localFile)) {
-                            cell.setForeground(Display.getDefault().getSystemColor(SWT.COLOR_RED));
+                            cell.setForeground(JFaceColors.getErrorText(Display.getDefault()));
                         } else if (!driver.getDefaultDriverLoader().isLibraryResolved(lib)) {
-                            cell.setForeground(Display.getDefault().getSystemColor(SWT.COLOR_BLUE));
+                            cell.setForeground(JFaceColors.getHyperlinkText(Display.getDefault()));
                         } else {
                             cell.setForeground(null);
                         }
@@ -432,11 +487,11 @@ public class DriverEditDialog extends HelpEnabledDialog {
                         Path localFile = dl.getLocalFile();
                         return localFile == null ? "N/A" : localFile.toAbsolutePath().toString();
                     } else if (element instanceof DriverFileInfo dfi) {
-                        Path localFile = dfi.getFile();
-                        return localFile == null ? "N/A" : localFile.toString();
+                        return getPathFromDriverFileInfo(dfi);
                     }
                     return super.getToolTipText(element);
                 }
+
             });
             ColumnViewerToolTipSupport.enableFor(libTable);
             libTable.getControl().setLayoutData(new GridData(GridData.FILL_BOTH));
@@ -446,7 +501,7 @@ public class DriverEditDialog extends HelpEnabledDialog {
                 UIWidgets.fillDefaultTreeContextMenu(manager, libTable.getTree()));
 
             // Find driver class
-            boolean isReadOnly = !provider.isDriversManagable();
+            boolean isReadOnly = !provider.isDriversManageable();
 
             Composite findClassGroup = new Composite(libsListGroup, SWT.TOP);
             findClassGroup.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
@@ -458,15 +513,12 @@ public class DriverEditDialog extends HelpEnabledDialog {
             UIUtils.createControlLabel(findClassGroup, UIConnectionMessages.dialog_edit_driver_label_driver_class);
             classListCombo = new Combo(findClassGroup, SWT.DROP_DOWN | SWT.READ_ONLY);
             classListCombo.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-            classListCombo.addSelectionListener(new SelectionAdapter() {
-                @Override
-                public void widgetSelected(SelectionEvent e) {
-                    int selIndex = classListCombo.getSelectionIndex();
-                    if (selIndex >= 0) {
-                        driverClassText.setText(classListCombo.getItem(selIndex));
-                    }
+            classListCombo.addSelectionListener(SelectionListener.widgetSelectedAdapter(e -> {
+                int selIndex = classListCombo.getSelectionIndex();
+                if (selIndex >= 0) {
+                    driverClassText.setText(classListCombo.getItem(selIndex));
                 }
-            });
+            }));
             classListCombo.setEnabled(!isReadOnly);
             findClassButton = new Button(findClassGroup, SWT.PUSH);
             findClassButton.setText(UIConnectionMessages.dialog_edit_driver_button_bind_class);
@@ -483,7 +535,7 @@ public class DriverEditDialog extends HelpEnabledDialog {
                         if (!RuntimeUtils.isMacOS()) {
                             classListCombo.setListVisible(true);
                         } else if (!classNames.isEmpty()) {
-                            classListCombo.setText(classNames.get(0));
+                            classListCombo.setText(classNames.getFirst());
                         }
                     }
 
@@ -498,42 +550,39 @@ public class DriverEditDialog extends HelpEnabledDialog {
         libsControlGroup.setLayout(new GridLayout(1, true));
         libsControlGroup.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_BEGINNING));
 
-        UIUtils.createToolButton(libsControlGroup, UIConnectionMessages.dialog_edit_driver_button_add_file, new SelectionAdapter() {
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                addLibraryFiles();
-            }
-        });
+        UIUtils.createToolButton(
+            libsControlGroup,
+            UIConnectionMessages.dialog_edit_driver_button_add_file,
+            SelectionListener.widgetSelectedAdapter(e -> addLibraryFiles()));
 
-        UIUtils.createToolButton(libsControlGroup, UIConnectionMessages.dialog_edit_driver_button_add_folder, new SelectionAdapter() {
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                addLibraryFolder();
-            }
-        });
+        UIUtils.createToolButton(
+            libsControlGroup,
+            UIConnectionMessages.dialog_edit_driver_button_add_folder,
+            SelectionListener.widgetSelectedAdapter(e -> addLibraryFolder()));
         if (!DBWorkbench.isDistributed()) {
-            UIUtils.createToolButton(libsControlGroup, UIConnectionMessages.dialog_edit_driver_button_add_artifact, new SelectionAdapter() {
-                @Override
-                public void widgetSelected(SelectionEvent e) {
-                    addMavenArtifact();
-                }
-            });
+            UIUtils.createToolButton(
+                libsControlGroup,
+                UIConnectionMessages.dialog_edit_driver_button_add_artifact,
+                SelectionListener.widgetSelectedAdapter(e -> addMavenArtifact()));
 
-            editButton = UIUtils.createToolButton(libsControlGroup, UIConnectionMessages.dialog_driver_manager_button_edit, new SelectionAdapter() {
-                @Override
-                public void widgetSelected(SelectionEvent e) {
-                    editSelectedLibrary();
-                }
-            });
+            editButton = UIUtils.createToolButton(
+                libsControlGroup,
+                UIConnectionMessages.dialog_driver_manager_button_edit,
+                SelectionListener.widgetSelectedAdapter(e -> editSelectedLibrary()));
             editButton.setEnabled(false);
         }
 
-        deleteButton = UIUtils.createToolButton(libsControlGroup, UIConnectionMessages.dialog_edit_driver_button_delete, new SelectionAdapter() {
-            @Override
-            public void widgetSelected(SelectionEvent e) {
+        deleteButton = UIUtils.createToolButton(
+            libsControlGroup,
+            UIConnectionMessages.dialog_edit_driver_button_delete,
+            SelectionListener.widgetSelectedAdapter(e -> {
                 IStructuredSelection selection = (IStructuredSelection) libTable.getSelection();
                 if (selection != null && !selection.isEmpty()) {
-                    if (UIUtils.confirmAction(getShell(), UIConnectionMessages.dialog_edit_driver_dialog_delete_library_title, UIConnectionMessages.dialog_edit_driver_dialog_delete_library_message)) {
+                    if (UIUtils.confirmAction(
+                        getShell(),
+                        UIConnectionMessages.dialog_edit_driver_dialog_delete_library_title,
+                        UIConnectionMessages.dialog_edit_driver_dialog_delete_library_message
+                    )) {
                         for (Object obj : selection.toArray()) {
                             if (obj instanceof DriverLibraryAbstract) {
                                 driver.resetDriverInstance();
@@ -545,45 +594,50 @@ public class DriverEditDialog extends HelpEnabledDialog {
                 }
                 changeLibContent();
             }
-        });
+        ));
         deleteButton.setEnabled(false);
 
-        UIUtils.createHorizontalLine(libsControlGroup);
+        UIUtils.createLabelSeparator(libsControlGroup, SWT.HORIZONTAL);
 
         if (!DBWorkbench.isDistributed()) {
-            updateVersionButton = UIUtils.createToolButton(libsControlGroup, UIConnectionMessages.dialog_edit_driver_button_update_version, new SelectionAdapter() {
-                @Override
-                public void widgetSelected(SelectionEvent e) {
+            updateVersionButton = UIUtils.createToolButton(
+                libsControlGroup,
+                UIConnectionMessages.dialog_edit_driver_button_update_version,
+                SelectionListener.widgetSelectedAdapter(e -> {
                     driver.setDriverLibraries(libraries);
-                    driver.getDefaultDriverLoader().updateFiles();
+                    driver.getDefaultDriverLoader().updateFiles(true);
                     changeLibContent();
                 }
-            });
+            ));
         }
 
-        detailsButton = UIUtils.createToolButton(libsControlGroup, UIConnectionMessages.dialog_edit_driver_button_details, new SelectionAdapter() {
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                new DriverLibraryDetailsDialog(getShell(), driver, getSelectedLibrary()).open();
-            }
-        });
+        detailsButton = UIUtils.createToolButton(
+            libsControlGroup,
+            UIConnectionMessages.dialog_edit_driver_button_details,
+            SelectionListener.widgetSelectedAdapter(e ->
+                new DriverLibraryDetailsDialog(getShell(), driver, getSelectedLibrary()).open())
+        );
         detailsButton.setEnabled(false);
 
-        UIUtils.createToolButton(libsControlGroup, UIConnectionMessages.dialog_edit_driver_button_classpath, new SelectionAdapter() {
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                UIUtils.showPreferencesFor(null, null, PrefPageDriversClasspath.PAGE_ID);
-            }
-        });
-        UIUtils.createToolButton(libsControlGroup, ActionUtils.findCommandName(IWorkbenchCommandConstants.FILE_EXPORT), new SelectionAdapter() {
-            @Override
-            public void widgetSelected(SelectionEvent e) {
+        UIUtils.createToolButton(
+            libsControlGroup,
+            UIConnectionMessages.dialog_edit_driver_button_classpath,
+            SelectionListener.widgetSelectedAdapter(e ->
+                    UIUtils.showPreferencesFor(null, null, PrefPageDriversClasspath.PAGE_ID))
+        );
+        UIUtils.createToolButton(
+            libsControlGroup,
+            ActionUtils.findCommandName(IWorkbenchCommandConstants.FILE_EXPORT),
+            SelectionListener.widgetSelectedAdapter(e -> {
                 for (DBPDriverLibrary lib : libraries) {
                     if (!driver.getDefaultDriverLoader().isLibraryResolved(lib)) {
-                        if (!UIUtils.confirmAction(getShell(), "Not all files present",
+                        if (!UIUtils.confirmAction(
+                            getShell(), "Not all files present",
                             "Driver files weren't downloaded. " +
-                            "You need to click '" + UIConnectionMessages.dialog_edit_driver_button_update_version + "' before exporting.\n" +
-                            "Are you sure you want to continue with incomplete files?")
+                                "You need to click '" + UIConnectionMessages.dialog_edit_driver_button_update_version
+                                + "' before exporting.\n" +
+                                "Are you sure you want to continue with incomplete files?"
+                        )
                         ) {
                             return;
                         }
@@ -592,7 +646,7 @@ public class DriverEditDialog extends HelpEnabledDialog {
                 }
                 DriverEditHelpers.exportDriverLibraries(getShell(), libraries);
             }
-        });
+        ));
 
         changeLibContent();
 
@@ -613,7 +667,7 @@ public class DriverEditDialog extends HelpEnabledDialog {
             if (!selection.isEmpty()) {
                 Object element = selection.getFirstElement();
                 if (element instanceof DriverFileInfo dfi) {
-                    DriverEditHelpers.showFileInExplorer(dfi.getFile());
+                    DriverEditHelpers.showFileInExplorer(Path.of(getPathFromDriverFileInfo(dfi)));
                 }
             }
         }
@@ -629,8 +683,8 @@ public class DriverEditDialog extends HelpEnabledDialog {
 
     private void editMavenArtifact() {
         DriverLibraryAbstract selectedLibrary = getSelectedLibrary();
-        if (selectedLibrary instanceof DriverLibraryMavenArtifact) {
-            EditMavenArtifactDialog fd = new EditMavenArtifactDialog(getShell(), driver, (DriverLibraryMavenArtifact) selectedLibrary);
+        if (selectedLibrary instanceof DriverLibraryMavenArtifact dlma) {
+            EditMavenArtifactDialog fd = new EditMavenArtifactDialog(getShell(), driver, dlma);
             if (fd.open() == IDialogConstants.OK_ID) {
                 libTable.refresh();
             }
@@ -693,6 +747,15 @@ public class DriverEditDialog extends HelpEnabledDialog {
         paramsTab.setText(UIConnectionMessages.dialog_edit_driver_tab_name_advanced_parameters);
         paramsTab.setToolTipText(UIConnectionMessages.dialog_edit_driver_tab_tooltip_advanced_parameters);
         paramsTab.setControl(paramsGroup);
+        group.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                if (e.item == paramsTab) {
+                    parametersEditor.repackColumns();
+                    group.removeSelectionListener(this);
+                }
+            }
+        });
     }
 
     private void createConnectionPropertiesTab(CTabFolder group) {
@@ -708,6 +771,16 @@ public class DriverEditDialog extends HelpEnabledDialog {
         paramsTab.setText(UIConnectionMessages.dialog_edit_driver_tab_name_connection_properties);
         paramsTab.setToolTipText(UIConnectionMessages.dialog_edit_driver_tab_tooltip_connection_properties);
         paramsTab.setControl(paramsGroup);
+
+        group.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                if (e.item == paramsTab) {
+                    connectionPropertiesEditor.repackColumns();
+                    group.removeSelectionListener(this);
+                }
+            }
+        });
     }
 
     private void createClientHomesTab(CTabFolder group) {
@@ -749,7 +822,7 @@ public class DriverEditDialog extends HelpEnabledDialog {
     }
 
     @Override
-    protected void createButtonsForButtonBar(Composite parent) {
+    protected void createButtonsForButtonBar(@NotNull Composite parent) {
         Button resetButton = createButton(parent, IDialogConstants.RETRY_ID, UIMessages.button_reset_to_defaults, false);
         if (driver.isCustom()) {
             resetButton.setEnabled(false);
@@ -790,7 +863,7 @@ public class DriverEditDialog extends HelpEnabledDialog {
                 hasDownloads = true;
             }
         }
-        findClassButton.setEnabled(provider.isDriversManagable() && hasFiles);
+        findClassButton.setEnabled(provider.isDriversManageable() && hasFiles);
         if (updateVersionButton != null) {
             updateVersionButton.setEnabled(hasDownloads);
         }
@@ -872,18 +945,35 @@ public class DriverEditDialog extends HelpEnabledDialog {
     protected void okPressed() {
         saveDriverSettings(this.driver);
 
-        DriverDescriptor oldDriver = provider.getDriverByName(driver.getCategory(), driver.getName());
+        DBPDriver oldDriver = provider.getDriverByName(driver.getCategory(), driver.getName());
         if (oldDriver != null && oldDriver != driver && !oldDriver.isDisabled() && oldDriver.getReplacedBy() == null) {
-            UIUtils.showMessageBox(getShell(), UIConnectionMessages.dialog_edit_driver_dialog_save_exists_title, NLS.bind(UIConnectionMessages.dialog_edit_driver_dialog_save_exists_message, driver.getName()), SWT.ICON_ERROR);
+            UIUtils.showMessageBox(
+                getShell(),
+                UIConnectionMessages.dialog_edit_driver_dialog_save_exists_title,
+                NLS.bind(UIConnectionMessages.dialog_edit_driver_dialog_save_exists_message, driver.getName()),
+                SWT.ICON_ERROR
+            );
             return;
         }
 
         if (DBWorkbench.isDistributed()) {
+            if (!UIUtils.confirmAction(
+                getShell(),
+                "Driver libraries upload",
+                "DBeaver will upload driver files back to the server. Do you confirm?")) {
+                return;
+            }
             try {
                 syncDriverLibraries();
             } catch (DBException e) {
                 DBWorkbench.getPlatformUI().showError("Error saving driver", "Driver libraries sync failed", e);
                 return;
+            }
+        } else {
+            // We have to reset the driver instance here to clear the old classloader with old libraries
+            // For distributed mode it is done in syncDriverLibraries method
+            if (oldDriver != null) {
+                driver.resetDriverInstance();
             }
         }
 
@@ -891,7 +981,12 @@ public class DriverEditDialog extends HelpEnabledDialog {
         if (provider.getDriver(driver.getId()) == null) {
             provider.addDriver(driver);
         }
-        provider.getRegistry().saveDrivers();
+        try {
+            provider.getRegistry().saveDrivers();
+        } catch (DBException e) {
+            DBWorkbench.getPlatformUI().showError("Drivers save error", "Error saving drivers", e);
+            return;
+        }
 
         super.okPressed();
     }
@@ -900,7 +995,7 @@ public class DriverEditDialog extends HelpEnabledDialog {
         // Set props
         drv.setName(driverNameText.getText());
         drv.setDescription(CommonUtils.notEmpty(driverDescText.getText()));
-        drv.setDriverClassName(driverClassText.getText());
+        drv.setDriverClassName(driverClassText.getText(), true);
         drv.setSampleURL(driverURLText.getText());
         drv.setDriverDefaultPort(driverPortText.getText());
         drv.setDriverDefaultDatabase(driverDatabaseText.getText());
@@ -939,6 +1034,9 @@ public class DriverEditDialog extends HelpEnabledDialog {
             }
         }
         for (DBPDriverLibrary newLib : libraries) {
+            if (newLib instanceof DriverLibraryMavenArtifact || newLib instanceof DriverLibraryBundle) {
+                continue;
+            }
             if (!(newLib instanceof DriverLibraryLocal)) {
                 log.error("Wrong driver library found: " + newLib + ". Must be a local file");
                 continue;
@@ -949,18 +1047,38 @@ public class DriverEditDialog extends HelpEnabledDialog {
                 log.error("Driver library doesn't exist: " + localFilePath + ".");
                 continue;
             }
+
+            if (isAppInstallationFile(localFilePath)) {
+                // Skip files which are part of app installation (e.g. licenses)
+                continue;
+            }
             String shortFileName = localFilePath.getFileName().toString();
 
             driver.getDefaultDriverLoader().removeLibraryFiles(newLib);
             if (Files.isDirectory(localFilePath)) {
                 synAddDriverLibDirectory(newLib, localFilePath, shortFileName);
-            } else {
+            } else if (IOUtils.isLocalFile(localFilePath.toString())) {
                 syncAddDriverLibFile(newLib, localFilePath, shortFileName);
+            } else {
+                log.debug("Skip remote file '" + localFilePath + "'");
             }
         }
     }
 
-    private void syncRemoveDriverLibFile(DBPDriverLibrary library) throws DBException {
+    private boolean isAppInstallationFile(Path localFilePath) {
+        try {
+            Path appInstallPath = RuntimeUtils.getLocalPathFromURL(Platform.getInstallLocation().getURL());
+            if (localFilePath.startsWith(appInstallPath)) {
+                // Skip files which are part of app installation (e.g. licenses)
+                return true;
+            }
+        } catch (IOException e) {
+            log.error("Error detecting app path", e);
+        }
+        return false;
+    }
+
+    private void syncRemoveDriverLibFile(@NotNull DBPDriverLibrary library) throws DBException {
         Collection<DriverFileInfo> libraryFiles = driver.getDefaultDriverLoader().getLibraryFiles(library);
         if (libraryFiles == null) {
             return;
@@ -968,10 +1086,14 @@ public class DriverEditDialog extends HelpEnabledDialog {
         DBFileController fileController = DBWorkbench.getPlatform().getFileController();
 
         for (DriverFileInfo file : libraryFiles) {
-            fileController.deleteFile(
-                DBFileController.TYPE_DATABASE_DRIVER,
-                file.getFile().toString(),
-                false);
+            Path localFile = file.getFile();
+            if (localFile != null) {
+                fileController.deleteFile(
+                    DBFileController.TYPE_DATABASE_DRIVER,
+                    localFile.toString(),
+                    false
+                );
+            }
         }
     }
 
@@ -994,15 +1116,14 @@ public class DriverEditDialog extends HelpEnabledDialog {
         DBFileController fileController = DBWorkbench.getPlatform().getFileController();
 
         String driverFilePath;
-        boolean isNewLib = Path.of(library.getPath()).isAbsolute();
-        if (isNewLib) {
-            driverFilePath = driver.getId() + "/" + shortFileName;
+        Path storageFolder = DriverDescriptor.getExternalDriversStorageFolder();
+        if (localFilePath.startsWith(storageFolder)) {
+            driverFilePath = storageFolder.relativize(localFilePath).toString();
         } else {
-            driverFilePath = DriverDescriptor.getWorkspaceDriversStorageFolder().relativize(localFilePath).toString();
-        }
-
-        if (library instanceof DriverLibraryLocal libraryLocal && isNewLib) {
-            libraryLocal.setPath(driverFilePath);
+            driverFilePath = driver.getId() + "/" + shortFileName;
+            if (library instanceof DriverLibraryLocal libraryLocal) {
+                libraryLocal.setPath(driverFilePath);
+            }
         }
 
         try {
@@ -1024,16 +1145,16 @@ public class DriverEditDialog extends HelpEnabledDialog {
     private class LibContentProvider implements ITreeContentProvider {
         @Override
         public Object[] getElements(Object inputElement) {
-            if (inputElement instanceof Collection) {
-                return ((Collection<?>) inputElement).toArray();
+            if (inputElement instanceof Collection<?> col) {
+                return col.toArray();
             }
             return null;
         }
 
         @Override
         public Object[] getChildren(Object parentElement) {
-            if (parentElement instanceof DBPDriverLibrary) {
-                final Collection<DriverFileInfo> files = driver.getDefaultDriverLoader().getLibraryFiles((DBPDriverLibrary) parentElement);
+            if (parentElement instanceof DBPDriverLibrary driverLibrary) {
+                final Collection<DriverFileInfo> files = driver.getDefaultDriverLoader().getLibraryFiles(driverLibrary);
                 if (CommonUtils.isEmpty(files)) {
                     return null;
                 }
@@ -1052,5 +1173,19 @@ public class DriverEditDialog extends HelpEnabledDialog {
             return element instanceof DBPDriverLibrary &&
                 !CommonUtils.isEmpty(driver.getDefaultDriverLoader().getLibraryFiles((DBPDriverLibrary) element));
         }
+    }
+
+    private static @NotNull String getPathFromDriverFileInfo(@NotNull DriverFileInfo dfi) {
+        String tooltip = "N/A";
+        Path localFile = dfi.getFile();
+
+        if (localFile != null) {
+            if (DBWorkbench.isDistributed() && !localFile.isAbsolute()) {
+                localFile = DriverDescriptor.getExternalDriversStorageFolder().resolve(localFile);
+            }
+            tooltip = localFile.toString();
+        }
+
+        return tooltip;
     }
 }

@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2025 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,9 @@ import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.*;
+import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
-import org.jkiss.dbeaver.ui.UIStyles;
-import org.jkiss.dbeaver.ui.UIUtils;
+import org.jkiss.dbeaver.ui.*;
 import org.jkiss.utils.ArrayUtils;
 
 import java.util.ArrayList;
@@ -37,40 +37,34 @@ import java.util.List;
  */
 public class CSmartCombo<ITEM_TYPE> extends Composite {
 
-    public interface TableFilter<FILTER_ITEM_TYPE> {
-        String getFilterLabel();
-        String getDefaultLabel();
-        boolean isEnabled();
-        boolean setEnabled(boolean enabled);
-        boolean filter(FILTER_ITEM_TYPE item);
-    }
-
     protected final ILabelProvider labelProvider;
     protected final List<ITEM_TYPE> items = new ArrayList<>();
-    private TableFilter<ITEM_TYPE> tableFilter = null;
     private ITEM_TYPE selectedItem;
-    private Label imageLabel;
-    private Text text;
+    private final Label imageLabel;
+    private final Label text;
     private Tree dropDownControl;
     private int visibleItemCount = 10;
     private Shell popup;
     private long disposeTime = -1;
-    private Button arrow;
+    private Label arrow;
     private boolean hasFocus;
-    private Listener listener, filter;
+    private final Listener listener;
+    private final Listener filter;
     private Point sizeHint;
 
-    public CSmartCombo(Composite parent, int style, ILabelProvider labelProvider)
-    {
-        super(parent, style = checkStyle(style));
+    public CSmartCombo(@NotNull Composite parent, int style, @NotNull ILabelProvider labelProvider) {
+        super(parent, checkStyle(style));
         this.labelProvider = labelProvider;
         if (parent.getLayout() instanceof GridLayout) {
             this.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
         }
+        if ((style & SWT.BORDER) != 0) {
+            new CompositeBorderPainter(this);
+        }
 
         GridLayout gridLayout = new GridLayout(3, false);
-        gridLayout.marginHeight = 0;
-        gridLayout.marginWidth = 0;
+        gridLayout.marginHeight = 2;
+        gridLayout.marginWidth = 2;
         gridLayout.marginTop = 0;
         gridLayout.marginBottom = 0;
         gridLayout.horizontalSpacing = 0;
@@ -80,19 +74,18 @@ public class CSmartCombo<ITEM_TYPE> extends Composite {
         this.imageLabel = new Label(this, SWT.NONE);
         this.imageLabel.setLayoutData(new GridData(GridData.FILL_VERTICAL | GridData.HORIZONTAL_ALIGN_BEGINNING));
 
-        this.text = new Text(this, SWT.SINGLE | SWT.READ_ONLY);
+        this.text = new Label(this, SWT.NONE);
         GridData gd = new GridData(GridData.FILL_HORIZONTAL | GridData.VERTICAL_ALIGN_CENTER);
         this.text.setLayoutData(gd);
 
-        int arrowStyle = SWT.ARROW | SWT.DOWN;
-        if ((style & SWT.FLAT) != 0) {
-            arrowStyle |= SWT.FLAT;
-        }
-        this.arrow = new Button(this, arrowStyle);
+        this.arrow = new Label(this, SWT.NONE);
+        this.arrow.setImage(DBeaverIcons.getImage(UIIcon.TREE_COLLAPSE));
         gd = new GridData(GridData.FILL_VERTICAL | GridData.HORIZONTAL_ALIGN_END | GridData.VERTICAL_ALIGN_CENTER);
         this.arrow.setLayoutData(gd);
 
-        this.setCursor(getDisplay().getSystemCursor(SWT.CURSOR_ARROW));
+        Cursor arrowCursor = getDisplay().getSystemCursor(SWT.CURSOR_ARROW);
+        this.setCursor(arrowCursor);
+        this.text.setCursor(arrowCursor);
         this.setEnabled(true, true);
         this.setForeground(UIStyles.getDefaultTextForeground());
 
@@ -141,18 +134,19 @@ public class CSmartCombo<ITEM_TYPE> extends Composite {
             this.text.addListener(textEvent, this.listener);
         }
 
-        int[] arrowEvents = {SWT.Selection, SWT.FocusIn};
+        int[] arrowEvents = {SWT.MouseDown, SWT.MouseUp, SWT.FocusIn};
         for (int arrowEvent : arrowEvents) {
             this.arrow.addListener(arrowEvent, this.listener);
         }
+
+        UIUtils.asyncExec(() -> {
+            if (!isDisposed()) {
+                layout(true, true);
+            }
+        });
     }
 
-    public void setTableFilter(TableFilter<ITEM_TYPE> tableFilter) {
-        this.tableFilter = tableFilter;
-    }
-
-    private void setEnabled(boolean enabled, boolean force)
-    {
+    private void setEnabled(boolean enabled, boolean force) {
         if (force || enabled != isEnabled()) {
             super.setEnabled(enabled);
             imageLabel.setEnabled(enabled);
@@ -161,22 +155,20 @@ public class CSmartCombo<ITEM_TYPE> extends Composite {
             if (!enabled) {
                 this.setBackground(getParent().getBackground());
             } else {
-                if (selectedItem != null && labelProvider instanceof IColorProvider) {
-                    this.setBackground(((IColorProvider) labelProvider).getBackground(selectedItem));
+                if (selectedItem != null && labelProvider instanceof IColorProvider cp) {
+                    this.setBackground(cp.getBackground(selectedItem));
                 }
             }
         }
     }
 
     @Override
-    public void setEnabled(boolean enabled)
-    {
+    public void setEnabled(boolean enabled) {
         setEnabled(enabled, false);
     }
 
     @Override
-    public void setForeground(Color foreground)
-    {
+    public void setForeground(Color foreground) {
         super.setForeground(foreground);
         this.imageLabel.setForeground(foreground);
         this.text.setForeground(foreground);
@@ -184,8 +176,7 @@ public class CSmartCombo<ITEM_TYPE> extends Composite {
     }
 
     @Override
-    public void setBackground(Color background)
-    {
+    public void setBackground(Color background) {
         if (background == getBackground()) {
             return;
         }
@@ -198,83 +189,73 @@ public class CSmartCombo<ITEM_TYPE> extends Composite {
     /**
      * Adds element
      */
-    public void addItem(@Nullable ITEM_TYPE element)
-    {
+    public void addItem(@Nullable ITEM_TYPE element) {
         items.add(element);
         if (items.size() == 1) {
             select(0);
         }
     }
 
-    public void addItem(@Nullable ITEM_TYPE parent, @Nullable ITEM_TYPE element)
-    {
+    public void addItem(@Nullable ITEM_TYPE parent, @Nullable ITEM_TYPE element) {
         items.add(element);
         if (items.size() == 1) {
             select(0);
         }
     }
 
-    public ITEM_TYPE getItem(int index)
-    {
+    @NotNull
+    public ITEM_TYPE getItem(int index) {
         return items.get(index);
     }
 
-    public void addModifyListener(final ModifyListener listener)
-    {
+    public void addModifyListener(@NotNull ModifyListener listener) {
         checkWidget();
         addListener(SWT.Modify, event -> listener.modifyText(new ModifyEvent(event)));
     }
 
-    public void addSelectionListener(final SelectionListener listener)
-    {
+    public void addSelectionListener(@NotNull SelectionListener listener) {
         checkWidget();
         addListener(SWT.Selection, event -> listener.widgetSelected(new SelectionEvent(event)));
         addListener(SWT.DefaultSelection, event -> listener.widgetDefaultSelected(new SelectionEvent(event)));
     }
 
-    public void addVerifyListener(final VerifyListener listener)
-    {
+    public void addVerifyListener(@NotNull VerifyListener listener) {
         checkWidget();
         addListener(SWT.Verify, event -> listener.verifyText(new VerifyEvent(event)));
     }
 
-    private static int checkStyle(int style)
-    {
-        int mask = SWT.BORDER | SWT.READ_ONLY | SWT.FLAT | SWT.LEFT_TO_RIGHT | SWT.RIGHT_TO_LEFT | SWT.CHECK;
+    private static int checkStyle(int style) {
+        int mask = SWT.READ_ONLY | SWT.FLAT | SWT.LEFT_TO_RIGHT | SWT.RIGHT_TO_LEFT | SWT.CHECK;
         return style & mask;
     }
 
-    public String getItemText(int index)
-    {
+    public String getItemText(int index) {
         return labelProvider.getText(this.items.get(index));
     }
 
-    public int getItemCount()
-    {
+    public int getItemCount() {
         return this.items.size();
     }
 
-    public List<ITEM_TYPE> getItems()
-    {
+    @NotNull
+    public List<ITEM_TYPE> getItems() {
         return items;
     }
 
+    @Nullable
     public ITEM_TYPE getSelectedItem() {
         return selectedItem;
     }
 
-    public int getSelectionIndex()
-    {
+    public int getSelectionIndex() {
         return this.items.indexOf(this.selectedItem);
     }
 
-    public String getText()
-    {
+    public String getText() {
         return this.labelProvider.getText(this.selectedItem);
     }
 
-    public void remove(int index)
-    {
+    public void remove(int index) {
         checkWidget();
         if (index < 0) {
             selectedItem = null;
@@ -295,18 +276,15 @@ public class CSmartCombo<ITEM_TYPE> extends Composite {
         }
     }
 
-    public void remove(ITEM_TYPE item)
-    {
+    public void remove(ITEM_TYPE item) {
         remove(this.items.indexOf(item));
     }
 
-    public void removeAll()
-    {
+    public void removeAll() {
         this.remove(-1);
     }
 
-    public void select(int index)
-    {
+    public void select(int index) {
         checkWidget();
 
         String itemText;
@@ -315,8 +293,6 @@ public class CSmartCombo<ITEM_TYPE> extends Composite {
         if (index < 0) {
             selectedItem = null;
             itemText = "";
-            itemImage = null;
-            itemBackground = null;
         } else {
             selectedItem = this.items.get(index);
             itemText = labelProvider.getText(selectedItem);
@@ -325,13 +301,14 @@ public class CSmartCombo<ITEM_TYPE> extends Composite {
             } catch (Exception e) {
                 // No image
             }
-            if (labelProvider instanceof IColorProvider) {
-                itemBackground = ((IColorProvider) labelProvider).getBackground(selectedItem);
+            if (labelProvider instanceof IColorProvider cp) {
+                itemBackground = cp.getBackground(selectedItem);
             }
         }
         this.text.setText(itemText);
         if (itemImage != null) {
             this.imageLabel.setImage(itemImage);
+            this.imageLabel.getParent().layout(true, true);
         }
         if (itemBackground == null) {
             itemBackground = UIStyles.getDefaultTextBackground();
@@ -339,21 +316,18 @@ public class CSmartCombo<ITEM_TYPE> extends Composite {
         this.setBackground(itemBackground);
     }
 
-    public void select(ITEM_TYPE item)
-    {
+    public void select(ITEM_TYPE item) {
         select(this.items.indexOf(item));
     }
 
     @Override
-    public void setFont(Font font)
-    {
+    public void setFont(Font font) {
         checkWidget();
         super.setFont(font);
         this.text.setFont(font);
     }
 
-    public void setText(String string)
-    {
+    public void setText(String string) {
         checkWidget();
         if (string == null) {
             string = "";
@@ -367,8 +341,7 @@ public class CSmartCombo<ITEM_TYPE> extends Composite {
     }
 
     @Override
-    public void setToolTipText(String string)
-    {
+    public void setToolTipText(String string) {
         checkWidget();
         super.setToolTipText(string);
         this.arrow.setToolTipText(string);
@@ -376,8 +349,7 @@ public class CSmartCombo<ITEM_TYPE> extends Composite {
         this.text.setToolTipText(string);
     }
 
-    public void setVisibleItemCount(int count)
-    {
+    public void setVisibleItemCount(int count) {
         checkWidget();
         if (count < 0) {
             return;
@@ -385,8 +357,7 @@ public class CSmartCombo<ITEM_TYPE> extends Composite {
         this.visibleItemCount = count;
     }
 
-    private void handleFocus(int type)
-    {
+    private void handleFocus(int type) {
         if (isDisposed()) {
             return;
         }
@@ -426,8 +397,7 @@ public class CSmartCombo<ITEM_TYPE> extends Composite {
         }
     }
 
-    private void createPopup()
-    {
+    private void createPopup() {
         Shell oldPopup = this.popup;
         if (oldPopup != null) {
             oldPopup.dispose();
@@ -456,20 +426,6 @@ public class CSmartCombo<ITEM_TYPE> extends Composite {
         gl.horizontalSpacing = 0;
         this.popup.setLayout(gl);
 
-        if (tableFilter != null) {
-            final Button filterButton = new Button(this.popup, SWT.PUSH | SWT.FLAT | SWT.CENTER);
-            filterButton.setText("Show " + (tableFilter.isEnabled() ? tableFilter.getDefaultLabel() : tableFilter.getFilterLabel()));
-            filterButton.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-            filterButton.addSelectionListener(new SelectionAdapter() {
-                @Override
-                public void widgetSelected(SelectionEvent e) {
-                    tableFilter.setEnabled(!tableFilter.isEnabled());
-                    filterButton.setText("Show " + (tableFilter.isEnabled() ? tableFilter.getDefaultLabel() : tableFilter.getFilterLabel()));
-                    updateTableItems();
-                }
-            });
-        }
-
         // create a table instead of a list.
         Tree table = new Tree(this.popup, listStyle);
         table.setLayoutData(new GridData(GridData.FILL_BOTH));
@@ -495,11 +451,7 @@ public class CSmartCombo<ITEM_TYPE> extends Composite {
     }
 
     private void createTableItems(Tree table) {
-        TableFilter<ITEM_TYPE> filter = tableFilter != null && tableFilter.isEnabled() ? tableFilter : null;
         for (ITEM_TYPE item : this.items) {
-            if (filter != null && !filter.filter(item)) {
-                continue;
-            }
             String itemText = labelProvider.getText(item);
             Image itemImage = labelProvider.getImage(item);
             Color itemBackground = null, itemForeground = null;
@@ -522,13 +474,11 @@ public class CSmartCombo<ITEM_TYPE> extends Composite {
         }
     }
 
-    private boolean isDropped()
-    {
+    private boolean isDropped() {
         return this.popup != null && this.popup.getVisible();
     }
 
-    protected void dropDown(boolean drop)
-    {
+    protected void dropDown(boolean drop) {
         if (drop == isDropped()) {
             return;
         }
@@ -553,9 +503,6 @@ public class CSmartCombo<ITEM_TYPE> extends Composite {
         Tree table = dropDownControl;
         int itemHeight = table.getItemHeight() * itemCount;
         Point listSize = table.computeSize(SWT.DEFAULT, itemHeight, false);
-        if (tableFilter != null) {
-            listSize.y += popup.getChildren()[0].computeSize(SWT.DEFAULT, SWT.DEFAULT).y;
-        }
         ScrollBar verticalBar = table.getVerticalBar();
         if (verticalBar != null) {
             listSize.x -= verticalBar.getSize().x;
@@ -565,15 +512,6 @@ public class CSmartCombo<ITEM_TYPE> extends Composite {
             listSize.y += hScrollBar.getSize().y;
         }
         table.setBounds(1, 1, Math.max(size.x, listSize.x) - 30, listSize.y);
-
-        {
-            final TreeColumn column = table.getColumn(0);
-            column.pack();
-            final int maxSize = table.getSize().x - 10;// - 2;//table.getVerticalBar().getSize().x;
-            if (column.getWidth() < maxSize) {
-                //column.setWidth(maxSize);
-            }
-        }
 
         if (selectedItem != null) {
             for (TreeItem item : table.getItems()) {
@@ -607,12 +545,21 @@ public class CSmartCombo<ITEM_TYPE> extends Composite {
             this.popup.addListener(SWT.Resize, event -> CSmartCombo.this.sizeHint = popup.getSize());
             this.popup.setData("resizeListener", Boolean.TRUE);
         }
+
+        {
+            final TreeColumn column = table.getColumn(0);
+            column.pack();
+            final int maxSize = table.getSize().x;// - table.getVerticalBar().getSize().x;
+            if (column.getWidth() < maxSize) {
+                column.setWidth(maxSize);
+            }
+        }
+
         this.popup.setVisible(true);
         this.dropDownControl.setFocus();
     }
 
-    private void listEvent(Event event)
-    {
+    private void listEvent(Event event) {
         switch (event.type) {
             case SWT.Dispose:
                 if (getShell() != this.popup.getParent()) {
@@ -718,14 +665,13 @@ public class CSmartCombo<ITEM_TYPE> extends Composite {
         }
     }
 
-    private void arrowEvent(Event event)
-    {
+    private void arrowEvent(Event event) {
         switch (event.type) {
             case SWT.FocusIn: {
                 handleFocus(SWT.FocusIn);
                 break;
             }
-            case SWT.Selection: {
+            case SWT.MouseDown: {
                 if (!isDropped() && (System.currentTimeMillis() - disposeTime) > 200) {
                     dropDown(true);
                 }
@@ -734,8 +680,7 @@ public class CSmartCombo<ITEM_TYPE> extends Composite {
         }
     }
 
-    private void comboEvent(Event event)
-    {
+    private void comboEvent(Event event) {
         switch (event.type) {
             case SWT.Dispose:
                 removeListener(SWT.Dispose, listener);
@@ -760,8 +705,7 @@ public class CSmartCombo<ITEM_TYPE> extends Composite {
         }
     }
 
-    private void popupEvent(Event event)
-    {
+    private void popupEvent(Event event) {
         switch (event.type) {
             case SWT.Paint:
                 // draw black rectangle around list
@@ -780,8 +724,7 @@ public class CSmartCombo<ITEM_TYPE> extends Composite {
         }
     }
 
-    private void textEvent(Event event)
-    {
+    private void textEvent(Event event) {
         switch (event.type) {
             case SWT.FocusIn: {
                 handleFocus(SWT.FocusIn);

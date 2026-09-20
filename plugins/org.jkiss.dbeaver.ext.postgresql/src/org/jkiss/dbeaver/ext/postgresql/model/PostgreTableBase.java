@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,6 @@ import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.ext.postgresql.PostgreUtils;
 import org.jkiss.dbeaver.model.*;
-import org.jkiss.dbeaver.model.dpi.DPIContainer;
-import org.jkiss.dbeaver.model.dpi.DPIElement;
 import org.jkiss.dbeaver.model.exec.DBCException;
 import org.jkiss.dbeaver.model.exec.jdbc.JDBCResultSet;
 import org.jkiss.dbeaver.model.impl.jdbc.JDBCUtils;
@@ -34,6 +32,7 @@ import org.jkiss.dbeaver.model.meta.IPropertyValueListProvider;
 import org.jkiss.dbeaver.model.meta.Property;
 import org.jkiss.dbeaver.model.meta.PropertyLength;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
+import org.jkiss.dbeaver.model.struct.DBSDescriptionEditable;
 import org.jkiss.dbeaver.model.struct.DBSEntityAssociation;
 import org.jkiss.dbeaver.model.struct.DBSObject;
 import org.jkiss.dbeaver.model.struct.DBSObjectWithType;
@@ -56,7 +55,7 @@ public abstract class PostgreTableBase extends JDBCTable<PostgreDataSource, Post
     DBPScriptObjectExt2,
     PostgrePrivilegeOwner,
     DBPNamedObject2,
-    DBSObjectWithType
+    DBSObjectWithType, DBSDescriptionEditable
 {
     private static final Log log = Log.getLog(PostgreTableBase.class);
 
@@ -160,7 +159,8 @@ public abstract class PostgreTableBase extends JDBCTable<PostgreDataSource, Post
         return this.description;
     }
 
-    public void setDescription(String description) {
+    @Override
+    public void setDescription(@Nullable String description) {
         this.description = description;
     }
 
@@ -175,7 +175,7 @@ public abstract class PostgreTableBase extends JDBCTable<PostgreDataSource, Post
 
     @NotNull
     @Override
-    public String getFullyQualifiedName(DBPEvaluationContext context)
+    public String getFullyQualifiedName(@NotNull DBPEvaluationContext context)
     {
         PostgreDatabase database = getDatabase();
         return DBUtils.getFullQualifiedName(getDataSource(),
@@ -184,7 +184,6 @@ public abstract class PostgreTableBase extends JDBCTable<PostgreDataSource, Post
             this);
     }
 
-    @DPIContainer
     @NotNull
     public PostgreSchema getSchema() {
         final DBSObject parentObject = super.getParentObject();
@@ -277,8 +276,7 @@ public abstract class PostgreTableBase extends JDBCTable<PostgreDataSource, Post
         return getDataSource().getServerType().readObjectPermissions(monitor, this, includeNestedObjects);
     }
 
-    @DPIElement(cache = true)
-	public boolean isPartition() {
+    public boolean isPartition() {
 		return isPartition;
 	}
 
@@ -286,7 +284,6 @@ public abstract class PostgreTableBase extends JDBCTable<PostgreDataSource, Post
         isPartition = partition;
     }
 
-    @DPIElement(cache = true)
     @NotNull
     public PostgreTablePersistence getPersistence() {
         return persistence;
@@ -305,7 +302,7 @@ public abstract class PostgreTableBase extends JDBCTable<PostgreDataSource, Post
     }
 
     @Override
-    public boolean supportsObjectDefinitionOption(String option) {
+    public boolean supportsObjectDefinitionOption(@NotNull String option) {
         if (DBPScriptObject.OPTION_INCLUDE_COMMENTS.equals(option) && getDataSource().getServerType().supportsShowingOfExtraComments()) {
             return true;
         }
@@ -329,6 +326,7 @@ public abstract class PostgreTableBase extends JDBCTable<PostgreDataSource, Post
         {
             return false;
         }
+        @Nullable
         @Override
         public Object[] getPossibleValues(PostgreTableBase object)
         {

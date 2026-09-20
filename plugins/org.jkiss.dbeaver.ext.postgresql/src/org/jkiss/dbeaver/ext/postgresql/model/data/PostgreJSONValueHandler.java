@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,9 @@
 package org.jkiss.dbeaver.ext.postgresql.model.data;
 
 import org.jkiss.code.NotNull;
+import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.ext.postgresql.PostgreUtils;
+import org.jkiss.dbeaver.ext.postgresql.model.PostgreDataSource;
 import org.jkiss.dbeaver.model.data.DBDContent;
 import org.jkiss.dbeaver.model.exec.DBCException;
 import org.jkiss.dbeaver.model.exec.DBCSession;
@@ -35,24 +37,29 @@ public class PostgreJSONValueHandler extends JDBCContentValueHandler {
     public static final PostgreJSONValueHandler INSTANCE = new PostgreJSONValueHandler();
 
     @Override
-    protected DBDContent fetchColumnValue(DBCSession session, JDBCResultSet resultSet, DBSTypedObject type, int index) throws SQLException {
+    protected DBDContent fetchColumnValue(@NotNull DBCSession session, @NotNull JDBCResultSet resultSet, @NotNull DBSTypedObject type, int index) throws SQLException {
         String json = resultSet.getString(index);
         return new PostgreContentJSON(session.getExecutionContext(), json);
     }
 
     @Override
-    public DBDContent getValueFromObject(@NotNull DBCSession session, @NotNull DBSTypedObject type, Object object, boolean copy, boolean validateValue) throws DBCException
-    {
-        if (PostgreUtils.isPGObject(object)) {
-            object = PostgreUtils.extractPGObjectValue(object);
+    public DBDContent getValueFromObject(
+        @NotNull DBCSession session,
+        @NotNull DBSTypedObject type,
+        @Nullable Object object,
+        boolean copy,
+        boolean validateValue
+    ) throws DBCException {
+        PostgreDataSource dataSource = (PostgreDataSource) session.getDataSource();
+        boolean isPgObject = PostgreUtils.isPgObject(dataSource, object);
+        if (isPgObject) {
+            object = PostgreUtils.extractPGObjectValue(object, dataSource);
         }
-        if (object == null) {
-            return new PostgreContentJSON(session.getExecutionContext(), null);
-        } else if (object instanceof PostgreContentJSON) {
-            return copy ? ((PostgreContentJSON) object).cloneValue(session.getProgressMonitor()) : (PostgreContentJSON) object;
-        } else if (object instanceof String) {
-            return new PostgreContentJSON(session.getExecutionContext(), (String) object);
-        }
-        return super.getValueFromObject(session, type, object, copy, validateValue);
+        return switch (object) {
+            case null -> new PostgreContentJSON(session.getExecutionContext(), null);
+            case PostgreContentJSON contentJSON -> copy ? contentJSON.cloneValue(session.getProgressMonitor()) : contentJSON;
+            case String stringValue -> new PostgreContentJSON(session.getExecutionContext(), stringValue);
+            default -> super.getValueFromObject(session, type, object, copy, validateValue);
+        };
     }
 }

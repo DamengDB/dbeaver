@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,9 @@ import org.jkiss.dbeaver.model.exec.DBCException;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 import org.jkiss.dbeaver.model.struct.DBSAttributeBase;
 import org.jkiss.dbeaver.model.struct.DBSDataType;
+
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 public class ClickhouseTupleValue implements DBDComposite, DBDValueCloneable {
     private final ClickhouseTupleType type;
@@ -53,6 +56,7 @@ public class ClickhouseTupleValue implements DBDComposite, DBDValueCloneable {
         }
     }
 
+    @NotNull
     @Override
     public DBSDataType getDataType() {
         return type;
@@ -84,6 +88,7 @@ public class ClickhouseTupleValue implements DBDComposite, DBDValueCloneable {
         modified = true;
     }
 
+    @Nullable
     @Override
     public Object getRawValue() {
         return values;
@@ -104,8 +109,17 @@ public class ClickhouseTupleValue implements DBDComposite, DBDValueCloneable {
         values = null;
     }
 
+    @NotNull
     @Override
-    public DBDValueCloneable cloneValue(DBRProgressMonitor monitor) throws DBCException {
+    public DBDValueCloneable cloneValue(@NotNull DBRProgressMonitor monitor) throws DBCException {
         return new ClickhouseTupleValue(monitor, type, values);
+    }
+
+    @Override
+    public String toString() {
+        String elements = Arrays.stream(values)
+            .map(Object::toString)
+            .collect(Collectors.joining(", "));
+        return "(" + elements + ")";
     }
 }

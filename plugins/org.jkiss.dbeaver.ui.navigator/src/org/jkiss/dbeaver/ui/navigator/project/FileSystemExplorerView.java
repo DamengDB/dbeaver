@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2025 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,15 +22,14 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.IViewSite;
 import org.eclipse.ui.PartInitException;
+import org.jkiss.code.NotNull;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.model.DBConstants;
 import org.jkiss.dbeaver.model.navigator.DBNEmptyNode;
 import org.jkiss.dbeaver.model.navigator.DBNNode;
-import org.jkiss.dbeaver.model.navigator.DBNProject;
 import org.jkiss.dbeaver.model.navigator.DBNProjectDatabases;
 import org.jkiss.dbeaver.model.navigator.fs.DBNFileSystems;
 import org.jkiss.dbeaver.model.navigator.fs.DBNPath;
-import org.jkiss.dbeaver.runtime.DBWorkbench;
 import org.jkiss.dbeaver.ui.UIExecutionQueue;
 import org.jkiss.dbeaver.ui.UIUtils;
 import org.jkiss.dbeaver.ui.controls.ViewerColumnController;
@@ -39,6 +38,7 @@ import org.jkiss.dbeaver.ui.navigator.INavigatorFilter;
 import org.jkiss.dbeaver.ui.navigator.SimpleNavigatorTreeFilter;
 import org.jkiss.dbeaver.ui.navigator.database.DatabaseBrowserView;
 import org.jkiss.dbeaver.ui.navigator.database.DatabaseNavigatorTree;
+import org.jkiss.dbeaver.ui.navigator.database.DatabaseNavigatorTreeFilterObjectType;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -60,12 +60,7 @@ public class FileSystemExplorerView extends DatabaseBrowserView {
     private ViewerColumnController<?,?> columnController;
 
     public static DBNFileSystems getFileSystemsNode() {
-        DBNProject projectNode = getGlobalNavigatorModel().getRoot().getProjectNode(
-            DBWorkbench.getPlatform().getWorkspace().getActiveProject());
-        if (projectNode != null) {
-            return projectNode.getExtraNode(DBNFileSystems.class);
-        }
-        return null;
+        return getGlobalNavigatorModel().getRoot().getExtraNode(DBNFileSystems.class);
     }
 
     public FileSystemExplorerView() {
@@ -82,6 +77,7 @@ public class FileSystemExplorerView extends DatabaseBrowserView {
         return super.getRootNode();
     }
 
+    @NotNull
     @Override
     protected DBNNode getDefaultRootNode() {
         DBNFileSystems fsRootNode = getFileSystemsNode();
@@ -104,8 +100,14 @@ public class FileSystemExplorerView extends DatabaseBrowserView {
         UIExecutionQueue.queueExec(() -> createColumns(viewer));
     }
 
+    @NotNull
     @Override
-    protected void installDragAndDropSupport(DatabaseNavigatorTree navigatorTree) {
+    protected DatabaseNavigatorTreeFilterObjectType getDefaultFilterType() {
+        return DatabaseNavigatorTreeFilterObjectType.file;
+    }
+
+    @Override
+    protected void installDragAndDropSupport(@NotNull DatabaseNavigatorTree navigatorTree) {
         super.installDragAndDropSupport(navigatorTree);
     }
 

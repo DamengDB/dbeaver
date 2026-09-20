@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,9 @@ import org.jkiss.dbeaver.ModelPreferences;
 import org.jkiss.dbeaver.ext.generic.model.GenericDataSource;
 import org.jkiss.dbeaver.ext.mssql.SQLServerConstants;
 import org.jkiss.dbeaver.ext.mssql.SQLServerUtils;
-import org.jkiss.dbeaver.ext.mssql.model.SQLServerDialect;
+import org.jkiss.dbeaver.ext.mssql.model.SQLServerDialectMssql;
+import org.jkiss.dbeaver.ext.mssql.model.SQLServerDialectSybase;
+import org.jkiss.dbeaver.ext.mssql.model.ServerType;
 import org.jkiss.dbeaver.model.DBPDataKind;
 import org.jkiss.dbeaver.model.DBPDataSource;
 import org.jkiss.dbeaver.model.DBPDataSourceContainer;
@@ -54,16 +56,17 @@ public class SQLServerGenericDataSource extends GenericDataSource {
     public SQLServerGenericDataSource(DBRProgressMonitor monitor, DBPDataSourceContainer container)
         throws DBException
     {
-        this(monitor, container,
-            new SQLServerMetaModel(
-                SQLServerUtils.isDriverSqlServer(container.getDriver())
-            ));
+        this(
+            monitor,
+            container,
+            new SQLServerMetaModel(SQLServerUtils.isDriverSqlServer(container.getDriver()))
+        );
     }
 
     public SQLServerGenericDataSource(DBRProgressMonitor monitor, DBPDataSourceContainer container, SQLServerMetaModel metaModel)
         throws DBException
     {
-        super(monitor, container, metaModel, new SQLServerDialect());
+        super(monitor, container, metaModel, metaModel.getServerType() == ServerType.SQL_SERVER ? new SQLServerDialectMssql() : new SQLServerDialectSybase());
     }
 
     @Override
@@ -83,7 +86,8 @@ public class SQLServerGenericDataSource extends GenericDataSource {
         }
         if (CommonUtils.toBoolean(connectionInfo.getProviderProperty(SQLServerConstants.PROP_ENCRYPT_PASSWORD))) {
             try {
-                DBPPropertyDescriptor[] properties = driver.getDataSourceProvider().getConnectionProperties(monitor, driver, connectionInfo);
+                DBPPropertyDescriptor[] properties = driver.getDataSourceProvider()
+                    .getConnectionProperties(monitor, driver, container, connectionInfo);
                 for (DBPPropertyDescriptor descriptor : properties) {
                     if (descriptor.getId().equals(PROP_ENCRYPT_PASS) && descriptor instanceof PropertyDescriptor) {
                         connectionInfo.setProperty(PROP_ENCRYPT_PASS, "true"); // To apply changes

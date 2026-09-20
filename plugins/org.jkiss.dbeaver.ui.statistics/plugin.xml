@@ -9,7 +9,7 @@
     </extension>
 
     <extension point="org.jkiss.dbeaver.workbenchHandler">
-        <workbenchWindowInitializer class="org.jkiss.dbeaver.ui.statistics.WorkbenchInitializerDataShareConfirm" priority="5"/>
+        <workbenchWindowInitializer class="org.jkiss.dbeaver.ui.statistics.WorkbenchInitializerDataShareConfirm" order="2"/>
     </extension>
 
     <extension point="org.eclipse.ui.preferencePages">
@@ -17,6 +17,10 @@
               id="org.jkiss.dbeaver.preferences.main.usageStatistics"
               class="org.jkiss.dbeaver.ui.statistics.PrefPageUsageStatistics"
               name="%page.org.jkiss.dbeaver.preferences.main.usageStatistics"/>
+    </extension>
+
+    <extension point="org.jkiss.dbeaver.ui.app.config">
+        <page id="dataCollection" order="4000" class="org.jkiss.dbeaver.ui.app.config.ProductConfigDataCollectionPage"/>
     </extension>
 
 </plugin>

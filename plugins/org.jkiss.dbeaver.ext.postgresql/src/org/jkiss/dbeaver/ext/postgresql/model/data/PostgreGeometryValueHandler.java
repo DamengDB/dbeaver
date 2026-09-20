@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2025 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,12 @@
 package org.jkiss.dbeaver.ext.postgresql.model.data;
 
 import org.jkiss.code.NotNull;
+import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.data.gis.handlers.WKGUtils;
 import org.jkiss.dbeaver.ext.postgresql.PostgreConstants;
 import org.jkiss.dbeaver.ext.postgresql.PostgreUtils;
+import org.jkiss.dbeaver.ext.postgresql.model.PostgreDataSource;
 import org.jkiss.dbeaver.model.data.DBDAttributeBinding;
 import org.jkiss.dbeaver.model.data.DBDDisplayFormat;
 import org.jkiss.dbeaver.model.exec.DBCException;
@@ -35,7 +37,6 @@ import org.jkiss.dbeaver.model.struct.DBSTypedObject;
 import org.jkiss.utils.BeanUtils;
 import org.jkiss.utils.CommonUtils;
 import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKBReader;
 import org.locationtech.jts.io.WKTReader;
 import org.locationtech.jts.io.WKTWriter;
@@ -52,7 +53,7 @@ public class PostgreGeometryValueHandler extends JDBCAbstractValueHandler {
     private static final Log log = Log.getLog(PostgreGeometryValueHandler.class);
 
     @Override
-    protected Object fetchColumnValue(DBCSession session, JDBCResultSet resultSet, DBSTypedObject type, int index) throws DBCException, SQLException {
+    protected Object fetchColumnValue(@NotNull DBCSession session, @NotNull JDBCResultSet resultSet, @NotNull DBSTypedObject type, int index) throws DBCException, SQLException {
         try {
             Object object = resultSet.getObject(index);
             return getValueFromObject(session, type, object,false, false);
@@ -68,7 +69,7 @@ public class PostgreGeometryValueHandler extends JDBCAbstractValueHandler {
     }
 
     @Override
-    protected void bindParameter(JDBCSession session, JDBCPreparedStatement statement, DBSTypedObject paramType, int paramIndex, Object value) throws DBCException, SQLException {
+    protected void bindParameter(@NotNull JDBCSession session, @NotNull JDBCPreparedStatement statement, @NotNull DBSTypedObject paramType, int paramIndex, Object value) throws DBCException, SQLException {
         int valueSRID = 0;
         if (paramType instanceof DBDAttributeBinding) {
             paramType = ((DBDAttributeBinding) paramType).getAttribute();
@@ -86,7 +87,7 @@ public class PostgreGeometryValueHandler extends JDBCAbstractValueHandler {
             if (((Geometry) value).getSRID() == 0) {
                 ((Geometry) value).setSRID(valueSRID);
             }
-            statement.setObject(paramIndex, getStringFromGeometry(session, (Geometry)value), Types.OTHER);
+            statement.setObject(paramIndex, getStringFromGeometry((Geometry)value), Types.OTHER);
         } else if (value.getClass().getName().equals(PostgreConstants.PG_GEOMETRY_CLASS)) {
             statement.setObject(paramIndex, value, Types.OTHER);
         } else {
@@ -105,25 +106,26 @@ public class PostgreGeometryValueHandler extends JDBCAbstractValueHandler {
     }
 
     @Override
-    public Object getValueFromObject(@NotNull DBCSession session, @NotNull DBSTypedObject type, Object object, boolean copy, boolean validateValue) throws DBCException {
+    public Object getValueFromObject(@NotNull DBCSession session, @NotNull DBSTypedObject type, @Nullable Object object, boolean copy, boolean validateValue) throws DBCException {
+        PostgreDataSource dataSource = (PostgreDataSource) session.getDataSource();
         if (object == null) {
             return new DBGeometry();
-        } else if (object instanceof DBGeometry) {
+        } else if (object instanceof DBGeometry dbGeometry) {
             if (copy) {
-                return ((DBGeometry) object).copy();
+                return dbGeometry.copy();
             } else {
                 return object;
             }
-        } else if (object instanceof Geometry) {
-            return new DBGeometry((Geometry) object);
-        } else if (object instanceof String) {
-            return makeGeometryFromWKT(session, (String) object);
+        } else if (object instanceof Geometry geometry) {
+            return new DBGeometry(geometry);
+        } else if (object instanceof String value) {
+            return makeGeometryFromWKT(value);
         } else if (object.getClass().getName().equals(PostgreConstants.PG_GEOMETRY_CLASS)) {
             return makeGeometryFromPGGeometry(session, object);
-        } else if (PostgreUtils.isPGObject(object)) {
-            return makeGeometryFromWKT(session, CommonUtils.toString(PostgreUtils.extractPGObjectValue(object)));
+        } else if (PostgreUtils.isPgObject(dataSource, object)) {
+            return makeGeometryFromWKT(CommonUtils.toString(PostgreUtils.extractPGObjectValue(object, dataSource)));
         } else {
-            return makeGeometryFromWKT(session, object.toString());
+            return makeGeometryFromWKT(object.toString());
         }
     }
 
@@ -171,6 +173,7 @@ public class PostgreGeometryValueHandler extends JDBCAbstractValueHandler {
                 final int srid = (Integer) BeanUtils.invokeObjectMethod(geometry, "getSrid");
 
                 // PostGIS JDBC uses StringBuffer instead of StringBuilder, yup
+                @SuppressWarnings("StringBufferMayBeStringBuilder")
                 final StringBuffer sb = new StringBuffer(type);
 
                 if (is3D) {
@@ -194,14 +197,14 @@ public class PostgreGeometryValueHandler extends JDBCAbstractValueHandler {
                 return new DBGeometry(result);
             } catch (Throwable e) {
                 log.error("Error reading geometry from PGGeometry", e);
-                return makeGeometryFromWKT(session, geometry.toString());
+                return makeGeometryFromWKT(geometry.toString());
             }
         } catch (Throwable e) {
             throw new DBCException(e, session.getExecutionContext());
         }
     }
 
-    protected DBGeometry makeGeometryFromWKT(DBCSession session, String pgString) throws DBCException {
+    protected DBGeometry makeGeometryFromWKT(String pgString) throws DBCException {
         if (CommonUtils.isEmpty(pgString)) {
             return new DBGeometry();
         }
@@ -222,7 +225,7 @@ public class PostgreGeometryValueHandler extends JDBCAbstractValueHandler {
         }
     }
 
-    private String getStringFromGeometry(JDBCSession session, Geometry geometry) throws DBCException {
+    private String getStringFromGeometry(Geometry geometry) throws DBCException {
         // Use all possible dimensions (4 stands for XYZM) for the most verbose output (see DBGeometry#getString)
         final String strGeom = new WKTWriter(4).write(geometry);
         if (geometry.getSRID() > 0) {

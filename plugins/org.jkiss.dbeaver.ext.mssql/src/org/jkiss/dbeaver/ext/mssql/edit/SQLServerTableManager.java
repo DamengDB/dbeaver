@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package org.jkiss.dbeaver.ext.mssql.edit;
 
 import org.jkiss.code.NotNull;
+import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.ext.mssql.model.*;
 import org.jkiss.dbeaver.model.DBConstants;
@@ -55,8 +56,13 @@ public class SQLServerTableManager extends SQLServerBaseTableManager<SQLServerTa
         );
 
     @Override
-    protected SQLServerTable createDatabaseObject(@NotNull DBRProgressMonitor monitor, @NotNull DBECommandContext context, Object container, Object copyFrom, @NotNull Map<String, Object> options)
-    {
+    protected SQLServerTable createDatabaseObject(
+        @NotNull DBRProgressMonitor monitor,
+        @NotNull DBECommandContext context,
+        @NotNull Object container,
+        @Nullable Object copyFrom,
+        @NotNull Map<String, Object> options
+    ) {
         SQLServerSchema schema = (SQLServerSchema) container;
         SQLServerTable table = new SQLServerTable(schema);
         setNewObjectName(monitor, schema, table);
@@ -64,19 +70,28 @@ public class SQLServerTableManager extends SQLServerBaseTableManager<SQLServerTa
     }
 
     @Override
-    protected void addObjectModifyActions(@NotNull DBRProgressMonitor monitor, @NotNull DBCExecutionContext executionContext, @NotNull List<DBEPersistAction> actionList, @NotNull ObjectChangeCommand command, @NotNull Map<String, Object> options)
-    {
+    protected void addObjectModifyActions(
+        @NotNull DBRProgressMonitor monitor,
+        @NotNull DBCExecutionContext executionContext,
+        @NotNull List<DBEPersistAction> actionList,
+        @NotNull ObjectChangeCommand command,
+        @NotNull Map<String, Object> options) {
         if (command.getProperties().size() > 1 || command.getProperty(DBConstants.PROP_ID_DESCRIPTION) == null) {
             StringBuilder query = new StringBuilder("ALTER TABLE "); //$NON-NLS-1$
             query.append(command.getObject().getFullyQualifiedName(DBPEvaluationContext.DDL)).append(" "); //$NON-NLS-1$
-            appendTableModifiers(monitor, command.getObject(), command, query, true);
+            appendTableModifiers(monitor, command.getObject(), command, query, true, options);
             actionList.add(new SQLDatabasePersistAction(query.toString()));
         }
     }
 
     @Override
-    protected void appendTableModifiers(DBRProgressMonitor monitor, SQLServerTableBase table, NestedObjectCommand tableProps, StringBuilder ddl, boolean alter)
-    {
+    protected void appendTableModifiers(
+        @NotNull DBRProgressMonitor monitor,
+        @NotNull SQLServerTableBase table,
+        @NotNull NestedObjectCommand tableProps,
+        @NotNull StringBuilder ddl,
+        boolean alter,
+        @NotNull Map<String, Object> options) {
         // ALTER
 /*
         if (tableProps.getProperty("tablespace") != null) { //$NON-NLS-1$

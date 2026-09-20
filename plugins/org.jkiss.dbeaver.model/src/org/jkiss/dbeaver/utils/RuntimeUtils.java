@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2025 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,6 +53,10 @@ import java.util.*;
  * RuntimeUtils
  */
 public final class RuntimeUtils {
+
+    public static final String ENV_WORKSPACE_PATH = "DBEAVER_WORKSPACE";
+    public static final String ENV_DATA_PATH = "DBEAVER_DATA";
+
     private static final Log log = Log.getLog(RuntimeUtils.class);
 
     private static final boolean IS_OS_ARCH_AARCH64;
@@ -78,11 +82,13 @@ public final class RuntimeUtils {
         //intentionally left blank
     }
 
-    public static <T> T getObjectAdapter(Object adapter, Class<T> objectType) {
+    @Nullable
+    public static <T> T getObjectAdapter(@NotNull Object adapter, @NotNull Class<T> objectType) {
         return Platform.getAdapterManager().getAdapter(adapter, objectType);
     }
 
-    public static <T> T getObjectAdapter(Object adapter, Class<T> objectType, boolean force) {
+    @Nullable
+    public static <T> T getObjectAdapter(@NotNull Object adapter, @NotNull Class<T> objectType, boolean force) {
         IAdapterManager adapterManager = Platform.getAdapterManager();
         if (force) {
             adapterManager.loadAdapter(adapter, objectType.getName());
@@ -90,20 +96,23 @@ public final class RuntimeUtils {
         return adapterManager.getAdapter(adapter, objectType);
     }
 
-    public static DBRProgressMonitor makeMonitor(IProgressMonitor monitor) {
+    @NotNull
+    public static DBRProgressMonitor makeMonitor(@NotNull IProgressMonitor monitor) {
         if (monitor instanceof DBRProgressMonitor monitor1) {
             return monitor1;
         }
         return new DefaultProgressMonitor(monitor);
     }
 
-    public static IProgressMonitor getNestedMonitor(DBRProgressMonitor monitor) {
+    @NotNull
+    public static IProgressMonitor getNestedMonitor(@NotNull DBRProgressMonitor monitor) {
         if (monitor instanceof IProgressMonitor monitor1) {
             return monitor1;
         }
         return monitor.getNestedMonitor();
     }
 
+    @NotNull
     public static File getUserHomeDir() {
         String userHome = System.getProperty(StandardConstants.ENV_USER_HOME); //$NON-NLS-1$
         if (userHome == null) {
@@ -112,14 +121,17 @@ public final class RuntimeUtils {
         return new File(userHome);
     }
 
+    @NotNull
     public static String getCurrentDate() {
         return new SimpleDateFormat(GeneralUtils.DEFAULT_DATE_PATTERN, Locale.ENGLISH).format(new Date()); //$NON-NLS-1$
     }
 
+    @NotNull
     public static String getCurrentTime() {
         return new SimpleDateFormat(GeneralUtils.DEFAULT_TIME_PATTERN, Locale.ENGLISH).format(new Date()); //$NON-NLS-1$
     }
 
+    @NotNull
     public static String getCurrentTimeStamp() {
         return new SimpleDateFormat(GeneralUtils.DEFAULT_TIMESTAMP_PATTERN, Locale.ENGLISH).format(new Date()); //$NON-NLS-1$
     }
@@ -136,10 +148,12 @@ public final class RuntimeUtils {
         return false;
     }
 
+    @NotNull
     public static String getNativeBinaryName(String binName) {
         return isWindows() ? binName + ".exe" : binName;
     }
 
+    @NotNull
     public static File getNativeClientBinary(@NotNull DBPNativeClientLocation home, @Nullable String binFolder, @NotNull String binName) throws IOException {
         binName = getNativeBinaryName(binName);
         File dumpBinary = new File(home.getPath(),
@@ -181,36 +195,23 @@ public final class RuntimeUtils {
         }
     }
 
+    /**
+     * Consider using {@link DurationFormatter#format(Duration, DurationFormat)} instead
+     */
+    @NotNull
     public static String formatExecutionTime(long ms) {
-        return formatExecutionTime(Duration.ofMillis(ms));
+        return DurationFormatter.format(Duration.ofMillis(ms), DurationFormat.MEDIUM);
     }
 
     @NotNull
-    public static String formatExecutionTime(@NotNull Duration duration) {
-        final long hours = duration.toHours();
-        final int minutes = duration.toMinutesPart();
-        final int seconds = duration.toSecondsPart();
-        final int millis = duration.toMillisPart();
-
-        if (hours > 0) {
-            return String.format("%dh %dm %ds", hours, minutes, seconds);
-        } else if (minutes > 0) {
-            return String.format("%dm %ds", minutes, seconds);
-        } else if (seconds >= 10) {
-            return String.format("%ds", seconds);
-        } else {
-            return String.format("%d.%03ds", seconds, millis);
-        }
-    }
-
-    public static File getPlatformFile(String platformURL) throws IOException {
+    public static Path getPlatformFile(@NotNull String platformURL) throws IOException {
         URL url = new URL(platformURL);
         URL fileURL = FileLocator.toFileURL(url);
         return getLocalFileFromURL(fileURL);
-
     }
 
-    public static File getLocalFileFromURL(URL fileURL) throws IOException {
+    @NotNull
+    public static Path getLocalFileFromURL(@NotNull URL fileURL) throws IOException {
         // Escape spaces to avoid URI syntax error
         try {
             URI filePath = GeneralUtils.makeURIFromFilePath(fileURL.toString());
@@ -219,15 +220,16 @@ public final class RuntimeUtils {
                 see dbeaver#15117
              */
             if (filePath.getAuthority() != null) {
-                return new File(filePath.getSchemeSpecificPart());
+                return Path.of(filePath.getSchemeSpecificPart());
             }
-            return new File(filePath);
+            return Path.of(filePath);
         } catch (URISyntaxException e) {
             throw new IOException("Bad local file path: " + fileURL, e);
         }
     }
 
-    public static java.nio.file.Path getLocalPathFromURL(URL fileURL) throws IOException {
+    @NotNull
+    public static Path getLocalPathFromURL(@NotNull URL fileURL) throws IOException {
         // Escape spaces to avoid URI syntax error
         try {
             URI filePath = GeneralUtils.makeURIFromFilePath(fileURL.toString());
@@ -236,19 +238,24 @@ public final class RuntimeUtils {
                 see dbeaver#15117
              */
             if (filePath.getAuthority() != null) {
-                return java.nio.file.Path.of(filePath.getSchemeSpecificPart());
+                return Path.of(filePath.getSchemeSpecificPart());
             }
-            return java.nio.file.Path.of(filePath);
+            return Path.of(filePath);
         } catch (URISyntaxException e) {
             throw new IOException("Bad local file path: " + fileURL, e);
         }
     }
 
-    public static boolean runTask(final DBRRunnableWithProgress task, String taskName, final long waitTime) {
+    public static boolean runTask(@NotNull DBRRunnableWithProgress task, @NotNull String taskName, final long waitTime) {
         return runTask(task, taskName, waitTime, false);
     }
 
-    public static boolean runTask(final DBRRunnableWithProgress task, String taskName, final long waitTime, boolean hidden) {
+    public static boolean runTask(
+        @NotNull DBRRunnableWithProgress task,
+        @NotNull String taskName,
+        final long waitTime,
+        boolean hidden
+    ) {
         final MonitoringTask monitoringTask = new MonitoringTask(task);
         Job monitorJob = new AbstractJob(taskName) {
             {
@@ -256,8 +263,9 @@ public final class RuntimeUtils {
                 setUser(!hidden);
             }
 
+            @NotNull
             @Override
-            protected IStatus run(DBRProgressMonitor monitor) {
+            protected IStatus run(@NotNull DBRProgressMonitor monitor) {
                 monitor.beginTask(getName(), 1);
                 try {
                     monitor.subTask("Execute task");
@@ -293,7 +301,25 @@ public final class RuntimeUtils {
         return monitoringTask.finished;
     }
 
-    public static String executeProcess(String binPath, String... args) throws DBException {
+    public static void scheduleJob(@NotNull String task, @NotNull DBRRunnableWithProgress rwp) {
+        new AbstractJob(task) {
+            @NotNull
+            @Override
+            protected IStatus run(@NotNull DBRProgressMonitor monitor) {
+                try {
+                    rwp.run(monitor);
+                } catch (InvocationTargetException e) {
+                    return GeneralUtils.makeExceptionStatus(e);
+                } catch (InterruptedException e) {
+                    return Status.CANCEL_STATUS;
+                }
+                return Status.OK_STATUS;
+            }
+        }.schedule();
+    }
+
+    @NotNull
+    public static String executeProcess(@NotNull String binPath, @Nullable String... args) throws DBException {
         try {
             String[] cmdBin = {binPath};
             String[] cmd = args == null ? cmdBin : ArrayUtils.concatArrays(cmdBin, args);
@@ -302,7 +328,7 @@ public final class RuntimeUtils {
                 StringBuilder out = new StringBuilder();
                 readStringToBuffer(p.getInputStream(), out);
 
-                if (out.length() == 0) {
+                if (out.isEmpty()) {
                     StringBuilder err = new StringBuilder();
                     readStringToBuffer(p.getErrorStream(), err);
                     return err.toString();
@@ -317,7 +343,11 @@ public final class RuntimeUtils {
         }
     }
 
-    public static String executeProcessAndCheckResult(String binPath, String... args) throws DBException {
+    @NotNull
+    public static String executeProcessAndCheckResult(
+        @NotNull String binPath,
+        @Nullable String... args
+    ) throws DBException {
         try {
             String[] cmdBin = {binPath};
             String[] cmd = args == null ? cmdBin : ArrayUtils.concatArrays(cmdBin, args);
@@ -332,7 +362,7 @@ public final class RuntimeUtils {
     }
 
     @NotNull
-    public static String getProcessResults(Process p) throws IOException, InterruptedException, DBException {
+    public static String getProcessResults(@NotNull Process p) throws IOException, InterruptedException, DBException {
         try {
             StringBuilder out = new StringBuilder();
             readStringToBuffer(p.getInputStream(), out);
@@ -351,14 +381,14 @@ public final class RuntimeUtils {
         }
     }
 
-    private static void readStringToBuffer(InputStream is, StringBuilder out) throws IOException {
+    private static void readStringToBuffer(@NotNull InputStream is, @NotNull StringBuilder out) throws IOException {
         try (BufferedReader input = new BufferedReader(new InputStreamReader(is))) {
             for (; ; ) {
                 String line = input.readLine();
                 if (line == null) {
                     break;
                 }
-                if (out.length() > 0) {
+                if (!out.isEmpty()) {
                     out.append("\n");
                 }
                 out.append(line);
@@ -448,10 +478,11 @@ public final class RuntimeUtils {
         return actual.compareTo(expected) >= 0;
     }
 
-    public static void setThreadName(String name) {
+    public static void setThreadName(@NotNull String name) {
         Thread.currentThread().setName("DBeaver: " + name);
     }
 
+    @NotNull
     public static byte[] getLocalMacAddress() throws IOException {
         InetAddress localHost = getLocalHostOrLoopback();
         NetworkInterface ni = NetworkInterface.getByInetAddress(localHost);
@@ -553,25 +584,46 @@ public final class RuntimeUtils {
     }
 
     @NotNull
-    public static String getWorkingDirectory(String defaultWorkspaceLocation) {
-        String osName = (System.getProperty("os.name")).toUpperCase();
+    public static Path getWorkspacePath(@NotNull String workingDirectory, @NotNull String defaultAppWorkspaceName) {
+        String customWorkspacePath = System.getenv(ENV_WORKSPACE_PATH);
+        if (!CommonUtils.isEmpty(customWorkspacePath)) {
+            // Custom location
+            return Path.of(customWorkspacePath);
+        }
+
+        return Path.of(workingDirectory).resolve(defaultAppWorkspaceName);
+    }
+
+    @NotNull
+    public static String getWorkingDirectory(@NotNull String subPath) {
+        String customDataPath = System.getenv(ENV_DATA_PATH);
+        if (!CommonUtils.isEmpty(customDataPath)) {
+            // Custom location
+            return Path.of(customDataPath).resolve(subPath).toAbsolutePath().toString();
+        }
+
+        // Detect default workspace location
+        // Since 6.1.3 it is different for different OSes
+        // Windows: %AppData%/DBeaverData
+        // MacOS: ~/Library/DBeaverData
+        // Linux: $XDG_DATA_HOME/DBeaverData
         String workingDirectory;
-        if (osName.contains("WIN")) {
+        if (isWindows()) {
             String appData = System.getenv("AppData");
             if (appData == null) {
-                appData = System.getProperty("user.home");
+                appData = System.getProperty(StandardConstants.ENV_USER_HOME);
             }
-            workingDirectory = appData + "\\" + defaultWorkspaceLocation;
-        } else if (osName.contains("MAC")) {
-            workingDirectory = System.getProperty("user.home") + "/Library/" + defaultWorkspaceLocation;
+            workingDirectory = appData + "\\" + subPath;
+        } else if (isMacOS()) {
+            workingDirectory = System.getProperty(StandardConstants.ENV_USER_HOME) + "/Library/" + subPath;
         } else {
             // Linux
             String dataHome = System.getProperty("XDG_DATA_HOME");
             if (dataHome == null) {
-                dataHome = System.getProperty("user.home") + "/.local/share";
+                dataHome = System.getProperty(StandardConstants.ENV_USER_HOME) + "/.local/share";
             }
-            String badWorkingDir = dataHome + "/." + defaultWorkspaceLocation;
-            String goodWorkingDir = dataHome + "/" + defaultWorkspaceLocation;
+            String badWorkingDir = dataHome + "/." + subPath;
+            String goodWorkingDir = dataHome + "/" + subPath;
             if (!new File(goodWorkingDir).exists() && new File(badWorkingDir).exists()) {
                 // Let's use bad working dir if it exists (#6316)
                 workingDirectory = badWorkingDir;
@@ -584,7 +636,8 @@ public final class RuntimeUtils {
 
     // Extraction from Eclipse source to support old and new API versions
     // Activator.getLocalization became static after 2023-09
-    public static ResourceBundle getBundleLocalization(Bundle bundle, String locale) throws MissingResourceException {
+    @NotNull
+    public static ResourceBundle getBundleLocalization(@NotNull Bundle bundle, @NotNull String locale) throws MissingResourceException {
         Activator activator = Activator.getDefault();
         if (activator == null) {
             throw new MissingResourceException(CommonMessages.activator_resourceBundleNotStarted,
@@ -611,7 +664,11 @@ public final class RuntimeUtils {
         return result;
     }
 
-    public static <T> void executeJobsForEach(List<T> objects, DBRRunnableParametrizedWithProgress<T> task) {
+    public static <T> void executeJobsForEach(
+        @NotNull Collection<? extends T> objects,
+        @NotNull DBRRunnableParametrizedWithProgress<? super T> task
+    ) throws DBException {
+        Map<T, Throwable> errors = Collections.synchronizedMap(new LinkedHashMap<>());
         JobGroup jobGroup = new JobGroup("executeJobsForEach:" + objects, 10, 1);
         for (T object : objects) {
             AbstractJob job = new AbstractJob("Execute for " + object) {
@@ -620,15 +677,15 @@ public final class RuntimeUtils {
                     setUser(false);
                 }
 
+                @NotNull
                 @Override
-                protected IStatus run(DBRProgressMonitor monitor) {
+                protected IStatus run(@NotNull DBRProgressMonitor monitor) {
                     if (!monitor.isCanceled()) {
                         try {
                             task.run(monitor, object);
-                        } catch (InvocationTargetException e) {
-                            log.debug(e.getTargetException());
-                        } catch (InterruptedException e) {
-                            return Status.CANCEL_STATUS;
+                        } catch (Throwable e) {
+                            errors.put(object, e);
+                            log.debug(e);
                         }
                     }
                     return Status.OK_STATUS;
@@ -643,6 +700,13 @@ public final class RuntimeUtils {
             }
         } catch (InterruptedException e) {
             // ignore
+        }
+        if (!errors.isEmpty()) {
+            Throwable firstError = errors.values().iterator().next();
+            if (firstError instanceof DBException dbe) {
+                throw dbe;
+            }
+            throw new DBException("Error executing task", firstError);
         }
     }
 
@@ -672,7 +736,15 @@ public final class RuntimeUtils {
         return null;
     }
 
-    public static <T> T getBundleService(Class<T> theClass, boolean required) throws IllegalStateException {
+    /**
+     * Instantiates service and return reference.
+     * Late service activation is needed to avoid double entrance in service instantiation.
+     * Service initialization may be a very long process with a lot of side effects. But we must init service reference asap.
+     * *
+     * FIXME: Generally it is not a brilliant solution. We should think about redesigning service init, it should be fast and with no side effects.
+     */
+    @NotNull
+    public static <T> BundleServiceRef<T> getBundleService(@NotNull Class<T> theClass, boolean required) throws IllegalStateException {
         Bundle bundle = FrameworkUtil.getBundle(theClass);
         BundleContext bundleContext = bundle.getBundleContext();
         ServiceReference<T> serviceReference = bundleContext.getServiceReference(theClass);
@@ -680,21 +752,24 @@ public final class RuntimeUtils {
             if (required) {
                 throw new IllegalStateException("Service '" + theClass.getName() + "' is not registered");
             }
-            return null;
+            return new BundleServiceRef<>(null, null);
         }
         T service = bundleContext.getService(serviceReference);
+        Runnable initializer = null;
         if (service == null) {
             if (required) {
                 throw new IllegalStateException("Service '" + theClass.getName() + "' implementation not found");
             }
         } else {
-            RuntimeUtils.injectComponentReferences(service);
+            initializer = RuntimeUtils.injectComponentReferences(service);
         }
 
-        return service;
+        return new BundleServiceRef<>(service, initializer);
     }
 
-    public static void injectComponentReferences(Object object) {
+    @Nullable
+    public static Runnable injectComponentReferences(@NotNull Object object) {
+        List<Runnable> initializers = new ArrayList<>();
         Class<?> aClass = object.getClass();
         for (Field field : aClass.getDeclaredFields()) {
             if (Modifier.isStatic(field.getModifiers())) {
@@ -709,26 +784,73 @@ public final class RuntimeUtils {
                 try {
                     Object fieldValue = field.get(object);
                     if (fieldValue == null) {
-                        Object bundleService = getBundleService(serviceClass, refAnno.required());
+                        BundleServiceRef<?> bundleServiceRef = getBundleService(serviceClass, refAnno.required());
+                        Object bundleService = bundleServiceRef.service();
+                        bundleServiceRef.initializeService();
                         field.setAccessible(true);
                         field.set(object, bundleService);
 
                         if (bundleService != null && !CommonUtils.isEmpty(refAnno.postProcessMethod())) {
-                            Method postProcessMethod = bundleService.getClass().getDeclaredMethod(refAnno.postProcessMethod());
-                            postProcessMethod.setAccessible(true);
-                            postProcessMethod.invoke(bundleService);
+                            initializers.add(() -> {
+                                try {
+                                    Method postProcessMethod = bundleService.getClass().getDeclaredMethod(refAnno.postProcessMethod());
+                                    postProcessMethod.setAccessible(true);
+                                    postProcessMethod.invoke(bundleService);
+                                } catch (Exception e) {
+                                    if (e instanceof InvocationTargetException ite && ite.getTargetException() instanceof RuntimeException re) {
+                                        throw re;
+                                    }
+                                    throw new IllegalStateException(e);
+                                }
+                            });
                         }
                     }
                 } catch (Exception e) {
-                    log.debug("Error injecting field '" + field.getName() + "' in '" + object + "'", e);
+                    throw new IllegalStateException(e);
                 }
             }
         }
+        if (!initializers.isEmpty()) {
+            return () -> {
+                for (Runnable initializer : initializers) {
+                    initializer.run();
+                }
+            };
+        }
+        return null;
     }
 
     // Returns plugin state folder and do not create it (as default Eclipse function does)
     public static Path getPluginStateLocation(Plugin plugin) {
         return InternalPlatform.getDefault().getStateLocation(plugin.getBundle(), false).toPath();
+    }
+
+    /**
+     * Debounces the execution of a runnable by the specified delay.
+     * <p>
+     * If the returned runnable is called multiple times within the
+     * delay period, only the last call will be executed after the delay.
+     *
+     * @param runnable the runnable to debounce
+     * @param delay    the delay duration
+     * @return a debounced runnable
+     */
+    @NotNull
+    public static Runnable debounce(@NotNull Runnable runnable, @NotNull Duration delay) {
+        var job = new AbstractJob("Debouncer[" + runnable + "]") {
+            @NotNull
+            @Override
+            protected IStatus run(@NotNull DBRProgressMonitor monitor) {
+                runnable.run();
+                return Status.OK_STATUS;
+            }
+        };
+        job.setUser(false);
+        job.setSystem(true);
+        return () -> {
+            job.cancel();
+            job.schedule(delay);
+        };
     }
 
     private enum CommandLineState {
@@ -744,10 +866,6 @@ public final class RuntimeUtils {
 
         private MonitoringTask(DBRRunnableWithProgress task) {
             this.task = task;
-        }
-
-        public boolean isFinished() {
-            return finished;
         }
 
         @Override

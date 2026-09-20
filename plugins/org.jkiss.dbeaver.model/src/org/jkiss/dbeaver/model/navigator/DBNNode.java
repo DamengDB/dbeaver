@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,11 +22,13 @@ import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.model.*;
 import org.jkiss.dbeaver.model.app.DBPProject;
+import org.jkiss.dbeaver.model.app.DBPWorkspace;
 import org.jkiss.dbeaver.model.navigator.meta.DBXTreeFolder;
 import org.jkiss.dbeaver.model.navigator.meta.DBXTreeNode;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 import org.jkiss.dbeaver.model.struct.DBSObject;
 import org.jkiss.dbeaver.model.struct.DBSObjectContainer;
+import org.jkiss.dbeaver.runtime.DBWorkbench;
 import org.jkiss.utils.CommonUtils;
 
 import java.util.Collection;
@@ -39,17 +41,7 @@ import java.util.List;
 public abstract class DBNNode implements DBPNamedObject, DBPNamedObjectLocalized, DBPObjectWithDescription, DBPPersistedObject, DBPAdaptable {
     static final Log log = Log.getLog(DBNNode.class);
 
-    public enum NodePathType {
-        resource,
-        dbvfs,
-        folder,
-        database,
-        ext, other, node;
-
-        public String getPrefix() {
-            return name() + "://";
-        }
-    }
+    public static final String NODE_URI_PREFIX= "node://";
 
     protected final DBNNode parentNode;
 
@@ -72,6 +64,7 @@ public abstract class DBNNode implements DBPNamedObject, DBPNamedObjectLocalized
         return parentNode == null ? null : parentNode.getModel();
     }
 
+    @Nullable
     public DBNNode getParentNode() {
         return parentNode;
     }
@@ -85,7 +78,7 @@ public abstract class DBNNode implements DBPNamedObject, DBPNamedObjectLocalized
         return true;
     }
 
-    public boolean isManagable() {
+    public boolean isManageable() {
         return false;
     }
 
@@ -106,21 +99,25 @@ public abstract class DBNNode implements DBPNamedObject, DBPNamedObjectLocalized
     /**
      * Internal node name. Usually it is the same as getName.
      */
+    @NotNull
     public abstract String getNodeDisplayName();
 
+    @NotNull
     @Override
-    public String getLocalizedName(String locale) {
+    public String getLocalizedName(@NotNull String locale) {
         return getName();
     }
 
     /**
      * Node type. May be used internally.
      */
+    @NotNull
     public abstract String getNodeType();
 
     /**
      * Node type in display format.
      */
+    @NotNull
     public String getNodeTypeLabel() {
         return getNodeType();
     }
@@ -130,8 +127,10 @@ public abstract class DBNNode implements DBPNamedObject, DBPNamedObjectLocalized
         return null;
     }
 
+    @Nullable
     public abstract String getNodeDescription();
 
+    @Nullable
     public abstract DBPImage getNodeIcon();
 
     @Nullable
@@ -154,6 +153,7 @@ public abstract class DBNNode implements DBPNamedObject, DBPNamedObjectLocalized
         }
     }
 
+    @NotNull
     public String getNodeFullName() {
         StringBuilder pathName = new StringBuilder();
         pathName.append(getNodeDisplayName());
@@ -175,6 +175,7 @@ public abstract class DBNNode implements DBPNamedObject, DBPNamedObjectLocalized
      * Used to copy target name in clipboard and in DND operations.
      * Equals to regular node name by default.
      */
+    @NotNull
     public String getNodeTargetName() {
         return getNodeDisplayName();
     }
@@ -189,6 +190,7 @@ public abstract class DBNNode implements DBPNamedObject, DBPNamedObjectLocalized
         return allowsChildren();
     }
 
+    @Nullable
     public abstract DBNNode[] getChildren(@NotNull DBRProgressMonitor monitor) throws DBException;
 
     void clearNode(boolean reflect) {
@@ -199,15 +201,15 @@ public abstract class DBNNode implements DBPNamedObject, DBPNamedObjectLocalized
         return false;
     }
 
-    public void rename(DBRProgressMonitor monitor, String newName) throws DBException {
+    public void rename(@NotNull DBRProgressMonitor monitor, @NotNull String newName) throws DBException {
         throw new DBException("Rename is not supported");
     }
 
-    public boolean supportsDrop(DBNNode otherNode) {
+    public boolean supportsDrop(@Nullable DBNNode otherNode) {
         return false;
     }
 
-    public void dropNodes(DBRProgressMonitor monitor, Collection<DBNNode> nodes) throws DBException {
+    public void dropNodes(@NotNull DBRProgressMonitor monitor, @NotNull Collection<DBNNode> nodes) throws DBException {
         throw new DBException("Drop is not supported");
     }
 
@@ -223,7 +225,8 @@ public abstract class DBNNode implements DBPNamedObject, DBPNamedObjectLocalized
      * @return real refreshed node or null if nothing was refreshed
      * @throws DBException on any internal exception
      */
-    public DBNNode refreshNode(DBRProgressMonitor monitor, Object source) throws DBException {
+    @Nullable
+    public DBNNode refreshNode(@NotNull DBRProgressMonitor monitor, @Nullable Object source) throws DBException {
         if (this.getParentNode() != null) {
             return this.getParentNode().refreshNode(monitor, source);
         } else {
@@ -249,23 +252,6 @@ public abstract class DBNNode implements DBPNamedObject, DBPNamedObjectLocalized
     }
 
     /**
-     * Node item path in form [nodeType://]<path>
-     * nodeType can be 'resource', 'folder' or 'database'.
-     * If missing then 'database' will be used (backward compatibility).
-     * <p>
-     * For resources and folders path is just a hierarchy path divided with / (slash).
-     * <p>
-     * For database nodes path has form: type1=name1/type2=name2/...[/typeX]
-     * Where typeN is path element for particular database item, name is database object name.
-     *
-     * @return full item node path
-     * @deprecated the path is not unique and does not contain complete information to find the correct node
-     * use {@link #getNodeUri()} instead
-     */
-    @Deprecated
-    public abstract String getNodeItemPath();
-
-    /**
      * Node uri path in form [node://]<parentPath>/<path>
      *
      * @return a unique path to the node containing information about the reals hierarchy
@@ -278,7 +264,8 @@ public abstract class DBNNode implements DBPNamedObject, DBPNamedObjectLocalized
             if (!pathBuilder.isEmpty()) {
                 pathBuilder.insert(0, '/');
             }
-            String nodeId = DBNUtils.encodeNodePath(currentNode.getNodeId());
+            String nodeId = currentNode.getNodeId();
+            nodeId = DBNUtils.encodeNodePath(nodeId);
             pathBuilder.insert(0, nodeId);
             if (currentNode instanceof DBNLocalFolder folder) {
                 // FIXME: When traversing to root, nested folders are skipped. This is a workaround so that we don't skip them.
@@ -288,22 +275,35 @@ public abstract class DBNNode implements DBPNamedObject, DBPNamedObjectLocalized
             }
         }
 
-        return NodePathType.node.getPrefix() + pathBuilder;
+        return DBNNode.NODE_URI_PREFIX + pathBuilder;
     }
 
     @Override
-    public <T> T getAdapter(Class<T> adapter) {
+    public <T> T getAdapter(@NotNull Class<T> adapter) {
         return null;
     }
 
     @Nullable
     public DBPProject getOwnerProjectOrNull() {
         for (DBNNode node = getParentNode(); node != null; node = node.getParentNode()) {
-            if (node instanceof DBNProject) {
-                return ((DBNProject) node).getProject();
+            if (node instanceof DBNProject nodeProject) {
+                return nodeProject.getProject();
             }
         }
         return null;
+    }
+
+    @NotNull
+    public DBPWorkspace getOwnerWorkspace() {
+        DBPProject project = getOwnerProjectOrNull();
+        if (project != null) {
+            return project.getWorkspace();
+        }
+        DBPWorkspace modelWorkspace = getModel().getModelWorkspace();
+        if (modelWorkspace != null) {
+            return modelWorkspace;
+        }
+        return DBWorkbench.getPlatform().getWorkspace();
     }
 
     @NotNull
@@ -315,11 +315,12 @@ public abstract class DBNNode implements DBPNamedObject, DBPNamedObjectLocalized
         return project;
     }
 
+    @Nullable
     public Throwable getLastLoadError() {
         return null;
     }
 
-    static void sortNodes(List<? extends DBNNode> nodes) {
+    static void sortNodes(@NotNull List<? extends DBNNode> nodes) {
         nodes.sort((Comparator<DBNNode>) (o1, o2) -> {
             boolean isFolder1 = o1 instanceof DBNLocalFolder;
             boolean isFolder2 = o2 instanceof DBNLocalFolder;
@@ -330,7 +331,7 @@ public abstract class DBNNode implements DBPNamedObject, DBPNamedObjectLocalized
             }
             String odn1 = o1.getNodeDisplayName();
             String odn2 = o2.getNodeDisplayName();
-            return odn1 == null || odn2 == null ? 0 : odn1.compareToIgnoreCase(odn2);
+            return CommonUtils.notEmpty(odn1).compareToIgnoreCase(CommonUtils.notEmpty(odn2));
         });
     }
 
@@ -355,12 +356,12 @@ public abstract class DBNNode implements DBPNamedObject, DBPNamedObjectLocalized
         return aClass;
     }
 
-    public static boolean nodeHasStructureContainers(DBNNode node, DBXTreeNode meta) {
+    public static boolean nodeHasStructureContainers(@NotNull DBNNode node, @NotNull DBXTreeNode meta) {
         List<DBXTreeNode> children = meta.getChildren(node);
         if (!CommonUtils.isEmpty(children)) {
             for (DBXTreeNode child : children) {
-                if (child instanceof DBXTreeFolder) {
-                    Class<? extends DBSObject> childrenClass = DBNNode.getFolderChildrenClass((DBXTreeFolder) child);
+                if (child instanceof DBXTreeFolder tf) {
+                    Class<? extends DBSObject> childrenClass = DBNNode.getFolderChildrenClass(tf);
                     if (childrenClass != null && DBSObjectContainer.class.isAssignableFrom(childrenClass)) {
                         return true;
                     }
@@ -371,6 +372,7 @@ public abstract class DBNNode implements DBPNamedObject, DBPNamedObjectLocalized
     }
 
     @Override
+    @NotNull
     public String toString() {
         return getNodeUri();
     }

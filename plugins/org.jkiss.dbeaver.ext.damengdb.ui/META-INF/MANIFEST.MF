@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: DBeaver Dameng Support
 Bundle-SymbolicName: org.jkiss.dbeaver.ext.damengdb.ui;singleton:=true
-Bundle-Version: 1.0.1
+Bundle-Version: 1.0.1.qualifier
 Bundle-Release-Date: 20230904
 Bundle-Activator: org.jkiss.dbeaver.ext.damengdb.ui.internal.DamengUIActivator
 Require-Bundle: org.eclipse.ui,
@@ -28,7 +28,6 @@ Require-Bundle: org.eclipse.ui,
  org.jkiss.dbeaver.tasks.native.ui,
  org.jkiss.dbeaver.tasks.ui
 Bundle-ActivationPolicy: lazy
-Bundle-RequiredExecutionEnvironment: JavaSE-17
 Bundle-Vendor: dameng.com
 Bundle-ClassPath: .
 Import-Package: com.google.gson
@@ -37,3 +36,6 @@ Export-Package: org.jkiss.dbeaver.ext.damengdb.ui.actions,
  org.jkiss.dbeaver.ext.damengdb.ui.editors,
  org.jkiss.dbeaver.ext.damengdb.ui.views
 Automatic-Module-Name: org.jkiss.dbeaver.ext.damengdb.ui
+Bundle-RequiredExecutionEnvironment: JavaSE-25
+Require-Capability: osgi.ee;filter="(&(osgi.ee=JavaSE)(version=25))"
+

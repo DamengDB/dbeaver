@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2025 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,7 @@ import org.eclipse.jface.preference.ColorSelector;
 import org.eclipse.jface.resource.StringConverter;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.ControlAdapter;
-import org.eclipse.swt.events.ControlEvent;
-import org.eclipse.swt.events.SelectionAdapter;
-import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.*;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.*;
@@ -40,13 +37,14 @@ import org.jkiss.dbeaver.model.app.DBPDataSourceRegistry;
 import org.jkiss.dbeaver.model.app.DBPProject;
 import org.jkiss.dbeaver.model.connection.DBPConnectionConfiguration;
 import org.jkiss.dbeaver.model.connection.DBPConnectionType;
+import org.jkiss.dbeaver.model.rm.RMConstants;
 import org.jkiss.dbeaver.registry.DataSourceProviderRegistry;
 import org.jkiss.dbeaver.runtime.DBWorkbench;
-import org.jkiss.dbeaver.ui.DBeaverIcons;
 import org.jkiss.dbeaver.ui.ShellUtils;
 import org.jkiss.dbeaver.ui.UIIcon;
 import org.jkiss.dbeaver.ui.UIUtils;
 import org.jkiss.dbeaver.ui.dialogs.connection.EditConnectionPermissionsDialog;
+import org.jkiss.dbeaver.ui.internal.UIMessages;
 import org.jkiss.dbeaver.utils.HelpUtils;
 import org.jkiss.utils.CommonUtils;
 import org.jkiss.utils.SecurityUtils;
@@ -67,6 +65,7 @@ public class PrefPageConnectionTypes extends AbstractPrefPage implements IWorkbe
     private Text typeName;
     private Text typeDescription;
     private ColorSelector colorPicker;
+    private ColorSelector alternativeColorPicker;
     private Button autocommitCheck;
     private Button confirmCheck;
     private Button confirmDataChangeCheck;
@@ -76,9 +75,10 @@ public class PrefPageConnectionTypes extends AbstractPrefPage implements IWorkbe
     private Text autoCloseConnectionsTtlText;
     private Button smartCommitCheck;
     private Button smartCommitRecoverCheck;
-    private ToolItem deleteButton;
+    private Button deleteButton;
     private DBPConnectionType selectedType;
 
+    private final boolean canEdit = DBWorkbench.getPlatform().getWorkspace().hasRealmPermission(RMConstants.PERMISSION_CONFIGURATION_MANAGER);
     private final Map<DBPConnectionType, DBPConnectionType> changedInfo = new HashMap<>();
 
     @Override
@@ -90,12 +90,16 @@ public class PrefPageConnectionTypes extends AbstractPrefPage implements IWorkbe
     protected Control createPreferenceContent(@NotNull Composite parent) {
         Composite composite = UIUtils.createComposite(parent, 1);
 
+        if (!canEdit) {
+            UIUtils.createWarningLabel(composite, UIMessages.preference_page_no_edit_access, SWT.NONE, 1);
+        }
+
         {
             typeTable = new Table(composite, SWT.SINGLE | SWT.BORDER);
             typeTable.setLayoutData(new GridData(GridData.FILL_BOTH));
             UIUtils.createTableColumn(typeTable, SWT.LEFT, CoreMessages.pref_page_connection_types_label_table_column_name);
             UIUtils.createTableColumn(typeTable, SWT.LEFT, CoreMessages.pref_page_connection_types_label_table_column_description);
-            typeTable.setHeaderVisible(true);
+            //typeTable.setHeaderVisible(true);
             typeTable.setLayoutData(new GridData(GridData.FILL_BOTH));
             typeTable.addSelectionListener(new SelectionAdapter() {
                 @Override
@@ -104,69 +108,71 @@ public class PrefPageConnectionTypes extends AbstractPrefPage implements IWorkbe
                 }
             });
 
-
-            ToolBar toolbar = new ToolBar(composite, SWT.FLAT | SWT.HORIZONTAL);
-            final ToolItem newButton = new ToolItem(toolbar, SWT.NONE);
-            newButton.setImage(DBeaverIcons.getImage(UIIcon.ROW_ADD));
-            deleteButton = new ToolItem(toolbar, SWT.NONE);
-            deleteButton.setImage(DBeaverIcons.getImage(UIIcon.ROW_DELETE));
-
-            newButton.addSelectionListener(new SelectionAdapter() {
-                @Override
-                public void widgetSelected(SelectionEvent e) {
-                    String name;
-                    for (int i = 1; ; i++) {
-                        name = "Type" + i;
-                        boolean hasName = false;
-                        for (DBPConnectionType type : changedInfo.keySet()) {
-                            if (type.getName().equals(name)) {
-                                hasName = true;
+            if (canEdit) {
+                Composite toolbar = UIUtils.createComposite(composite, 2);
+                Button newButton = UIUtils.createPushButton(
+                    toolbar,
+                    null,
+                    "Add connection type",
+                    UIIcon.ROW_ADD,
+                    SelectionListener.widgetSelectedAdapter(selectionEvent -> {
+                        String name;
+                        for (int i = 1; ; i++) {
+                            name = "Type" + i;
+                            boolean hasName = false;
+                            for (DBPConnectionType type : changedInfo.keySet()) {
+                                if (type.getName().equals(name)) {
+                                    hasName = true;
+                                    break;
+                                }
+                            }
+                            if (!hasName) {
                                 break;
                             }
                         }
-                        if (!hasName) {
-                            break;
+                        DBPConnectionType newType = new DBPConnectionType(DBPConnectionType.DEFAULT_TYPE);
+                        newType.setId(name.toLowerCase());
+                        newType.setName("New type");
+                        newType.setColorLight("255,255,255");
+                        addTypeToTable(newType, newType);
+                        typeTable.select(typeTable.getItemCount() - 1);
+                        typeTable.showSelection();
+                        showSelectedType(newType);
+                    }));
+                deleteButton = UIUtils.createPushButton(
+                    toolbar,
+                    null,
+                "Delete connection type",
+                    UIIcon.ROW_DELETE,
+                    SelectionListener.widgetSelectedAdapter(selectionEvent -> {
+                        DBPConnectionType connectionType = getSelectedType();
+                        if (!UIUtils.confirmAction(
+                            getShell(),
+                            CoreMessages.pref_page_connection_types_label_delete_connection_type, NLS.bind(
+                                CoreMessages.pref_page_connection_types_label_delete_connection_type_description,
+                                connectionType.getName(), DBPConnectionType.DEFAULT_TYPE.getName()
+                            )
+                        )) {
+                            return;
                         }
-                    }
-                    DBPConnectionType newType = new DBPConnectionType(DBPConnectionType.DEFAULT_TYPE);
-                    newType.setId(name.toLowerCase());
-                    newType.setName("New type");
-                    newType.setColor("255,255,255");
-                    addTypeToTable(newType, newType);
-                    typeTable.select(typeTable.getItemCount() - 1);
-                    typeTable.showSelection();
-                    showSelectedType(newType);
-                }
-            });
-
-            this.deleteButton.addSelectionListener(new SelectionAdapter() {
-                @Override
-                public void widgetSelected(SelectionEvent e) {
-                    DBPConnectionType connectionType = getSelectedType();
-                    if (!UIUtils.confirmAction(
-                        getShell(),
-                        CoreMessages.pref_page_connection_types_label_delete_connection_type, NLS.bind(CoreMessages.pref_page_connection_types_label_delete_connection_type_description,
-                            connectionType.getName(), DBPConnectionType.DEFAULT_TYPE.getName()))) {
-                        return;
-                    }
-                    changedInfo.remove(connectionType);
-                    int index = typeTable.getSelectionIndex();
-                    typeTable.remove(index);
-                    if (index > 0) index--;
-                    typeTable.select(index);
-                    showSelectedType(getSelectedType());
-                }
-            });
+                        changedInfo.remove(connectionType);
+                        int index = typeTable.getSelectionIndex();
+                        typeTable.remove(index);
+                        if (index > 0)
+                            index--;
+                        typeTable.select(index);
+                        showSelectedType(getSelectedType());
+                    }));
+            }
         }
 
         {
-            Group groupSettings = UIUtils.createControlGroup(
+            Composite groupSettings = UIUtils.createTitledComposite(
                 composite,
                 CoreMessages.pref_page_connection_types_group_parameters,
                 2,
-                GridData.VERTICAL_ALIGN_BEGINNING,
+                GridData.VERTICAL_ALIGN_BEGINNING | GridData.FILL_HORIZONTAL,
                 300);
-            groupSettings.setLayoutData(new GridData(GridData.FILL_BOTH));
 
             typeId = UIUtils.createLabelText(groupSettings, CoreMessages.pref_page_connection_types_label_id, null);
             typeId.addModifyListener(e -> {
@@ -186,58 +192,30 @@ public class PrefPageConnectionTypes extends AbstractPrefPage implements IWorkbe
 
             {
                 UIUtils.createControlLabel(groupSettings, CoreMessages.pref_page_connection_types_label_color);
-//                Composite colorGroup = UIUtils.createPlaceholder(groupSettings, 2, 5);
-//                colorGroup.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-
-                colorPicker = new ColorSelector(groupSettings);
-//                colorPicker.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+                Composite panel = UIUtils.createComposite(groupSettings, 3);
+                panel.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+                colorPicker = new ColorSelector(panel);
                 colorPicker.addListener(event -> {
-                    getSelectedType().setColor(StringConverter.asString(colorPicker.getColorValue()));
+                    getSelectedType().setColorLight(StringConverter.asString(colorPicker.getColorValue()));
                     updateTableInfo();
                 });
-/*
-                Button pickerButton = new Button(colorGroup, SWT.PUSH);
-                pickerButton.setText("...");
-                pickerButton.addSelectionListener(new SelectionAdapter() {
-                    @Override
-                    public void widgetSelected(SelectionEvent e)
-                    {
-                        DBPConnectionType connectionType = getSelectedType();
-                        ColorDialog colorDialog = new ColorDialog(parent.getShell());
-                        colorDialog.setRGB(StringConverter.asRGB(connectionType.getColor()));
-                        RGB rgb = colorDialog.open();
-                        if (rgb != null) {
-                            Color color = null;
-                            int count = colorPicker.getItemCount();
-                            for (int i = 0; i < count; i++) {
-                                Color item = colorPicker.getColorItem(i);
-                                if (item != null && item.getRGB().equals(rgb)) {
-                                    color = item;
-                                    break;
-                                }
-                            }
-                            if (color == null) {
-                                color = new Color(colorPicker.getDisplay(), rgb);
-                                colorPicker.addColor(color);
-                            }
-                            colorPicker.select(color);
-                            getSelectedType().setColor(StringConverter.asString(color.getRGB()));
-                            updateTableInfo();
-                        }
-                    }
+
+                UIUtils.createControlLabel(panel, CoreMessages.pref_page_connection_types_label_color_alternative);
+                alternativeColorPicker = new ColorSelector(panel);
+                alternativeColorPicker.addListener(event -> {
+                    getSelectedType().setColorDark(StringConverter.asString(alternativeColorPicker.getColorValue()));
+                    updateTableInfo();
                 });
-*/
             }
         }
 
         {
-            Group placeholder = UIUtils.createControlGroup(
+            Composite placeholder = UIUtils.createTitledComposite(
                 composite,
                 CoreMessages.pref_page_connection_types_group_settings,
                 2,
-                GridData.VERTICAL_ALIGN_BEGINNING,
+                GridData.VERTICAL_ALIGN_BEGINNING | GridData.FILL_HORIZONTAL,
                 300);
-            placeholder.setLayoutData(new GridData(GridData.FILL_BOTH));
 
             confirmCheck = UIUtils.createCheckbox(
                 placeholder,
@@ -346,27 +324,29 @@ public class PrefPageConnectionTypes extends AbstractPrefPage implements IWorkbe
                 getSelectedType().setCloseIdleConnectionPeriod(
                     CommonUtils.toInt(autoCloseConnectionsTtlText.getText(), DBPConnectionType.DEFAULT_TYPE.getCloseIdleConnectionPeriod())));
 
-            Button epButton = UIUtils.createDialogButton(
-                placeholder,
-                CoreMessages.pref_page_label_edit_permissions,
-                new SelectionAdapter() {
-                    @Override
-                    public void widgetSelected(SelectionEvent e) {
-                        EditConnectionPermissionsDialog dialog = new EditConnectionPermissionsDialog(
-                            getShell(), getSelectedType().getModifyPermission()
-                        );
-                        if (dialog.open() == IDialogConstants.OK_ID) {
-                            getSelectedType().setModifyPermissions(dialog.getAccessRestrictions());
+            if (canEdit) {
+                Button editPermissionsButton = UIUtils.createDialogButton(
+                    placeholder,
+                    CoreMessages.pref_page_label_edit_permissions,
+                    new SelectionAdapter() {
+                        @Override
+                        public void widgetSelected(SelectionEvent e) {
+                            EditConnectionPermissionsDialog dialog = new EditConnectionPermissionsDialog(
+                                getShell(), getSelectedType().getModifyPermission()
+                            );
+                            if (dialog.open() == IDialogConstants.OK_ID) {
+                                getSelectedType().setModifyPermissions(dialog.getAccessRestrictions());
+                            }
                         }
                     }
-                }
-            );
-            GridData gd = new GridData(GridData.HORIZONTAL_ALIGN_BEGINNING);
-            gd.horizontalSpan = 2;
-            epButton.setLayoutData(gd);
+                );
+                GridData gd = new GridData(GridData.HORIZONTAL_ALIGN_BEGINNING);
+                gd.horizontalSpan = 2;
+                editPermissionsButton.setLayoutData(gd);
+            }
         }
 
-        Link urlHelpLabel = UIUtils.createLink(
+        UIUtils.createLink(
             composite,
             "<a>" + CoreMessages.pref_page_connection_types_wiki_link + "</a>",
             new SelectionAdapter() {
@@ -375,8 +355,6 @@ public class PrefPageConnectionTypes extends AbstractPrefPage implements IWorkbe
                     ShellUtils.launchProgram(HelpUtils.getHelpExternalReference(HELP_CONNECTION_TYPES_LINK));
                 }
             });
-        GridData gridData = new GridData(GridData.FILL, SWT.END, true, true);
-        urlHelpLabel.setLayoutData(gridData);
 
         performDefaults(false);
         updateCommitRecoverCheckBox();
@@ -392,16 +370,23 @@ public class PrefPageConnectionTypes extends AbstractPrefPage implements IWorkbe
         }
     }
 
+    @NotNull
     private DBPConnectionType getSelectedType() {
         return (DBPConnectionType) typeTable.getItem(typeTable.getSelectionIndex()).getData();
     }
 
-    private void showSelectedType(DBPConnectionType connectionType) {
-        final Color connectionTypeColor = UIUtils.getConnectionTypeColor(connectionType);
+    private void showSelectedType(@NotNull DBPConnectionType connectionType) {
+        final Color connectionTypeColor = UIUtils.getConnectionColorByRGB(connectionType.getColorLight());
         if (connectionTypeColor != null) {
             colorPicker.setColorValue(connectionTypeColor.getRGB());
         } else {
             colorPicker.setColorValue(colorPicker.getButton().getBackground().getRGB());
+        }
+        final Color alternativeConnectionTypeColor = UIUtils.getConnectionColorByRGB(connectionType.getColorDark());
+        if (alternativeConnectionTypeColor != null) {
+            alternativeColorPicker.setColorValue(alternativeConnectionTypeColor.getRGB());
+        } else {
+            alternativeColorPicker.setColorValue(alternativeColorPicker.getButton().getBackground().getRGB());
         }
 
         typeId.setText(connectionType.getId());
@@ -417,7 +402,26 @@ public class PrefPageConnectionTypes extends AbstractPrefPage implements IWorkbe
         autoCloseTransactionsTtlText.setText(String.valueOf(connectionType.getCloseIdleTransactionPeriod()));
         autoCloseConnectionsCheck.setSelection(connectionType.isAutoCloseConnections());
         autoCloseConnectionsTtlText.setText(String.valueOf(connectionType.getCloseIdleConnectionPeriod()));
-        deleteButton.setEnabled(!connectionType.isPredefined());
+
+        if (deleteButton != null) {
+            deleteButton.setEnabled(!connectionType.isPredefined());
+        }
+
+        if (!canEdit) {
+            typeId.setEnabled(false);
+            typeName.setEnabled(false);
+            typeDescription.setEnabled(false);
+            colorPicker.setEnabled(false);
+            autocommitCheck.setEnabled(false);
+            confirmCheck.setEnabled(false);
+            confirmDataChangeCheck.setEnabled(false);
+            smartCommitCheck.setEnabled(false);
+            smartCommitRecoverCheck.setEnabled(false);
+            autoCloseTransactionsCheck.setEnabled(false);
+            autoCloseTransactionsTtlText.setEnabled(false);
+            autoCloseConnectionsCheck.setEnabled(false);
+            autoCloseConnectionsTtlText.setEnabled(false);
+        }
     }
 
     private void updateTableInfo() {
@@ -445,6 +449,9 @@ public class PrefPageConnectionTypes extends AbstractPrefPage implements IWorkbe
 
     @Override
     protected void performDefaults() {
+        if (!canEdit) {
+            return;
+        }
         performDefaults(true);
         super.performDefaults();
     }
@@ -487,7 +494,7 @@ public class PrefPageConnectionTypes extends AbstractPrefPage implements IWorkbe
         TableItem item = new TableItem(typeTable, SWT.LEFT);
         item.setText(0, connectionType.getName());
         item.setText(1, CommonUtils.toString(connectionType.getDescription()));
-        if (connectionType.getColor() != null) {
+        if (connectionType.getColorLight() != null) {
             Color connectionColor = UIUtils.getConnectionTypeColor(connectionType);
             //item.setBackground(0, connectionColor);
             item.setBackground(1, connectionColor);
@@ -500,6 +507,10 @@ public class PrefPageConnectionTypes extends AbstractPrefPage implements IWorkbe
 
     @Override
     public boolean performOk() {
+        if (!canEdit) {
+            return false;
+        }
+
         typeId.setEnabled(false);
 
         DataSourceProviderRegistry registry = DataSourceProviderRegistry.getInstance();
@@ -512,10 +523,12 @@ public class PrefPageConnectionTypes extends AbstractPrefPage implements IWorkbe
         }
 
         Set<DBPConnectionType> changedSet = new HashSet<>();
+        boolean hasExistingTypeChanges = false;
 
         for (DBPConnectionType connectionType : toRemove) {
             registry.removeConnectionType(connectionType);
             changedSet.add(connectionType);
+            hasExistingTypeChanges = true;
         }
 
         for (Map.Entry<DBPConnectionType, DBPConnectionType> entry : changedInfo.entrySet()) {
@@ -538,13 +551,15 @@ public class PrefPageConnectionTypes extends AbstractPrefPage implements IWorkbe
                 hasChanges = true;
             } else if (!source.equals(changed)) {
                 // Changed type
+                hasExistingTypeChanges = true;
                 source.setId(changed.getId());
                 source.setName(changed.getName());
                 source.setDescription(changed.getDescription());
                 source.setAutocommit(changed.isAutocommit());
                 source.setConfirmExecute(changed.isConfirmExecute());
                 source.setConfirmDataChange(changed.isConfirmDataChange());
-                source.setColor(changed.getColor());
+                source.setColorLight(changed.getColorLight());
+                source.setColorDark(changed.getColorDark());
                 source.setModifyPermissions(changed.getModifyPermission());
                 source.setSmartCommit(changed.isSmartCommit());
                 source.setSmartCommitRecover(changed.isSmartCommitRecover());
@@ -564,6 +579,8 @@ public class PrefPageConnectionTypes extends AbstractPrefPage implements IWorkbe
         Set<DBPDataSourceRegistry> affectedDataSourceRegs = new HashSet<>();
         if (!changedSet.isEmpty()) {
             registry.saveConnectionTypes();
+        }
+        if (hasExistingTypeChanges) {
             // Flush projects configs (as they cache connection type information)
             for (DBPProject project : DBWorkbench.getPlatform().getWorkspace().getProjects()) {
                 DBPDataSourceRegistry projectRegistry = project.getDataSourceRegistry();

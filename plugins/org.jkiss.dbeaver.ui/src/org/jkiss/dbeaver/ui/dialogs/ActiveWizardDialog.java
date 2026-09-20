@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,16 @@ package org.jkiss.dbeaver.ui.dialogs;
 
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.IDialogSettings;
+import org.eclipse.jface.layout.LayoutConstants;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.wizard.IWizard;
 import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.ISelectionService;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWizard;
@@ -36,10 +39,9 @@ import java.util.Set;
 /**
  * ActiveWizardDialog
  */
-public class ActiveWizardDialog extends WizardDialog
-{
+public class ActiveWizardDialog extends WizardDialog {
 
-    private Set<String> resizedShells = new HashSet<>();
+    private final Set<String> resizedShells = new HashSet<>();
     private boolean adaptContainerSizeToPages = false;
 
     private String finishButtonLabel = IDialogConstants.FINISH_LABEL;
@@ -52,7 +54,12 @@ public class ActiveWizardDialog extends WizardDialog
 
     public ActiveWizardDialog(IWorkbenchWindow window, IWizard wizard, IStructuredSelection selection)
     {
-        super(window.getShell(), wizard);
+        this(window, wizard, selection, window.getShell());
+    }
+
+    public ActiveWizardDialog(IWorkbenchWindow window, IWizard wizard, IStructuredSelection selection, Shell parentShell)
+    {
+        super(parentShell, wizard);
 
         // Initialize wizard
         if (wizard instanceof IWorkbenchWizard) {
@@ -108,6 +115,12 @@ public class ActiveWizardDialog extends WizardDialog
     @Override
     protected void createButtonsForButtonBar(Composite parent) {
         super.createButtonsForButtonBar(parent);
+
+        Button nextButton = getButton(IDialogConstants.NEXT_ID);
+        if (nextButton != null) {
+            // Fix ugly spacing between previous/next buttons compared to other buttons
+            ((GridLayout) nextButton.getParent().getLayout()).horizontalSpacing = LayoutConstants.getSpacing().x;
+        }
 
         Button cancelButton = getButton(IDialogConstants.CANCEL_ID);
         cancelButton.setText(cancelButtonLabel);

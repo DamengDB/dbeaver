@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2025 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,8 +61,8 @@ public class OracleTableManager extends SQLTableManager<OracleTable, OracleSchem
     protected OracleTable createDatabaseObject(
         @NotNull DBRProgressMonitor monitor,
         @NotNull DBECommandContext context,
-        Object container,
-        Object copyFrom,
+        @NotNull Object container,
+        @Nullable Object copyFrom,
         @NotNull Map<String, Object> options
     ) {
         OracleSchema schema = (OracleSchema) container;
@@ -83,7 +83,7 @@ public class OracleTableManager extends SQLTableManager<OracleTable, OracleSchem
         if (command.getProperties().size() > 1 || command.getProperty("comment") == null) { //$NON-NLS-1$
             StringBuilder query = new StringBuilder("ALTER TABLE "); //$NON-NLS-1$
             query.append(command.getObject().getFullyQualifiedName(DBPEvaluationContext.DDL)).append(" "); //$NON-NLS-1$
-            appendTableModifiers(monitor, command.getObject(), command, query, true);
+            appendTableModifiers(monitor, command.getObject(), command, query, true, options);
             actionList.add(new SQLDatabasePersistAction(query.toString()));
         }
     }
@@ -116,20 +116,22 @@ public class OracleTableManager extends SQLTableManager<OracleTable, OracleSchem
 
     @Override
     protected void appendTableModifiers(
-        DBRProgressMonitor monitor,
-        OracleTable table,
-        NestedObjectCommand tableProps,
-        StringBuilder ddl,
-        boolean alter
+        @NotNull DBRProgressMonitor monitor,
+        @NotNull OracleTable table,
+        @NotNull NestedObjectCommand tableProps,
+        @NotNull StringBuilder ddl,
+        boolean alter,
+        @NotNull Map<String, Object> options
     ) throws DBException {
         // ALTER
         if (tableProps.getProperty("tablespace") != null) { //$NON-NLS-1$
+            String delimiter = getDelimiter(options);
             Object tablespace = table.getTablespace();
             if (tablespace instanceof OracleTablespace) {
                 if (table.isPersisted()) {
-                    ddl.append("\nMOVE TABLESPACE ").append(((OracleTablespace) tablespace).getName()); //$NON-NLS-1$
+                    ddl.append(delimiter).append("MOVE TABLESPACE ").append(((OracleTablespace) tablespace).getName()); //$NON-NLS-1$
                 } else {
-                    ddl.append("\nTABLESPACE ").append(((OracleTablespace) tablespace).getName()); //$NON-NLS-1$
+                    ddl.append(delimiter).append("TABLESPACE ").append(((OracleTablespace) tablespace).getName()); //$NON-NLS-1$
                 }
             }
         }

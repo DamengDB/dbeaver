@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,8 +45,7 @@ public class DBDRowIdentifier implements DBPObject {
     private final DBSEntityConstraint entityIdentifier;
     private final List<DBDAttributeBinding> attributes = new ArrayList<>();
 
-    public DBDRowIdentifier(@NotNull DBSEntity entity, @NotNull DBSEntityConstraint entityIdentifier)
-    {
+    public DBDRowIdentifier(@NotNull DBSEntity entity, @NotNull DBSEntityConstraint entityIdentifier) {
         this.entity = entity;
         this.entityIdentifier = entityIdentifier;
     }
@@ -85,17 +84,15 @@ public class DBDRowIdentifier implements DBPObject {
         return true;
     }
 
-    public boolean hasAttribute(DBDAttributeBinding attributeBinding) {
+    public boolean hasAttribute(@NotNull DBDAttributeBinding attributeBinding) {
         return attributes.contains(attributeBinding);
     }
 
-    public void reloadAttributes(@NotNull DBRProgressMonitor monitor, @NotNull DBDAttributeBinding[] bindings) throws DBException
-    {
+    public void reloadAttributes(@NotNull DBRProgressMonitor monitor, @NotNull DBDAttributeBinding[] bindings) throws DBException {
         this.attributes.clear();
         if (entityIdentifier instanceof DBVEntityConstraint && ((DBVEntityConstraint) entityIdentifier).isUseAllColumns()) {
             Collections.addAll(this.attributes, bindings);
-        } else if (entityIdentifier instanceof DBSEntityReferrer) {
-            DBSEntityReferrer referrer = (DBSEntityReferrer) entityIdentifier;
+        } else if (entityIdentifier instanceof DBSEntityReferrer referrer) {
             Collection<? extends DBSEntityAttributeRef> refs = CommonUtils.safeCollection(referrer.getAttributeReferences(monitor));
             for (DBSEntityAttributeRef cColumn : refs) {
                 DBDAttributeBinding binding = DBUtils.findBinding(bindings, cColumn.getAttribute());

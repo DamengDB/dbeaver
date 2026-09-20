@@ -1,7 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
- * Copyright (C) 2019 Andrew Khitrin (ahitrin@gmail.com)
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +18,7 @@
 package org.jkiss.dbeaver.ext.postgresql.edit;
 
 import org.jkiss.code.NotNull;
+import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.ext.postgresql.model.PostgreDatabase;
 import org.jkiss.dbeaver.ext.postgresql.model.PostgreExtension;
@@ -48,8 +48,13 @@ public class PostgreExtensionManager extends SQLObjectEditor<PostgreExtension, P
     }
 
     @Override
-    protected PostgreExtension createDatabaseObject(@NotNull DBRProgressMonitor monitor, @NotNull DBECommandContext context,
-                                                    Object container, Object copyFrom, @NotNull Map<String, Object> options) throws DBException {
+    protected PostgreExtension createDatabaseObject(
+        @NotNull DBRProgressMonitor monitor,
+        @NotNull DBECommandContext context,
+        @NotNull Object container,
+        @Nullable Object copyFrom,
+        @NotNull Map<String, Object> options
+    ) throws DBException {
         return new PostgreExtension((PostgreDatabase) container);
     }
 
@@ -89,7 +94,7 @@ public class PostgreExtensionManager extends SQLObjectEditor<PostgreExtension, P
     }
 
     @Override
-    public boolean canEditObject(PostgreExtension object) {
+    public boolean canEditObject(@NotNull PostgreExtension object) {
         return false;
     }
     

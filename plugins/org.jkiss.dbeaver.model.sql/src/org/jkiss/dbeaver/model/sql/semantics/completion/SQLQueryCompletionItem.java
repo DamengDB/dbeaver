@@ -23,6 +23,7 @@ import org.jkiss.dbeaver.model.sql.semantics.SQLQuerySymbol;
 import org.jkiss.dbeaver.model.sql.semantics.SQLQuerySymbolClass;
 import org.jkiss.dbeaver.model.sql.semantics.context.SQLQueryExprType;
 import org.jkiss.dbeaver.model.sql.semantics.context.SQLQueryResultColumn;
+import org.jkiss.dbeaver.model.sql.semantics.context.SQLQueryResultPseudoColumn;
 import org.jkiss.dbeaver.model.sql.semantics.context.SourceResolutionResult;
 import org.jkiss.dbeaver.model.struct.DBSEntity;
 import org.jkiss.dbeaver.model.struct.DBSEntityAttribute;
@@ -94,9 +95,10 @@ public abstract class SQLQueryCompletionItem {
         int score,
         @NotNull SQLQueryWordEntry filterKey,
         @NotNull SQLQuerySymbol aliasSymbol,
-        @NotNull SourceResolutionResult source
+        @NotNull SourceResolutionResult source,
+        boolean isRelated
     ) {
-        return new SQLRowsSourceAliasCompletionItem(score, filterKey, aliasSymbol, source);
+        return new SQLRowsSourceAliasCompletionItem(score, filterKey, aliasSymbol, source, isRelated);
     }
 
     @NotNull
@@ -104,9 +106,9 @@ public abstract class SQLQueryCompletionItem {
         int score,
         @NotNull SQLQueryWordEntry filterKey,
         @Nullable ContextObjectInfo resolvedContext,
-        @NotNull DBSEntity table, boolean isUsed
+        @NotNull DBSEntity table, boolean isUsed, boolean isRelated
     ) {
-        return new SQLTableNameCompletionItem(score, filterKey, resolvedContext, table, isUsed);
+        return new SQLTableNameCompletionItem(score, filterKey, resolvedContext, table, isUsed, isRelated);
     }
 
     @NotNull
@@ -118,6 +120,15 @@ public abstract class SQLQueryCompletionItem {
         boolean absolute
     ) {
         return new SQLColumnNameCompletionItem(score, filterKey, columnInfo, sourceInfo, absolute);
+    }
+
+    @NotNull
+    public static SQLQueryCompletionItem forGlobalPseudoColumn(
+        int score,
+        @NotNull SQLQueryWordEntry filterKey,
+        @NotNull SQLQueryResultPseudoColumn columnInfo
+    ) {
+        return new SQLGlobalPseudoColumnCompletionItem(score, filterKey, columnInfo);
     }
 
     @NotNull
@@ -161,6 +172,18 @@ public abstract class SQLQueryCompletionItem {
         return new SQLCompositeFieldCompletionItem(score, filterKey, attribute, memberInfo);
     }
 
+    /**
+     * Returns completion item that describes field of the composite entity, which is not backed by the database metadata
+     */
+    @NotNull
+    public static SQLQueryCompletionItem forSpecialCompositeField(
+        int score,
+        @NotNull SQLQueryWordEntry filterKey,
+        @NotNull SQLQueryExprType.SQLQueryExprTypeMemberInfo memberInfo
+    ) {
+        return new SQLSpecialCompositeFieldCompletionItem(score, filterKey, memberInfo);
+    }
+
     public static SQLQueryCompletionItem forJoinCondition(
         int score,
         @NotNull SQLQueryWordEntry filterKey,
@@ -198,21 +221,25 @@ public abstract class SQLQueryCompletionItem {
         @NotNull
         public final SourceResolutionResult sourceInfo;
 
+        public final boolean isRelated;
+
         SQLRowsSourceAliasCompletionItem(
             int score,
             @NotNull SQLQueryWordEntry filterKey,
             @NotNull SQLQuerySymbol symbol,
-            @NotNull SourceResolutionResult sourceInfo
+            @NotNull SourceResolutionResult sourceInfo,
+            boolean isRelated
         ) {
             super(score, filterKey);
             this.symbol = symbol;
             this.sourceInfo = sourceInfo;
+            this.isRelated = isRelated;
         }
         
         @NotNull
         @Override
         public SQLQueryCompletionItemKind getKind() {
-            return SQLQueryCompletionItemKind.SUBQUERY_ALIAS;
+            return this.isRelated ? SQLQueryCompletionItemKind.RELATED_SUBQUERY_ALIAS : SQLQueryCompletionItemKind.SUBQUERY_ALIAS;
         }
 
         @Override
@@ -268,6 +295,31 @@ public abstract class SQLQueryCompletionItem {
         }
     }
 
+    public static class SQLGlobalPseudoColumnCompletionItem extends SQLQueryCompletionItem {
+        @NotNull
+        public final SQLQueryResultPseudoColumn columnInfo;
+
+        SQLGlobalPseudoColumnCompletionItem(
+            int score,
+            @NotNull SQLQueryWordEntry filterKey,
+            @NotNull SQLQueryResultPseudoColumn columnInfo
+        ) {
+            super(score, filterKey);
+            this.columnInfo = columnInfo;
+        }
+
+        @NotNull
+        @Override
+        public SQLQueryCompletionItemKind getKind() {
+            return SQLQueryCompletionItemKind.GLOBAL_PSEUDO_COLUMN;
+        }
+
+        @Override
+        protected <R> R applyImpl(SQLQueryCompletionItemVisitor<R> visitor) {
+            return visitor.visitGlobalPseudoColumn(this);
+        }
+    }
+
     public abstract static class SQLDbObjectCompletionItem<T extends DBSObject> extends SQLQueryCompletionItem {
         @Nullable
         public final ContextObjectInfo resolvedContext;
@@ -293,22 +345,27 @@ public abstract class SQLQueryCompletionItem {
 
     public static class SQLTableNameCompletionItem extends SQLDbObjectCompletionItem<DBSEntity> {
         public final boolean isUsed;
+        public final boolean isRelated;
 
         SQLTableNameCompletionItem(
             int score,
             @NotNull SQLQueryWordEntry filterKey,
             @Nullable ContextObjectInfo resolvedContext,
             @NotNull DBSEntity table,
-            boolean isUsed
+            boolean isUsed,
+            boolean isRelated
         ) {
             super(score, filterKey, resolvedContext, table);
             this.isUsed = isUsed;
+            this.isRelated = isRelated;
         }
 
         @NotNull
         @Override
         public SQLQueryCompletionItemKind getKind() {
-            return this.isUsed ? SQLQueryCompletionItemKind.USED_TABLE_NAME : SQLQueryCompletionItemKind.NEW_TABLE_NAME;
+            return this.isRelated ? SQLQueryCompletionItemKind.RELATED_TABLE_NAME
+                : this.isUsed ? SQLQueryCompletionItemKind.USED_TABLE_NAME
+                : SQLQueryCompletionItemKind.NEW_TABLE_NAME;
         }
 
         @Override
@@ -414,6 +471,34 @@ public abstract class SQLQueryCompletionItem {
         @Override
         protected <R> R applyImpl(SQLQueryCompletionItemVisitor<R> visitor) {
             return visitor.visitCompositeField(this);
+        }
+    }
+
+    /**
+     * Completion item that describes field of the composite entity, which is not backed by the database metadata
+     */
+    public static class SQLSpecialCompositeFieldCompletionItem extends SQLQueryCompletionItem {
+        @NotNull
+        public final SQLQueryExprType.SQLQueryExprTypeMemberInfo memberInfo;
+
+        SQLSpecialCompositeFieldCompletionItem(
+            int score,
+            @NotNull SQLQueryWordEntry filterKey,
+            @NotNull SQLQueryExprType.SQLQueryExprTypeMemberInfo memberInfo
+        ) {
+            super(score, filterKey);
+            this.memberInfo = memberInfo;
+        }
+
+        @NotNull
+        @Override
+        public SQLQueryCompletionItemKind getKind() {
+            return SQLQueryCompletionItemKind.COMPOSITE_FIELD_NAME;
+        }
+
+        @Override
+        protected <R> R applyImpl(SQLQueryCompletionItemVisitor<R> visitor) {
+            return visitor.visitSpecialCompositeField(this);
         }
     }
 

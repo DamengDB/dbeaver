@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,7 @@ public class OracleRefCursor implements DBDCursor {
         this.cursorValue = cursorValue;
     }
 
+    @Nullable
     @Override
     public Object getRawValue() {
         return cursorValue;
@@ -80,7 +81,7 @@ public class OracleRefCursor implements DBDCursor {
     public DBCResultSet openResultSet(@NotNull DBCSession session) throws DBCException {
         if (cursorValue instanceof ResultSet) {
             try {
-                return JDBCResultSetImpl.makeResultSet((JDBCSession) session, sourceStatement, (ResultSet) cursorValue, null, false);
+                return JDBCResultSetImpl.makeResultSet((JDBCSession) session, sourceStatement, (ResultSet) cursorValue, false);
             } catch (SQLException e) {
                 throw new DBCException(e, session.getExecutionContext());
             }
@@ -104,7 +105,7 @@ public class OracleRefCursor implements DBDCursor {
 */
     }
 
-    @Nullable
+    @NotNull
     @Override
     public String getCursorName() {
         if (cursorValue instanceof ResultSet) {

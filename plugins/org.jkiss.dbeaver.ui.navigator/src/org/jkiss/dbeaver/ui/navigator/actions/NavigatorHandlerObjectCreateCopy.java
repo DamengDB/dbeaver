@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2025 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import org.eclipse.swt.dnd.FileTransfer;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.ui.handlers.HandlerUtil;
 import org.jkiss.code.NotNull;
+import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.model.app.DBPProject;
@@ -82,7 +83,7 @@ public class NavigatorHandlerObjectCreateCopy extends NavigatorHandlerObjectCrea
         if (curNode == null) {
             return null;
         }
-        DBPProject toProject = curNode.getOwnerProject();
+        DBPProject toProject = curNode.getOwnerProjectOrNull();
         Clipboard clipboard = new Clipboard(Display.getDefault());
         List<String> failedToPasteResources = new LinkedList<>();
         try {
@@ -90,10 +91,8 @@ public class NavigatorHandlerObjectCreateCopy extends NavigatorHandlerObjectCrea
             Collection<DBNNode> cbNodes = (Collection<DBNNode>) clipboard.getContents(TreeNodeTransfer.getInstance());
             if (cbNodes != null) {
                 for (DBNNode nodeObject : cbNodes) {
-                    if (nodeObject instanceof DBNResource && curNode instanceof DBNResource) {
-                        if (!toProject.hasRealmPermission(RMConstants.PERMISSION_PROJECT_RESOURCE_EDIT)) {
+                    if (nodeObject instanceof DBNResource && curNode instanceof DBNResource && !hasPermission(toProject)) {
                             failedToPasteResources.add(nodeObject.getName());
-                        }
                     }
                 }
                 if (failedToPasteResources.isEmpty()) {
@@ -109,17 +108,18 @@ public class NavigatorHandlerObjectCreateCopy extends NavigatorHandlerObjectCrea
                         }
                     } else {
                         for (DBNNode nodeObject : cbNodes) {
-                            if (curNode instanceof DBNResource && ((DBNResource) curNode).supportsPaste(nodeObject)) {
+                            if (nodeObject instanceof DBNDatabaseNode otherNode) {
+                                createNewObject(HandlerUtil.getActiveWorkbenchWindow(event), curNode, otherNode);
+                            } else if (curNode instanceof DBNResource currentResource) {
                                 try {
-                                    ((DBNResource) curNode).pasteNodes(List.of(nodeObject));
+                                    UIUtils.runWithMonitor(monitor -> {
+                                        pastNodeToResource(monitor, currentResource, nodeObject);
+                                        return null;
+                                    });
                                 } catch (DBException e) {
                                     DBWorkbench.getPlatformUI().showError("Paste error", "Can't paste node '" + nodeObject.getName() + "'", e);
                                     failedToPasteResources.add(nodeObject.getName());
                                 }
-                            } else if (nodeObject instanceof DBNDatabaseNode) {
-                                createNewObject(HandlerUtil.getActiveWorkbenchWindow(event), curNode, ((DBNDatabaseNode) nodeObject));
-                            } else if (nodeObject instanceof DBNResource && curNode instanceof DBNResource) {
-                                pasteResource((DBNResource) nodeObject, (DBNResource) curNode);
                             } else {
                                 log.error("Paste is not supported for " + curNode);
                             }
@@ -131,10 +131,8 @@ public class NavigatorHandlerObjectCreateCopy extends NavigatorHandlerObjectCrea
                 if (files != null) {
                     for (String fileName : files) {
                         final File file = new File(fileName);
-                        if (file.exists()) {
-                            if (!toProject.hasRealmPermission(RMConstants.PERMISSION_PROJECT_RESOURCE_EDIT)) {
+                        if (file.exists() && !hasPermission(toProject)) {
                                 failedToPasteResources.add(fileName);
-                            }
                         }
                     }
                     if (failedToPasteResources.isEmpty()) {
@@ -158,7 +156,7 @@ public class NavigatorHandlerObjectCreateCopy extends NavigatorHandlerObjectCrea
                     UINavigatorMessages.failed_to_paste_due_to_permissions_title,
                     NLS.bind(
                         UINavigatorMessages.failed_to_paste_due_to_permissions_message,
-                        toProject.getDisplayName(),
+                        toProject != null ? toProject.getDisplayName() : "Can't find owner project",
                         String.join(",\n", failedToPasteResources)
                     )
                 );
@@ -168,6 +166,23 @@ public class NavigatorHandlerObjectCreateCopy extends NavigatorHandlerObjectCrea
         }
 
         return null;
+    }
+
+    private boolean hasPermission(@Nullable DBPProject toProject) {
+        return toProject != null && toProject.hasRealmPermission(RMConstants.PERMISSION_PROJECT_RESOURCE_EDIT);
+    }
+
+    private void pastNodeToResource(@NotNull DBRProgressMonitor monitor, @NotNull DBNResource currentNode, @NotNull DBNNode nodeToPaste)
+    throws DBException {
+        if (currentNode.supportsPaste(nodeToPaste)) {
+            currentNode.pasteNodes(List.of(nodeToPaste));
+        } else if (nodeToPaste instanceof DBNResource fromResource) {
+            pasteResource(fromResource, currentNode);
+        } else if (currentNode.supportsDrop(nodeToPaste)) {
+            currentNode.dropNodes(monitor, List.of(nodeToPaste));
+        } else {
+            log.error("Paste or drop is not supported for " + currentNode);
+        }
     }
 
     private void pasteResource(DBNResource resourceNode, DBNResource toFolder) {

@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2025 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,7 +65,13 @@ public class MySQLTableManager extends SQLTableManager<MySQLTableBase, MySQLCata
     }
 
     @Override
-    protected MySQLTableBase createDatabaseObject(@NotNull DBRProgressMonitor monitor, @NotNull DBECommandContext context, Object container, Object copyFrom, @NotNull Map<String, Object> options) throws DBException {
+    protected MySQLTableBase createDatabaseObject(
+        @NotNull DBRProgressMonitor monitor,
+        @NotNull DBECommandContext context,
+        @NotNull Object container,
+        @Nullable Object copyFrom,
+        @NotNull Map<String, Object> options
+    ) throws DBException {
         final MySQLTable table;
         MySQLCatalog catalog = (MySQLCatalog) container;
         if (copyFrom instanceof DBSEntity) {
@@ -87,10 +93,16 @@ public class MySQLTableManager extends SQLTableManager<MySQLTableBase, MySQLCata
     }
 
     @Override
-    protected void addObjectModifyActions(@NotNull DBRProgressMonitor monitor, @NotNull DBCExecutionContext executionContext, @NotNull List<DBEPersistAction> actionList, @NotNull ObjectChangeCommand command, @NotNull Map<String, Object> options) {
+    protected void addObjectModifyActions(
+        @NotNull DBRProgressMonitor monitor,
+        @NotNull DBCExecutionContext executionContext,
+        @NotNull List<DBEPersistAction> actionList,
+        @NotNull ObjectChangeCommand command,
+        @NotNull Map<String, Object> options) {
+
         StringBuilder query = new StringBuilder("ALTER TABLE "); //$NON-NLS-1$
         query.append(command.getObject().getFullyQualifiedName(DBPEvaluationContext.DDL)).append(" "); //$NON-NLS-1$
-        appendTableModifiers(monitor, command.getObject(), command, query, true);
+        appendTableModifiers(monitor, command.getObject(), command, query, true, options);
 
         actionList.add(
             new SQLDatabasePersistAction(query.toString())
@@ -98,7 +110,13 @@ public class MySQLTableManager extends SQLTableManager<MySQLTableBase, MySQLCata
     }
 
     @Override
-    protected void addStructObjectCreateActions(DBRProgressMonitor monitor, DBCExecutionContext executionContext, List<DBEPersistAction> actions, StructCreateCommand command, Map<String, Object> options) throws DBException {
+    protected void addStructObjectCreateActions(
+        @NotNull DBRProgressMonitor monitor,
+        @NotNull DBCExecutionContext executionContext,
+        @NotNull List<DBEPersistAction> actions,
+        @NotNull StructCreateCommand command,
+        @NotNull Map<String, Object> options
+    ) throws DBException {
 
         if (CommonUtils.getOption(options, DBPScriptObject.OPTION_INCLUDE_OBJECT_DROP)) {
             final MySQLTableBase table = command.getObject();
@@ -110,35 +128,45 @@ public class MySQLTableManager extends SQLTableManager<MySQLTableBase, MySQLCata
     }
 
     @Override
-    protected void appendTableModifiers(DBRProgressMonitor monitor, MySQLTableBase tableBase, NestedObjectCommand tableProps, StringBuilder ddl, boolean alter) {
-        if (tableBase instanceof MySQLTable table) {
-            try {
-                final MySQLDataSource dataSource = table.getDataSource();
-                final MySQLTable.AdditionalInfo additionalInfo = table.getAdditionalInfo(monitor);
-                if ((!table.isPersisted() || tableProps.getProperty("engine") != null) && additionalInfo.getEngine() != null) { //$NON-NLS-1$
-                    ddl.append("\nENGINE=").append(additionalInfo.getEngine().getName()); //$NON-NLS-1$
-                }
-                if (dataSource.supportsCharsets() &&
-                    (!table.isPersisted() || tableProps.getProperty("charset") != null) && //$NON-NLS-1$
-                    additionalInfo.getCharset() != null
-                ) {
-                    ddl.append("\nDEFAULT CHARSET=").append(additionalInfo.getCharset().getName()); //$NON-NLS-1$
-                }
-                if (dataSource.supportsCollations() &&
-                    (!table.isPersisted() || tableProps.getProperty("collation") != null) && //$NON-NLS-1$
-                    additionalInfo.getCollation() != null
-                ) {
-                    ddl.append("\nCOLLATE=").append(additionalInfo.getCollation().getName()); //$NON-NLS-1$
-                }
-                if ((!table.isPersisted() && table.getDescription() != null) || tableProps.hasProperty(DBConstants.PROP_ID_DESCRIPTION)) {
-                    ddl.append("\nCOMMENT=").append(SQLUtils.quoteString(table, CommonUtils.notEmpty(table.getDescription())));//$NON-NLS-1$
-                }
-                if ((!table.isPersisted() || tableProps.getProperty("autoIncrement") != null) && additionalInfo.getAutoIncrement() > 0) { //$NON-NLS-1$
-                    ddl.append("\nAUTO_INCREMENT=").append(additionalInfo.getAutoIncrement()); //$NON-NLS-1$
-                }
-            } catch (DBCException e) {
-                log.error(e);
+    protected void appendTableModifiers(
+        @NotNull DBRProgressMonitor monitor,
+        @NotNull MySQLTableBase tableBase,
+        @NotNull NestedObjectCommand tableProps,
+        @NotNull StringBuilder ddl,
+        boolean alter,
+        @NotNull Map<String, Object> options) {
+
+        if (!(tableBase instanceof MySQLTable table)) {
+            return;
+        }
+
+        final String delimiter = getDelimiter(options);
+        try {
+            final MySQLDataSource dataSource = table.getDataSource();
+            final MySQLTable.AdditionalInfo additionalInfo = table.getAdditionalInfo(monitor);
+            if ((!table.isPersisted() || tableProps.getProperty("engine") != null) && additionalInfo.getEngine() != null) { //$NON-NLS-1$
+                ddl.append(delimiter).append("ENGINE=").append(additionalInfo.getEngine().getName()); //$NON-NLS-1$
             }
+            if (dataSource.supportsCharsets() &&
+                (!table.isPersisted() || tableProps.getProperty("charset") != null) && //$NON-NLS-1$
+                additionalInfo.getCharset() != null
+            ) {
+                ddl.append(delimiter).append("DEFAULT CHARSET=").append(additionalInfo.getCharset().getName()); //$NON-NLS-1$
+            }
+            if (dataSource.supportsCollations() &&
+                (!table.isPersisted() || tableProps.getProperty("collation") != null) && //$NON-NLS-1$
+                additionalInfo.getCollation() != null
+            ) {
+                ddl.append(delimiter).append("COLLATE=").append(additionalInfo.getCollation().getName()); //$NON-NLS-1$
+            }
+            if ((!table.isPersisted() && table.getDescription() != null) || tableProps.hasProperty(DBConstants.PROP_ID_DESCRIPTION)) {
+                ddl.append(delimiter).append("COMMENT=").append(SQLUtils.quoteString(table, CommonUtils.notEmpty(table.getDescription()))); //$NON-NLS-1$
+            }
+            if ((!table.isPersisted() || tableProps.getProperty("autoIncrement") != null) && additionalInfo.getAutoIncrement() > 0) { //$NON-NLS-1$
+                ddl.append(delimiter).append("AUTO_INCREMENT=").append(additionalInfo.getAutoIncrement()); //$NON-NLS-1$
+            }
+        } catch (DBCException e) {
+            log.error(e);
         }
     }
 
@@ -167,8 +195,13 @@ public class MySQLTableManager extends SQLTableManager<MySQLTableBase, MySQLCata
         return CHILD_TYPES;
     }
 
+    @Nullable
     @Override
-    public Collection<? extends DBSObject> getChildObjects(DBRProgressMonitor monitor, MySQLTableBase object, Class<? extends DBSObject> childType) throws DBException {
+    public Collection<? extends DBSObject> getChildObjects(
+        @NotNull DBRProgressMonitor monitor,
+        @NotNull MySQLTableBase object,
+        @NotNull Class<? extends DBSObject> childType
+    ) throws DBException {
         if (childType == MySQLTableColumn.class) {
             return object.getAttributes(monitor);
         } else if (childType == MySQLTableConstraint.class) {

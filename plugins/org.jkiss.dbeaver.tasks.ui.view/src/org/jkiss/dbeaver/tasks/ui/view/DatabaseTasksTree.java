@@ -28,11 +28,13 @@ import org.eclipse.swt.widgets.Item;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.ui.dialogs.PatternFilter;
+import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.model.DBIcon;
 import org.jkiss.dbeaver.model.DBPImage;
+import org.jkiss.dbeaver.model.DBPObjectWithOrdinalPosition;
 import org.jkiss.dbeaver.model.DBUtils;
 import org.jkiss.dbeaver.model.app.DBPProject;
 import org.jkiss.dbeaver.model.preferences.DBPPreferenceStore;
@@ -53,7 +55,6 @@ import org.jkiss.utils.ArrayUtils;
 import org.jkiss.utils.CommonUtils;
 
 import java.io.IOException;
-import java.text.Collator;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -88,10 +89,16 @@ public class DatabaseTasksTree {
         taskTree.setLayoutData(new GridData(GridData.FILL_BOTH));
 
         taskColumnController = new ViewerColumnController<>(TaskUIViewMessages.db_tasks_tree_column_controller_tasks, taskViewer);
-        taskColumnController.setComparator(new ViewerColumnController.DefaultComparator(Collator.getInstance()) {
+        taskColumnController.setComparator(new ViewerColumnController.DefaultComparator() {
             @Override
             public int category(Object element) {
                 return element instanceof DBTTaskFolder ? 0 : 1;
+            }
+
+            @Nullable
+            @Override
+            protected Integer getPosition(@Nullable Object element) {
+                return element instanceof DBPObjectWithOrdinalPosition o ? o.getOrdinalPosition() : null;
             }
         });
         taskColumnController.addColumn(TaskUIViewMessages.db_tasks_tree_column_controller_add_name, TaskUIViewMessages.db_tasks_tree_column_controller_add_descr_name, SWT.LEFT, true, true, new TaskLabelProvider() {
@@ -182,11 +189,7 @@ public class DatabaseTasksTree {
                     if (lastRun == null) {
                         return "N/A";
                     } else {
-                        if (lastRun.isRunSuccess()) {
-                            return TaskUIViewMessages.db_tasks_tree_column_cell_text_success;
-                        } else {
-                            return CommonUtils.notEmpty(lastRun.getErrorMessage());
-                        }
+                        return DatabaseTasksView.getBriefStatus(lastRun);
                     }
                 }
                 return null;
@@ -429,10 +432,13 @@ public class DatabaseTasksTree {
     }
 
     private void refreshTasks() {
+        DBPProject project = DBWorkbench.getPlatform().getWorkspace().getActiveProject();
+        if (project == null) {
+            return;
+        }
         allTasks.clear();
         allTasksFolders.clear();
 
-        DBPProject project = DBWorkbench.getPlatform().getWorkspace().getActiveProject();
         DBTTaskManager taskManager = project.getTaskManager();
         DBTTask[] tasks = taskManager.getAllTasks();
         if (tasks.length != 0) {
@@ -464,8 +470,9 @@ public class DatabaseTasksTree {
         DBTScheduler scheduler = TaskRegistry.getInstance().getActiveSchedulerInstance();
         if (scheduler != null) {
             new AbstractJob("Refresh scheduled tasks") {
+                @NotNull
                 @Override
-                protected IStatus run(DBRProgressMonitor monitor) {
+                protected IStatus run(@NotNull DBRProgressMonitor monitor) {
 
                     try {
                         scheduler.refreshScheduledTasks(monitor);

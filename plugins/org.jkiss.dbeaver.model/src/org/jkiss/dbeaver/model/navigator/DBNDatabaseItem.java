@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package org.jkiss.dbeaver.model.navigator;
 
 import org.jkiss.code.NotNull;
-import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.model.navigator.meta.DBXTreeNode;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 import org.jkiss.dbeaver.model.struct.DBSObject;
@@ -29,7 +28,7 @@ public class DBNDatabaseItem extends DBNDatabaseNode {
     private final DBXTreeNode meta;
     private DBSObject object;
 
-    DBNDatabaseItem(DBNNode parent, DBXTreeNode meta, DBSObject object, boolean reflect) {
+    DBNDatabaseItem(@NotNull DBNNode parent, @NotNull DBXTreeNode meta, @NotNull DBSObject object) {
         super(parent);
         this.meta = meta;
         this.object = object;
@@ -71,16 +70,13 @@ public class DBNDatabaseItem extends DBNDatabaseNode {
         return true;
     }
 
-    @Nullable
+    @NotNull
     @Override
     public DBSObject getObject() {
-        // FIXME: we can't throw error here because too many
-//        if (object == null) {
-//            throw new IllegalStateException("Null object in navigator node. Node was disposed?");
-//        }
         return object;
     }
 
+    @NotNull
     @Override
     public Object getValueObject() {
         return object;
@@ -92,10 +88,11 @@ public class DBNDatabaseItem extends DBNDatabaseNode {
     }
 
     @Override
-    public final boolean isManagable() {
+    public final boolean isManageable() {
         return true;
     }
 
+    @NotNull
     @Override
     public String toString() {
         return object == null ? super.toString() : object.toString();

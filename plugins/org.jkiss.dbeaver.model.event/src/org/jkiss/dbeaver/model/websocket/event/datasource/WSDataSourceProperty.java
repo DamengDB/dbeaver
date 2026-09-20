@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2024 DBeaver Corp and others
+ * Copyright (C) 2010-2025 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,22 @@
  */
 package org.jkiss.dbeaver.model.websocket.event.datasource;
 
+import org.jkiss.code.NotNull;
+import org.jkiss.dbeaver.registry.DataSourceDescriptor;
+
 public enum WSDataSourceProperty {
-    CONFIGURATION,
-    DESCRIPTION,
-    NAME
+    CONFIGURATION, // configuration like host, port, etc
+    NAME, // visual changes like name, description that doesn't affect connection configuration
+    INTERNAL; // internal changes like extensions
+
+    public boolean hasEffectiveChanges(
+        @NotNull DataSourceDescriptor before,
+        @NotNull DataSourceDescriptor after
+    ) {
+        return switch (this) {
+            case CONFIGURATION -> !before.equalConfiguration(after);
+            case NAME -> !before.isLooselyEqualTo(after);
+            case INTERNAL -> !before.equalInternalConfiguration(after);
+        };
+    }
 }

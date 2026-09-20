@@ -3,15 +3,15 @@ Bundle-ManifestVersion: 2
 Bundle-Vendor: DBeaver Corp
 Bundle-Name: DBeaver UI
 Bundle-SymbolicName: org.jkiss.dbeaver.ui;singleton:=true
-Bundle-Version: 5.1.167.qualifier
-Bundle-Release-Date: 20250407
-Bundle-RequiredExecutionEnvironment: JavaSE-17
+Bundle-Version: 5.1.201.qualifier
+Bundle-Release-Date: 20260831
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Bundle-Activator: org.jkiss.dbeaver.ui.internal.UIActivator
 Bundle-ActivationPolicy: lazy
 Export-Package: org.jkiss.dbeaver.runtime,
- org.jkiss.dbeaver.runtime.ui,
  org.jkiss.dbeaver.registry.configurator,
  org.jkiss.dbeaver.ui,
+ org.jkiss.dbeaver.ui.browser,
  org.jkiss.dbeaver.ui.contentassist,
  org.jkiss.dbeaver.ui.controls,
  org.jkiss.dbeaver.ui.controls.autorefresh,
@@ -21,6 +21,7 @@ Export-Package: org.jkiss.dbeaver.runtime,
  org.jkiss.dbeaver.ui.controls.finder,
  org.jkiss.dbeaver.ui.controls.finder.viewer,
  org.jkiss.dbeaver.ui.controls.folders,
+ org.jkiss.dbeaver.ui.controls.findandreplace,
  org.jkiss.dbeaver.ui.css,
  org.jkiss.dbeaver.ui.dialogs,
  org.jkiss.dbeaver.ui.dialogs.exec,
@@ -31,7 +32,9 @@ Export-Package: org.jkiss.dbeaver.runtime,
  org.jkiss.dbeaver.ui.properties,
  org.jkiss.dbeaver.ui.registry,
  org.jkiss.dbeaver.ui.screenreaders,
- org.jkiss.dbeaver.ui.swt
+ org.jkiss.dbeaver.ui.swt,
+ org.jkiss.dbeaver.ui.validator,
+ org.jkiss.dbeaver.ui.workbench
 Require-Bundle: org.eclipse.emf.common,
  org.eclipse.e4.ui.css.core,
  org.eclipse.e4.ui.css.swt,

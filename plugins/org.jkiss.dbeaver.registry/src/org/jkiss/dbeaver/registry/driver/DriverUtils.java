@@ -1,6 +1,6 @@
 /*
  * DBeaver - Universal Database Manager
- * Copyright (C) 2010-2025 DBeaver Corp and others
+ * Copyright (C) 2010-2026 DBeaver Corp and others
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -57,7 +58,7 @@ public class DriverUtils {
 
     public static final String ZIP_EXTRACT_DIR = "zip-cache";
 
-    public static boolean matchesBundle(IConfigurationElement config) {
+    public static boolean matchesBundle(@NotNull IConfigurationElement config) {
         // Check bundle
         String bundle = config.getAttribute(RegistryConstants.ATTR_BUNDLE);
         if (!CommonUtils.isEmpty(bundle)) {
@@ -77,9 +78,7 @@ public class DriverUtils {
         return true;
     }
 
-    static void copyZipStream(InputStream inputStream, OutputStream outputStream)
-        throws IOException
-    {
+    static void copyZipStream(@NotNull InputStream inputStream, @NotNull OutputStream outputStream) throws IOException {
         byte[] writeBuffer = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
         for (int br = inputStream.read(writeBuffer); br != -1; br = inputStream.read(writeBuffer)) {
             outputStream.write(writeBuffer, 0, br);
@@ -87,14 +86,15 @@ public class DriverUtils {
         outputStream.flush();
     }
 
-    static List<Path> extractZipArchives(List<Path> files) {
+    @NotNull
+    static List<Path> extractZipArchives(@NotNull List<Path> files) {
         if (files.isEmpty()) {
             return files;
         }
         List<Path> jarFiles = new ArrayList<>();
         for (Path inputFile : files) {
             jarFiles.add(inputFile);
-            if (!inputFile.getFileName().toString().toLowerCase(Locale.ENGLISH).endsWith(".zip")) {
+            if (!inputFile.getFileName().toString().toLowerCase(Locale.ENGLISH).endsWith(DBPDriverLibrary.FILE_EXT_ZIP)) {
                 continue;
             }
             // Seems to be a zip. Let's try it.
@@ -108,11 +108,11 @@ public class DriverUtils {
                         try {
                             if (!zipEntry.isDirectory()) {
                                 String zipEntryName = zipEntry.getName();
-                                if (zipEntryName.endsWith(".class")) {
+                                if (zipEntryName.endsWith(DBPDriverLibrary.FILE_EXT_CLASS)) {
                                     // This is a jar with classes. Stop processing.
                                     break;
                                 }
-                                if (zipEntryName.endsWith(".jar") || zipEntryName.endsWith(".zip")) {
+                                if (zipEntryName.endsWith(DBPDriverLibrary.FILE_EXT_JAR) || zipEntryName.endsWith(DBPDriverLibrary.FILE_EXT_ZIP)) {
                                     checkAndExtractEntry(inputFile, zipStream, zipEntry, jarFiles);
                                 }
                             }
@@ -131,9 +131,14 @@ public class DriverUtils {
         return jarFiles;
     }
 
-    private static void checkAndExtractEntry(Path sourceFile, InputStream zipStream, ZipEntry zipEntry, List<Path> jarFiles) throws IOException {
+    private static void checkAndExtractEntry(
+        @NotNull Path sourceFile,
+        @NotNull InputStream zipStream,
+        @NotNull ZipEntry zipEntry,
+        @NotNull List<Path> jarFiles
+    ) throws IOException {
         String sourceName = sourceFile.getFileName().toString();
-        if (sourceName.endsWith(".zip")) {
+        if (sourceName.endsWith(DBPDriverLibrary.FILE_EXT_ZIP)) {
             sourceName = sourceName.substring(0, sourceName.length() - 4);
         }
         Path localCacheDir = DriverDescriptor.getCustomDriversHome().resolve(ZIP_EXTRACT_DIR).resolve(sourceName);
@@ -166,7 +171,11 @@ public class DriverUtils {
         }
     }
 
-    public static List<DBPDataSourceContainer> getUsedBy(DBPDriver driver, List<DBPDataSourceContainer> containers) {
+    @NotNull
+    public static List<DBPDataSourceContainer> getUsedBy(
+        @NotNull DBPDriver driver,
+        @NotNull List<DBPDataSourceContainer> containers
+    ) {
         List<DBPDataSourceContainer> usedBy = new ArrayList<>();
         for (DBPDataSourceContainer ds : containers) {
             if (ds.getDriver() == driver) {
@@ -192,7 +201,7 @@ public class DriverUtils {
         return recentDrivers;
     }
 
-    public static void sortDriversByRating(List<DBPDataSourceContainer> allDataSources, List<DBPDriver> drivers) {
+    public static void sortDriversByRating(@NotNull List<DBPDataSourceContainer> allDataSources, @NotNull List<DBPDriver> drivers) {
         try {
             drivers.sort(new DriverScoreComparator(allDataSources));
         } catch (Throwable e) {
@@ -200,8 +209,10 @@ public class DriverUtils {
         }
     }
 
+    @NotNull
     public static List<DBPDriver> getAllDrivers() {
-        List<? extends DBPDataSourceProviderDescriptor> providers = DBWorkbench.getPlatform().getDataSourceProviderRegistry().getEnabledDataSourceProviders();
+        List<? extends DBPDataSourceProviderDescriptor> providers =
+            DBWorkbench.getPlatform().getDataSourceProviderRegistry().getEnabledDataSourceProviders();
 
         List<DBPDriver> allDrivers = new ArrayList<>();
         for (DBPDataSourceProviderDescriptor dpd : providers) {
@@ -250,18 +261,21 @@ public class DriverUtils {
     @NotNull
     public static String getDistributedLibraryPath(@NotNull Path path) {
         if (DBWorkbench.isDistributed() && path.isAbsolute()) {
-            return DriverDescriptor.getWorkspaceDriversStorageFolder().relativize(path).toString();
+            return DriverDescriptor.getExternalDriversStorageFolder().relativize(path).toString();
         }
         return path.toString();
     }
 
     @SuppressWarnings("unchecked")
     @NotNull
-    public static <T> Class<T> getDriverClass(@NotNull DBPDataSource dataSource, @NotNull String className) throws ClassNotFoundException {
+    public static <T> Class<T> getDriverClass(
+        @NotNull DBPDataSource dataSource,
+        @NotNull String className
+    ) throws ClassNotFoundException {
         return (Class<T>) Class.forName(className, true, dataSource.getContainer().getDriver().getDefaultDriverLoader().getClassLoader());
     }
 
-    public static long calculateFileCRC(Path localDriverFile) {
+    public static long calculateFileCRC(@NotNull Path localDriverFile) {
         try (InputStream is = Files.newInputStream(localDriverFile)) {
             return calculateCRC(is);
         } catch (IOException e) {
@@ -270,7 +284,7 @@ public class DriverUtils {
         }
     }
 
-    public static long calculateBytesCRC(byte[] bytes) {
+    public static long calculateBytesCRC(@NotNull byte[] bytes) {
         try (InputStream is = new ByteArrayInputStream(bytes)) {
             return calculateCRC(is);
         } catch (IOException e) {
@@ -279,7 +293,7 @@ public class DriverUtils {
         }
     }
 
-    private static long calculateCRC(InputStream is) throws IOException {
+    private static long calculateCRC(@NotNull InputStream is) throws IOException {
         CRC32 crc = new CRC32();
 
         byte[] buffer = new byte[65536];
@@ -288,6 +302,20 @@ public class DriverUtils {
             crc.update(buffer, 0, bytesRead);
         }
         return crc.getValue();
+    }
+
+    /**
+     * Builds string of drivers with single connection option
+     */
+    @NotNull
+    public static String collectSingleConnectionDrivers() {
+        return DBWorkbench.getPlatform().getDataSourceProviderRegistry().getDataSourceProviders().stream()
+            .flatMap(pr -> pr.getDrivers().stream())
+            .filter(d -> (d.isSingleConnection() || d.isEmbedded()))
+            .sorted(Comparator.comparing(DBPNamedObject::getName))
+            .map(d -> " - " + d.getName())
+            .distinct()
+            .collect(Collectors.joining("\n"));
     }
 
     public static class DriverNameComparator implements Comparator<DBPDriver> {
@@ -301,12 +329,12 @@ public class DriverUtils {
     public static class DriverScoreComparator extends DriverNameComparator {
         private final List<DBPDataSourceContainer> dataSources;
 
-        public DriverScoreComparator(List<DBPDataSourceContainer> dataSources) {
+        public DriverScoreComparator(@NotNull List<DBPDataSourceContainer> dataSources) {
             this.dataSources = dataSources;
         }
 
         @Override
-        public int compare(DBPDriver o1, DBPDriver o2) {
+        public int compare(@NotNull DBPDriver o1, @NotNull DBPDriver o2) {
             int ub1 = getUsedBy(o1, dataSources).size() + o1.getPromotedScore();
             int ub2 = getUsedBy(o2, dataSources).size() + o2.getPromotedScore();
             if (ub1 == ub2) {
