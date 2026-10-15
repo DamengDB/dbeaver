@@ -46,6 +46,8 @@ public class DamengExecutionContext extends JDBCExecutionContext
 
     private String activeSchemaName;
 
+    public volatile java.sql.Statement lastRawStatement;
+
     DamengExecutionContext(@NotNull JDBCRemoteInstance instance, String purpose) {
         super(instance, purpose);
     }

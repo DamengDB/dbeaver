@@ -21,14 +21,14 @@ org.jkiss.dbeaver.ext.damengdb.ui,版本号,plugins/org.jkiss.dbeaver.ext.dameng
 
 例如，两个jar包为：
 
-org.jkiss.dbeaver.ext.damengdb_1.0.1.202609181632.jar
+org.jkiss.dbeaver.ext.damengdb_1.0.1.202610151427.jar
 
-org.jkiss.dbeaver.ext.damengdb.ui_1.0.1.202609181632.jar
+org.jkiss.dbeaver.ext.damengdb.ui_1.0.1.202610151427.jar
 
 则需要添加以下语句：
 
 ```
-org.jkiss.dbeaver.ext.damengdb,1.0.1.202609181632,plugins/org.jkiss.dbeaver.ext.damengdb_1.0.1.202609181632.jar,4,false
-org.jkiss.dbeaver.ext.damengdb.ui,1.0.1.202609181632,plugins/org.jkiss.dbeaver.ext.damengdb.ui_1.0.1.202609181632.jar,4,false
+org.jkiss.dbeaver.ext.damengdb,1.0.1.202610151427,plugins/org.jkiss.dbeaver.ext.damengdb_1.0.1.202610151427.jar,4,false
+org.jkiss.dbeaver.ext.damengdb.ui,1.0.1.202610151427,plugins/org.jkiss.dbeaver.ext.damengdb.ui_1.0.1.202610151427.jar,4,false
 ```
 

@@ -58,6 +58,7 @@ import org.jkiss.dbeaver.model.admin.sessions.DBAServerSessionManager;
 import org.jkiss.dbeaver.model.connection.DBPConnectionConfiguration;
 import org.jkiss.dbeaver.model.connection.DBPDriver;
 import org.jkiss.dbeaver.model.data.DBDAttributeContentTypeProvider;
+import org.jkiss.dbeaver.model.preferences.DBPPreferenceStore;
 import org.jkiss.dbeaver.model.data.DBDValueHandlerProvider;
 import org.jkiss.dbeaver.model.exec.DBCException;
 import org.jkiss.dbeaver.model.exec.DBCExecutionContext;
@@ -73,6 +74,10 @@ import org.jkiss.dbeaver.model.exec.jdbc.JDBCPreparedStatement;
 import org.jkiss.dbeaver.model.exec.jdbc.JDBCResultSet;
 import org.jkiss.dbeaver.model.exec.jdbc.JDBCSession;
 import org.jkiss.dbeaver.model.exec.jdbc.JDBCStatement;
+import org.jkiss.dbeaver.model.exec.jdbc.JDBCObjectSupplier;
+import org.jkiss.dbeaver.model.exec.jdbc.JDBCCallableStatement;
+import org.jkiss.dbeaver.model.impl.jdbc.exec.JDBCFactoryDefault;
+import java.sql.PreparedStatement;
 import org.jkiss.dbeaver.model.exec.output.DBCOutputWriter;
 import org.jkiss.dbeaver.model.exec.output.DBCServerOutputReader;
 import org.jkiss.dbeaver.model.exec.plan.DBCQueryPlanner;
@@ -645,6 +650,47 @@ public class DamengDataSource extends JDBCDataSource implements DBPObjectStatist
         return super.getAdapter(adapter);
     }
 
+    private class DamengJDBCFactory extends JDBCFactoryDefault {
+        private void captureRaw(JDBCSession session, JDBCStatement stmt) {
+            try {
+                java.lang.reflect.Field f = null;
+                Class<?> clazz = stmt.getClass();
+                while (clazz != null) {
+                    try { f = clazz.getDeclaredField("original"); break; }
+                    catch (NoSuchFieldException e) { clazz = clazz.getSuperclass(); }
+                }
+                if (f == null) return;
+                f.setAccessible(true);
+                Object raw = f.get(stmt);
+                if (session.getExecutionContext() instanceof DamengExecutionContext) {
+                    ((DamengExecutionContext) session.getExecutionContext()).lastRawStatement = (java.sql.Statement) raw;
+                }
+            } catch (Exception ignored) {
+            }
+        }
+
+        @Override
+        public JDBCStatement createStatement(@NotNull JDBCSession session, @NotNull JDBCObjectSupplier<java.sql.Statement> original, boolean disableLogging) throws SQLException {
+            JDBCStatement s = super.createStatement(session, original, disableLogging);
+            captureRaw(session, s);
+            return s;
+        }
+
+        @Override
+        public JDBCPreparedStatement createPreparedStatement(@NotNull JDBCSession session, @NotNull JDBCObjectSupplier<PreparedStatement> original, String sql, boolean disableLogging) throws SQLException {
+            JDBCPreparedStatement s = super.createPreparedStatement(session, original, sql, disableLogging);
+            captureRaw(session, s);
+            return s;
+        }
+
+        @Override
+        public JDBCCallableStatement createCallableStatement(@NotNull JDBCSession session, @NotNull JDBCObjectSupplier<CallableStatement> original, String sql, boolean disableLogging) throws SQLException {
+            JDBCCallableStatement s = super.createCallableStatement(session, original, sql, disableLogging);
+            captureRaw(session, s);
+            return s;
+        }
+    }
+
     @Override
     public void cancelStatementExecute(DBRProgressMonitor monitor, JDBCStatement statement) throws DBException {
         if (driverSupportsQueryCancel()) {
@@ -1162,7 +1208,8 @@ public class DamengDataSource extends JDBCDataSource implements DBPObjectStatist
     private class DmOutputReader implements DBCServerOutputReader {
         @Override
         public boolean isServerOutputEnabled() {
-            return getContainer().getPreferenceStore().getBoolean(DamengConstants.PREF_DBMS_OUTPUT);
+            DBPPreferenceStore store = getContainer().getPreferenceStore();
+            return !store.contains(DamengConstants.PREF_DBMS_OUTPUT) || store.getBoolean(DamengConstants.PREF_DBMS_OUTPUT);
         }
 
         @Override
@@ -1186,23 +1233,26 @@ public class DamengDataSource extends JDBCDataSource implements DBPObjectStatist
         public void readServerOutput(@NotNull DBRProgressMonitor monitor, @NotNull DBCExecutionContext context,
                                      @Nullable DBCExecutionResult executionResult, @Nullable DBCStatement statement,
                                      @NotNull DBCOutputWriter output) throws DBCException {
-            try (JDBCSession session = (JDBCSession) context.openSession(monitor, DBCExecutionPurpose.UTIL,
-                "Read DBMS output")) {
-                try (CallableStatement getLineProc = session.getOriginal()
-                    .prepareCall("{CALL DBMS_OUTPUT.GET_LINE(?, ?)}")) {
-                    getLineProc.registerOutParameter(1, java.sql.Types.VARCHAR);
-                    getLineProc.registerOutParameter(2, java.sql.Types.INTEGER);
-                    int status = 0;
-                    while (status == 0) {
-                        getLineProc.execute();
-                        status = getLineProc.getInt(2);
-                        if (status == 0) {
-                            output.println(null, getLineProc.getString(1));
+            DamengExecutionContext dmCtx = (DamengExecutionContext) context;
+            java.sql.Statement rawStmt = dmCtx.lastRawStatement;
+            if (rawStmt == null) {
+                return;
+            }
+            try {
+                java.lang.reflect.Method m = rawStmt.getClass().getMethod("getPrintMsg");
+                Object result = m.invoke(rawStmt);
+                if (result != null) {
+                    String msg = result.toString();
+                    if (!msg.isEmpty()) {
+                        for (String line : msg.split("\n")) {
+                            output.println(null, line);
                         }
                     }
-                } catch (SQLException e) {
-                    throw new DBCException(e, context);
                 }
+            } catch (NoSuchMethodException e) {
+                // getPrintMsg not available on this statement, skip
+            } catch (Exception e) {
+                output.println(null, "[dm] " + e.getMessage());
             }
         }
     }
