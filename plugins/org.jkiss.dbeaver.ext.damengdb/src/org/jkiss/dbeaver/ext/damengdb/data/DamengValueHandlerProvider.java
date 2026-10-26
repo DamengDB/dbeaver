@@ -66,8 +66,10 @@ public class DamengValueHandlerProvider implements DBDValueHandlerProvider {
         if (typeName.contains(DamengConstants.TYPE_NAME_TIMESTAMP)
             || typedObject.getDataKind() == DBPDataKind.DATETIME) {
             return new DamengTimestampValueHandler(preferences, dataSource);
-        } else if (typeName.startsWith("SYSGEO2")) {
+        } else if (typeName.startsWith("SYSGEO2.ST_BOX")) {
             return DamengStringValueHandler.INSTANCE;
+        } else if (typeName.startsWith("SYSGEO2")) {
+            return DamengGeometryValueHandler.INSTANCE;
         } else {
             return null;
         }

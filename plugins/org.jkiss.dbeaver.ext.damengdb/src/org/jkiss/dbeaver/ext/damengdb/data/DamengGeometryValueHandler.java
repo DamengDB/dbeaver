@@ -300,14 +300,22 @@ public class DamengGeometryValueHandler extends JDBCAbstractValueHandler {
     @Override
     protected Object fetchColumnValue(DBCSession session, JDBCResultSet resultSet, DBSTypedObject type, int index)
         throws DBCException, SQLException {
-        Struct geostruct = (Struct) resultSet.getObject(index);
-        if (type.getTypeName().startsWith("SYSGEO2")) {
-            return dbGeometryFromGeo2Struct(geostruct);
-        } else if (type.getTypeName().startsWith("SYSTOPOLOGY")) {
-            return dbGeometryFromTopologyStruct(session, geostruct);
-        } else {
-            return dbGeometryFromGeo1Struct(geostruct);
+        Object obj = resultSet.getObject(index);
+        if (obj == null) {
+            return new DBGeometry();
         }
+        if (obj instanceof Struct) {
+            Struct geostruct = (Struct) obj;
+            if (type.getTypeName().startsWith("SYSGEO2")) {
+                return dbGeometryFromGeo2Struct(geostruct);
+            } else if (type.getTypeName().startsWith("SYSTOPOLOGY")) {
+                return dbGeometryFromTopologyStruct(session, geostruct);
+            } else {
+                return dbGeometryFromGeo1Struct(geostruct);
+            }
+        }
+        // DM9 driver may return bytes/object directly
+        return getValueFromObject(session, type, obj, false, false);
 
     }
 
