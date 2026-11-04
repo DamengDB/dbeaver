@@ -4,12 +4,14 @@
 
 ## ChangeLogs
 
-#### dmDBeaver v26.2.0.0（2026-10-26）
+#### dmDBeaver v26.2.0.0（2026-11-04）
 
 - 创建了适配DBeaver 26.2.0的分支
 - 修复了查看表数据耗时过长的问题
 - 无法输出匿名块中打印内容
 - 修复在DM9 下空间列数据不显示问题
+- 修复新建约束时，类型下拉只有 UNIQUE KEY 一项，缺少 PRIMARY KEY 和 CHECK
+- 修复打开表数据编辑器时，卡在 "Detect unique identifiers"
 
 #### dmDBeaver v25.0.1.0（2025-03-03）
 

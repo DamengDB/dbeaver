@@ -34,6 +34,9 @@ import org.jkiss.dbeaver.model.impl.jdbc.struct.JDBCTable;
 import org.jkiss.dbeaver.model.impl.jdbc.struct.JDBCTableColumn;
 import org.jkiss.dbeaver.model.meta.*;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
+import org.jkiss.dbeaver.model.struct.DBSEntityConstrainable;
+import org.jkiss.dbeaver.model.struct.DBSEntityConstraintInfo;
+import org.jkiss.dbeaver.model.struct.DBSEntityConstraintType;
 import org.jkiss.dbeaver.model.struct.DBSObject;
 import org.jkiss.dbeaver.model.struct.DBSObjectState;
 import org.jkiss.dbeaver.model.struct.cache.DBSObjectCache;
@@ -50,7 +53,7 @@ import java.util.*;
  * DamengTable base
  */
 public abstract class DamengTableBase extends JDBCTable<DamengDataSource, DamengSchema>
-    implements DBPNamedObject2, DBPRefreshableObject, DamengStatefulObject, DBPObjectWithLazyDescription {
+    implements DBPNamedObject2, DBPRefreshableObject, DamengStatefulObject, DBPObjectWithLazyDescription, DBSEntityConstrainable {
     
 	private static final Log log = Log.getLog(DamengTableBase.class);
     private final TablePrivCache tablePrivCache = new TablePrivCache();
@@ -232,6 +235,15 @@ public abstract class DamengTableBase extends JDBCTable<DamengDataSource, Dameng
     @Override
     public List<DamengTableColumn> getAttributes(@NotNull DBRProgressMonitor monitor) throws DBException {
         return getContainer().tableCache.getChildren(monitor, getContainer(), this);
+    }
+
+    @NotNull
+    public List<DBSEntityConstraintInfo> getSupportedConstraints() {
+        return List.of(
+            DBSEntityConstraintInfo.of(DBSEntityConstraintType.PRIMARY_KEY, DamengTableConstraint.class),
+            DBSEntityConstraintInfo.of(DBSEntityConstraintType.UNIQUE_KEY, DamengTableConstraint.class),
+            DBSEntityConstraintInfo.of(DBSEntityConstraintType.CHECK, DamengTableConstraint.class)
+        );
     }
 
     @Override

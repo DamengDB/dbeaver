@@ -140,9 +140,7 @@ public abstract class DamengTablePhysical extends DamengTableBase implements DBS
     }
 
     @Override
-    @Association
     public Collection<DamengTableIndex> getIndexes(DBRProgressMonitor monitor) throws DBException {
-        // Read indexes using cache
         return this.getContainer().indexCache.getObjects(monitor, getContainer(), this);
     }
 

@@ -1610,9 +1610,7 @@ public class DamengSchema extends DamengGlobalObject implements DBSSchema, DBPRe
         protected JDBCStatement prepareObjectsStatement(JDBCSession session, DamengSchema owner,
                                                         DamengTableBase forTable) throws SQLException {
 
-            boolean useSimpleConnection = CommonUtils
-                .toBoolean(session.getDataSource().getContainer().getConnectionConfiguration()
-                    .getProviderProperty(DamengConstants.PROP_METADATA_USE_SIMPLE_CONSTRAINTS));
+            boolean useSimpleConnection = true; // 强制使用简单模式，避免复杂子查询导致元数据加载慢
 
             StringBuilder sql = new StringBuilder(500);
             JDBCPreparedStatement dbStat;
@@ -1805,9 +1803,7 @@ public class DamengSchema extends DamengGlobalObject implements DBSSchema, DBPRe
         @Override
         protected JDBCStatement prepareObjectsStatement(JDBCSession session, DamengSchema owner, DamengTable forTable)
             throws SQLException {
-            boolean useSimpleConnection = CommonUtils
-                .toBoolean(session.getDataSource().getContainer().getConnectionConfiguration()
-                    .getProviderProperty(DamengConstants.PROP_METADATA_USE_SIMPLE_CONSTRAINTS));
+            boolean useSimpleConnection = true; // 强制使用简单模式，避免复杂子查询导致元数据加载慢
 
             StringBuilder sql = new StringBuilder(500);
             JDBCPreparedStatement dbStat;
@@ -1965,26 +1961,21 @@ public class DamengSchema extends DamengGlobalObject implements DBSSchema, DBPRe
         protected JDBCStatement prepareObjectsStatement(JDBCSession session, DamengSchema owner,
                                                         DamengTablePhysical forTable) throws SQLException {
             StringBuilder sql = new StringBuilder();
-            sql.append("SELECT ").append(DamengUtils.getSysCatalogHint(owner.getDataSource())).append(
-                " distinct IND_OBJ.NAME, IND_OBJ.ID, INDS.ISUNIQUE, INDS.XTYPE, INDS.GROUPID, INDS.TYPE$, IND_OBJ.CRTDATE, SCH_OBJ.ID, SCH_OBJ.NAME, TAB_OBJ.ID, TAB_OBJ.NAME TABLE_NAME, IND_OBJ.VALID, IND_OBJ.INFO7, i.TABLESPACE_NAME, ic.INDEX_NAME, ic.COLUMN_NAME, ic.COLUMN_POSITION, ic.DESCEND\n"
-                    +
-                    "from (select * from SYSINDEXES where ROOTFILE != -1 or (XTYPE & 0x1000) = 0x1000 or (XTYPE & 0x2000) = 0x2000 or (XTYPE & 0x08) = 0x08 or (FLAG & 0x08) = 0x08 or (XTYPE & 0x8000) = 0x8000 or (XTYPE & 0x40) = 0x40) INDS, SYSCOLUMNS COLS, ALL_INDEXES i, \n"
-                    +
-                    "(select distinct IND_OBJ_INNER.ID, IND_OBJ_INNER.NAME, IND_OBJ_INNER.CRTDATE, IND_OBJ_INNER.PID, IND_OBJ_INNER.VALID, IND_OBJ_INNER.INFO7 from SYSOBJECTS IND_OBJ_INNER where IND_OBJ_INNER.SUBTYPE$ = 'INDEX') IND_OBJ, (select ID, NAME, SCHID from SYSOBJECTS where TYPE$='SCHOBJ' and SUBTYPE$ like '_TAB' "
-                    + ((forTable == null) ? " " : " and  NAME = ? ")
-                    +
-                    "and SCHID = ?) TAB_OBJ, (select ID, NAME from SYSOBJECTS where TYPE$='SCH' and  ID = ?) SCH_OBJ, ALL_IND_COLUMNS ic where INDS.ID=IND_OBJ.ID and IND_OBJ.PID=TAB_OBJ.ID and TAB_OBJ.SCHID=SCH_OBJ.ID  and i.owner = SCH_OBJ.name and i.index_name = IND_OBJ.NAME and ic.index_owner = SCH_OBJ.NAME AND ic.index_name = IND_OBJ.name "
-                    +
-                    "and COLS.ID = IND_OBJ.PID and ((INDS.XTYPE & 0x1000) = 0x1000 or (INDS.XTYPE & 0x2000) = 0x2000 or (XTYPE & 0x08) = 0x08)) ORDER BY IND_OBJ.NAME\n");
+            sql.append("SELECT i.INDEX_NAME, i.TABLE_OWNER, i.TABLE_NAME, i.TABLESPACE_NAME, ")
+                .append("i.UNIQUENESS, i.STATUS, ")
+                .append("ic.COLUMN_NAME, ic.COLUMN_POSITION, ic.DESCEND, ")
+                .append("o.ID, o.SUBTYPE$, s.XTYPE, s.ISUNIQUE, s.TYPE$ ")
+                .append("FROM ALL_INDEXES i ")
+                .append("JOIN ALL_IND_COLUMNS ic ON i.OWNER = ic.INDEX_OWNER AND i.INDEX_NAME = ic.INDEX_NAME ")
+                .append("JOIN SYSOBJECTS o ON o.NAME = i.INDEX_NAME AND o.SUBTYPE$ = 'INDEX' AND o.SCHID = ? ")
+                .append("JOIN SYSINDEXES s ON s.ID = o.ID ")
+                .append("WHERE i.OWNER = ? ")
+                .append("AND i.TABLE_NAME = ? ")
+                .append("ORDER BY i.INDEX_NAME, ic.COLUMN_POSITION");
             JDBCPreparedStatement dbStat = session.prepareStatement(sql.toString());
-            if (forTable == null) {
-                dbStat.setLong(1, DamengSchema.this.getId());
-                dbStat.setLong(2, DamengSchema.this.getId());
-            } else {
-                dbStat.setString(1, forTable.getName());
-                dbStat.setLong(2, DamengSchema.this.getId());
-                dbStat.setLong(3, DamengSchema.this.getId());
-            }
+            dbStat.setLong(1, DamengSchema.this.getId());
+            dbStat.setString(2, DamengSchema.this.getName());
+            dbStat.setString(3, forTable.getName());
             return dbStat;
         }
 
